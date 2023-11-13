@@ -1,18 +1,18 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "centrex/laravel-accounting",
+    "description": "Manage accounts in laravel",
     "keywords": [
-        ":vendor_name",
+        "centrex",
         "laravel",
-        ":package_slug"
+        "laravel-accounting"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/centrex/laravel-accounting",
     "license": "MIT",
     "type": "library",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "centrex",
+            "email": "raisul.me@gmail.com",
             "role": "Developer"
         }
     ],
@@ -36,19 +36,19 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Centrex\\LaravelAccounting\\": "src/",
+            "Centrex\\LaravelAccounting\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Centrex\\LaravelAccounting\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
     "scripts": {
         "post-autoload-dump": "@composer run prepare",
-        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "clear": "@php vendor/bin/testbench package:purge-laravel-accounting --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "build": [
             "@composer run prepare",
@@ -74,10 +74,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Centrex\\LaravelAccounting\\LaravelAccountingServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "LaravelAccounting": "Centrex\\LaravelAccounting\\Facades\\LaravelAccounting"
             }
         }
     },

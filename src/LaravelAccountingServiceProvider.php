@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace VendorName\Skeleton;
+namespace Centrex\LaravelAccounting;
 
 use Illuminate\Support\ServiceProvider;
 
-class SkeletonServiceProvider extends ServiceProvider
+class LaravelAccountingServiceProvider extends ServiceProvider
 {
     /** Bootstrap the application services. */
     public function boot()
@@ -14,29 +14,29 @@ class SkeletonServiceProvider extends ServiceProvider
         /*
          * Optional methods to load your package assets
          */
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', ':package_slug');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', ':package_slug');
+        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'laravel-accounting');
+        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-accounting');
         // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path(':package_slug.php'),
+                __DIR__.'/../config/config.php' => config_path('laravel-accounting.php'),
             ], 'config');
 
             // Publishing the views.
             /*$this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/:package_slug'),
+                __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-accounting'),
             ], 'views');*/
 
             // Publishing assets.
             /*$this->publishes([
-                __DIR__.'/../resources/assets' => public_path('vendor/:package_slug'),
+                __DIR__.'/../resources/assets' => public_path('vendor/laravel-accounting'),
             ], 'assets');*/
 
             // Publishing the translation files.
             /*$this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/:package_slug'),
+                __DIR__.'/../resources/lang' => resource_path('lang/vendor/laravel-accounting'),
             ], 'lang');*/
 
             // Registering package commands.
@@ -48,11 +48,11 @@ class SkeletonServiceProvider extends ServiceProvider
     public function register()
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/config.php', ':package_slug');
+        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'laravel-accounting');
 
         // Register the main class to use with the facade
-        $this->app->singleton(':package_slug', function () {
-            return new Skeleton;
+        $this->app->singleton('laravel-accounting', function () {
+            return new LaravelAccounting;
         });
     }
 }
