@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace VendorName\Skeleton;
 
 use Illuminate\Support\ServiceProvider;
 
 class SkeletonServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     */
+    /** Bootstrap the application services. */
     public function boot()
     {
         /*
@@ -44,9 +44,7 @@ class SkeletonServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register the application services.
-     */
+    /** Register the application services. */
     public function register()
     {
         // Automatically apply the package configuration

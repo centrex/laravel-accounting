@@ -5,7 +5,7 @@ function ask(string $question, string $default = ''): string
 {
     $answer = readline($question.($default ? " ({$default})" : null).': ');
 
-    if (! $answer) {
+    if ( ! $answer) {
         return $default;
     }
 
@@ -16,7 +16,7 @@ function confirm(string $question, bool $default = false): bool
 {
     $answer = ask($question.' ('.($default ? 'Y/n' : 'y/N').')');
 
-    if (! $answer) {
+    if ( ! $answer) {
         return $default;
     }
 
@@ -102,6 +102,7 @@ function remove_composer_script($scriptName)
     foreach ($data['scripts'] as $name => $script) {
         if ($scriptName === $name) {
             unset($data['scripts'][$name]);
+
             break;
         }
     }
@@ -192,7 +193,7 @@ writeln('------');
 
 writeln('This script will replace the above values in all relevant files in the project directory.');
 
-if (! confirm('Modify files?', true)) {
+if ( ! confirm('Modify files?', true)) {
     exit(1);
 }
 
@@ -200,40 +201,40 @@ $files = (str_starts_with(strtoupper(PHP_OS), 'WIN') ? replaceForWindows() : rep
 
 foreach ($files as $file) {
     replace_in_file($file, [
-        ':author_name' => $authorName,
-        ':author_username' => $authorUsername,
-        'author@domain.com' => $authorEmail,
-        ':vendor_name' => $vendorName,
-        ':vendor_slug' => $vendorSlug,
-        'VendorName' => $vendorNamespace,
-        ':package_name' => $packageName,
-        ':package_slug' => $packageSlug,
+        ':author_name'                 => $authorName,
+        ':author_username'             => $authorUsername,
+        'author@domain.com'            => $authorEmail,
+        ':vendor_name'                 => $vendorName,
+        ':vendor_slug'                 => $vendorSlug,
+        'VendorName'                   => $vendorNamespace,
+        ':package_name'                => $packageName,
+        ':package_slug'                => $packageSlug,
         ':package_slug_without_prefix' => $packageSlugWithoutPrefix,
-        'Skeleton' => $className,
-        'skeleton' => $packageSlug,
-        'migration_table_name' => title_snake($packageSlug),
-        'variable' => $variableName,
-        ':package_description' => $description,
+        'Skeleton'                     => $className,
+        'skeleton'                     => $packageSlug,
+        'migration_table_name'         => title_snake($packageSlug),
+        'variable'                     => $variableName,
+        ':package_description'         => $description,
     ]);
 
     match (true) {
-        str_contains($file, determineSeparator('src/Skeleton.php')) => rename($file, determineSeparator('./src/'.$className.'.php')),
-        str_contains($file, determineSeparator('src/SkeletonServiceProvider.php')) => rename($file, determineSeparator('./src/'.$className.'ServiceProvider.php')),
-        str_contains($file, determineSeparator('src/Facades/Skeleton.php')) => rename($file, determineSeparator('./src/Facades/'.$className.'.php')),
-        str_contains($file, determineSeparator('src/Commands/SkeletonCommand.php')) => rename($file, determineSeparator('./src/Commands/'.$className.'Command.php')),
+        str_contains($file, determineSeparator('src/Skeleton.php'))                                   => rename($file, determineSeparator('./src/'.$className.'.php')),
+        str_contains($file, determineSeparator('src/SkeletonServiceProvider.php'))                    => rename($file, determineSeparator('./src/'.$className.'ServiceProvider.php')),
+        str_contains($file, determineSeparator('src/Facades/Skeleton.php'))                           => rename($file, determineSeparator('./src/Facades/'.$className.'.php')),
+        str_contains($file, determineSeparator('src/Commands/SkeletonCommand.php'))                   => rename($file, determineSeparator('./src/Commands/'.$className.'Command.php')),
         str_contains($file, determineSeparator('database/migrations/create_skeleton_table.php.stub')) => rename($file, determineSeparator('./database/migrations/create_'.title_snake($packageSlugWithoutPrefix).'_table.php.stub')),
-        str_contains($file, determineSeparator('config/skeleton.php')) => rename($file, determineSeparator('./config/'.$packageSlugWithoutPrefix.'.php')),
-        str_contains($file, 'README.md') => remove_readme_paragraphs($file),
-        default => [],
+        str_contains($file, determineSeparator('config/skeleton.php'))                                => rename($file, determineSeparator('./config/'.$packageSlugWithoutPrefix.'.php')),
+        str_contains($file, 'README.md')                                                              => remove_readme_paragraphs($file),
+        default                                                                                       => [],
     };
 }
 
-if (! $useLaravelPint) {
+if ( ! $useLaravelPint) {
     safeUnlink(__DIR__.'/.github/workflows/fix-php-code-style-issues.yml');
     safeUnlink(__DIR__.'/pint.json');
 }
 
-if (! $usePhpStan) {
+if ( ! $usePhpStan) {
     safeUnlink(__DIR__.'/phpstan.neon.dist');
     safeUnlink(__DIR__.'/phpstan-baseline.neon');
     safeUnlink(__DIR__.'/.github/workflows/phpstan.yml');
@@ -248,16 +249,16 @@ if (! $usePhpStan) {
     remove_composer_script('phpstan');
 }
 
-if (! $useDependabot) {
+if ( ! $useDependabot) {
     safeUnlink(__DIR__.'/.github/dependabot.yml');
     safeUnlink(__DIR__.'/.github/workflows/dependabot-auto-merge.yml');
 }
 
-if (! $useLaravelRay) {
+if ( ! $useLaravelRay) {
     remove_composer_deps(['spatie/laravel-ray']);
 }
 
-if (! $useUpdateChangelogWorkflow) {
+if ( ! $useUpdateChangelogWorkflow) {
     safeUnlink(__DIR__.'/.github/workflows/update-changelog.yml');
 }
 
