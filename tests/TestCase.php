@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Centrex\LaravelAccounting\Tests;
 
+use Centrex\LaravelAccounting\LaravelAccountingServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Centrex\LaravelAccounting\LaravelAccountingServiceProvider;
 
 class TestCase extends Orchestra
 {
