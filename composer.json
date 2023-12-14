@@ -19,7 +19,8 @@
     "require": {
         "php": "^8.0|^8.1",
         "illuminate/database": "^9.0|^10.0",
-        "illuminate/support": "^9.0|^10.0"
+        "illuminate/support": "^9.0|^10.0",
+        "moneyphp/money": "^3.0|^4.0"
     },
     "require-dev": {
         "laravel/pint": "^1.0",
@@ -32,6 +33,7 @@
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan-deprecation-rules": "^1.0",
         "phpstan/phpstan-phpunit": "^1.0",
+        "rector/rector": "^0.18.12",
         "spatie/laravel-ray": "^1.26"
     },
     "autoload": {
@@ -60,9 +62,19 @@
             "@php vendor/bin/testbench serve"
         ],
         "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "refacto": "rector",
+        "lint": "pint",
+        "test-coverage": "pest --coverage",
+        "test:refacto": "rector --dry-run",
+        "test:lint": "pint --test",
+        "test:types": "phpstan analyse",
+        "test:unit": "pest -p",
+        "test": [
+            "@test:refacto",
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
+        ]
     },
     "config": {
         "sort-packages": true,
@@ -77,7 +89,7 @@
                 "Centrex\\LaravelAccounting\\LaravelAccountingServiceProvider"
             ],
             "aliases": {
-                "LaravelAccounting": "Centrex\\LaravelAccounting\\Facades\\LaravelAccounting"
+                "Accounting": "Centrex\\LaravelAccounting\\Facades\\Accounting"
             }
         }
     },

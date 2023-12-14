@@ -18,14 +18,14 @@ composer require centrex/laravel-accounting
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-accounting-migrations"
+php artisan vendor:publish --tag="accounting-migrations"
 php artisan migrate
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-accounting-config"
+php artisan vendor:publish --tag="accounting-config"
 ```
 
 This is the contents of the published config file:
@@ -38,7 +38,7 @@ return [
 Optionally, you can publish the views using
 
 ```bash
-php artisan vendor:publish --tag="laravel-accounting-views"
+php artisan vendor:publish --tag="accounting-views"
 ```
 
 ## Usage
@@ -50,6 +50,27 @@ echo $laravelAccounting->echoPhrase('Hello, Centrex!');
 
 ## Testing
 
+🧹 Keep a modern codebase with **Pint**:
+```bash
+composer lint
+```
+
+✅ Run refactors using **Rector**
+```bash
+composer refacto
+```
+
+⚗️ Run static analysis using **PHPStan**:
+```bash
+composer test:types
+```
+
+✅ Run unit tests using **PEST**
+```bash
+composer test:unit
+```
+
+🚀 Run the entire test suite:
 ```bash
 composer test
 ```
@@ -70,6 +91,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 - [centrex](https://github.com/centrex)
 - [All Contributors](../../contributors)
+- [consilience/accounting](https://github.com/consilience/accounting)
 
 ## License
 

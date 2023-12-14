@@ -7,12 +7,12 @@ namespace Centrex\LaravelAccounting\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Centrex\LaravelAccounting\LaravelAccounting
+ * @see \Centrex\LaravelAccounting\Accounting
  */
-class LaravelAccounting extends Facade
+class Accounting extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Centrex\LaravelAccounting\LaravelAccounting::class;
+        return \Centrex\LaravelAccounting\Accounting::class;
     }
 }
