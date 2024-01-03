@@ -28,19 +28,6 @@ You can publish the config file with:
 php artisan vendor:publish --tag="accounting-config"
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="accounting-views"
-```
-
 ## Usage
 
 ```php
@@ -91,6 +78,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 - [centrex](https://github.com/centrex)
 - [All Contributors](../../contributors)
+- [scottlaurent/accounting](https://github.com/scottlaurent/accounting)
 - [consilience/accounting](https://github.com/consilience/accounting)
 
 ## License

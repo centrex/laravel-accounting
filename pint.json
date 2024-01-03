@@ -56,8 +56,8 @@
         "class_keyword_remove": false,
         "class_reference_name_casing": true,
         "clean_namespace": true,
-        "combine_consecutive_issets": false,
-        "combine_consecutive_unsets": false,
+        "combine_consecutive_issets": true,
+        "combine_consecutive_unsets": true,
         "combine_nested_dirname": false,
         "comment_to_phpdoc": false,
         "compact_nullable_typehint": true,
@@ -72,7 +72,7 @@
         "declare_equal_normalize": {
             "space": "single"
         },
-        "declare_strict_types": false,
+        "declare_strict_types": true,
         "dir_constant": false,
         "doctrine_annotation_indentation": {
             "ignored_tags": [],
