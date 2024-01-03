@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting;
 
@@ -16,12 +16,12 @@ class LaravelAccountingServiceProvider extends ServiceProvider
          */
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'accounting');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'accounting');
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('accounting.php'),
+                __DIR__ . '/../config/config.php' => config_path('accounting.php'),
             ], 'accounting-config');
 
             // Publishing the views.
@@ -48,11 +48,11 @@ class LaravelAccountingServiceProvider extends ServiceProvider
     public function register()
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'accounting');
+        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
         // Register the main class to use with the facade
         $this->app->singleton('accounting', function () {
-            return new Accounting;
+            return new Accounting();
         });
     }
 }

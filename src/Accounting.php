@@ -1,14 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting;
 
 use Carbon\Carbon;
-use Centrex\LaravelAccounting\Exceptions\DebitsAndCreditsDoNotEqual;
-use Centrex\LaravelAccounting\Exceptions\InvalidJournalEntryValue;
-use Centrex\LaravelAccounting\Exceptions\InvalidJournalMethod;
-use Centrex\LaravelAccounting\Exceptions\TransactionCouldNotBeProcessed;
+use Centrex\LaravelAccounting\Exceptions\{DebitsAndCreditsDoNotEqual, InvalidJournalEntryValue, InvalidJournalMethod, TransactionCouldNotBeProcessed};
 use Centrex\LaravelAccounting\Models\Journal;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +19,7 @@ class Accounting
 
     public static function newDoubleEntryTransactionGroup(): Accounting
     {
-        return new self;
+        return new self();
     }
 
     /**
@@ -41,10 +38,10 @@ class Accounting
         Money $money,
         ?string $memo = null,
         $referenced_object = null,
-        ?Carbon $postdate = null
+        ?Carbon $postdate = null,
     ): void {
-        if ( ! in_array($method, ['credit', 'debit'])) {
-            throw new InvalidJournalMethod;
+        if (!in_array($method, ['credit', 'debit'])) {
+            throw new InvalidJournalMethod();
         }
 
         if ($money->getAmount() <= 0) {
@@ -91,7 +88,7 @@ class Accounting
                 return $transactionGroupUuid;
             });
         } catch (Exception $e) {
-            throw new TransactionCouldNotBeProcessed('Rolling Back Database. Message: '.$e->getMessage());
+            throw new TransactionCouldNotBeProcessed('Rolling Back Database. Message: ' . $e->getMessage());
         }
     }
 
@@ -99,7 +96,7 @@ class Accounting
     private function assertTransactionCreditsEqualDebits(): void
     {
         $credits = 0;
-        $debits = 0;
+        $debits  = 0;
 
         foreach ($this->transactionsPending as $transaction_pending) {
             if ($transaction_pending['method'] == 'credit') {
@@ -110,7 +107,7 @@ class Accounting
         }
 
         if ($credits !== $debits) {
-            throw new DebitsAndCreditsDoNotEqual('In this transaction, credits == '.$credits.' and debits == '.$debits);
+            throw new DebitsAndCreditsDoNotEqual('In this transaction, credits == ' . $credits . ' and debits == ' . $debits);
         }
     }
 }

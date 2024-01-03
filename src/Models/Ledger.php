@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
 use Carbon\Carbon;
 use Centrex\LaravelAccounting\Enums\LedgerType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Money\Currency;
-use Money\Money;
+use Illuminate\Database\Eloquent\Relations\{HasMany, HasManyThrough};
+use Money\{Currency, Money};
 
 /**
  * @property    Money $balance

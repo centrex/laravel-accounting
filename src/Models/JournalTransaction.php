@@ -1,17 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
-use Centrex\LaravelAccounting\Casts\CurrencyCast;
-use Centrex\LaravelAccounting\Casts\MoneyCast;
+use Centrex\LaravelAccounting\Casts\{CurrencyCast, MoneyCast};
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
-use Money\Currency;
-use Money\Money;
+use Illuminate\Support\{Carbon, Str};
+use Money\{Currency, Money};
 
 /**
  * @property string $id
@@ -45,9 +42,9 @@ class JournalTransaction extends Model
     protected $casts = [
         'post_date' => 'datetime',
         'tags'      => 'array',
-        'currency'  => CurrencyCast::class.':currency_code',
-        'credit'    => MoneyCast::class.':currency_code,credit',
-        'debit'     => MoneyCast::class.':currency_code,debit',
+        'currency'  => CurrencyCast::class . ':currency_code',
+        'credit'    => MoneyCast::class . ':currency_code,credit',
+        'debit'     => MoneyCast::class . ':currency_code,debit',
     ];
 
     /** Boot. */
@@ -90,7 +87,7 @@ class JournalTransaction extends Model
     public function referencesObject($object)
     {
         $this->reference_type = $object->getMorphClass();
-        $this->reference_id = $object->id;
+        $this->reference_id   = $object->id;
         $this->save();
 
         return $this;

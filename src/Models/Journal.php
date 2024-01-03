@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
@@ -8,16 +8,11 @@ namespace Centrex\LaravelAccounting\Models;
  * A journal is a record of a transactions for a single parent model instance.
  */
 
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
-use Centrex\LaravelAccounting\Casts\CurrencyCast;
-use Centrex\LaravelAccounting\Casts\MoneyCast;
+use Carbon\{Carbon, CarbonInterface};
+use Centrex\LaravelAccounting\Casts\{CurrencyCast, MoneyCast};
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Money\Currency;
-use Money\Money;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
+use Money\{Currency, Money};
 
 /**
  * @property Money $balance
@@ -37,8 +32,8 @@ class Journal extends Model
 
     /** @var array */
     protected $casts = [
-        'currency' => CurrencyCast::class.':currency_code',
-        'balance'  => MoneyCast::class.':currency_code,balance',
+        'currency' => CurrencyCast::class . ':currency_code',
+        'balance'  => MoneyCast::class . ':currency_code,balance',
     ];
 
     /**
@@ -72,7 +67,7 @@ class Journal extends Model
         // Instead, set the balance default to zero though an attribute.
 
         static::created(
-            fn (Journal $journal) => $journal->resetCurrentBalance()
+            fn (Journal $journal) => $journal->resetCurrentBalance(),
         );
     }
 
@@ -175,7 +170,6 @@ class Journal extends Model
      */
     public function remove()
     {
-
     }
 
     /**
@@ -228,10 +222,10 @@ class Journal extends Model
     ): JournalTransaction {
         /** @var string */
         $transactionClass = config('accounting.model-classes.journal-transaction');
-        $transaction = new $transactionClass;
+        $transaction      = new $transactionClass();
 
         $transaction->credit = $credit;
-        $transaction->debit = $debit;
+        $transaction->debit  = $debit;
 
         // @todo use the journal currency, after confirming the correct
         // currency has been passed in.
@@ -241,8 +235,8 @@ class Journal extends Model
         $transaction->memo = $memo;
         // @todo the transaction needs to cast currency to an object,
         // so this will change to: `$transaction->currency = $this->currency`
-        $transaction->currency = $currency;
-        $transaction->post_date = $postDate ?: Carbon::now();
+        $transaction->currency          = $currency;
+        $transaction->post_date         = $postDate ?: Carbon::now();
         $transaction->transaction_group = $transactionGroup;
 
         $this->transactions()->save($transaction);

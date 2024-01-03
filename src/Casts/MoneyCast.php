@@ -1,12 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Casts;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-use Money\Currency;
-use Money\Money;
+use Money\{Currency, Money};
 
 class MoneyCast implements CastsAttributes
 {
@@ -14,7 +13,6 @@ class MoneyCast implements CastsAttributes
         protected ?string $currencyColumn = null,
         protected ?string $amountColumn = null,
     ) {
-
     }
 
     /**
@@ -27,8 +25,8 @@ class MoneyCast implements CastsAttributes
      */
     public function get($model, string $key, $value, array $attributes)
     {
-        $currencyCode = $attributes[$this->currencyColumn ?? $key.'_currency'] ?? null;
-        $minorUnits = $attributes[$this->amountColumn ?? $key.'_amount'] ?? null;
+        $currencyCode = $attributes[$this->currencyColumn ?? $key . '_currency'] ?? null;
+        $minorUnits   = $attributes[$this->amountColumn ?? $key . '_amount']     ?? null;
 
         if ($currencyCode === null || $minorUnits === null) {
             return null;
@@ -49,14 +47,14 @@ class MoneyCast implements CastsAttributes
     {
         if ($value === null) {
             return [
-                $this->currencyColumn ?? $key.'_currency' => null,
-                $this->amountColumn ?? $key.'_amount'     => null,
+                $this->currencyColumn ?? $key . '_currency' => null,
+                $this->amountColumn   ?? $key . '_amount'     => null,
             ];
         }
 
         return [
-            $this->currencyColumn ?? $key.'_currency' => $value?->getCurrency()?->getCode(),
-            $this->amountColumn ?? $key.'_amount'     => $value?->getAmount(),
+            $this->currencyColumn ?? $key . '_currency' => $value?->getCurrency()?->getCode(),
+            $this->amountColumn   ?? $key . '_amount'     => $value?->getAmount(),
         ];
     }
 }

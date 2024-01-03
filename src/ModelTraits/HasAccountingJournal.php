@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\ModelTraits;
 
@@ -12,8 +12,7 @@ use Centrex\LaravelAccounting\Exceptions\JournalAlreadyExists;
 use Centrex\LaravelAccounting\Models\Journal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Money\Currency;
-use Money\Money;
+use Money\{Currency, Money};
 
 /**
  * @mixin Model
@@ -41,7 +40,7 @@ trait HasAccountingJournal
         ?string $ledgerId = null,
     ) {
         if ($this->journal) {
-            throw new JournalAlreadyExists;
+            throw new JournalAlreadyExists();
         }
 
         if ($currency === null) {
@@ -57,7 +56,7 @@ trait HasAccountingJournal
         $journal = new $journalClass();
 
         $journal->ledger_id = $ledgerId;
-        $journal->balance = new Money(0, $currency);
+        $journal->balance   = new Money(0, $currency);
 
         return $this->journal()->save($journal);
     }
