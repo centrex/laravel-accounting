@@ -12,11 +12,8 @@ return new class() extends Migration
     {
         Schema::create('accounting_ledgers', function (Blueprint $table) {
             $table->id();
-
-            $table->string('name');
-            // One of: 'asset', 'liability', 'equity', 'income', 'expense'
+            $table->string('name'); // One of: 'asset', 'liability', 'equity', 'income', 'expense'
             $table->string('type', 30);
-
             $table->timestamps();
         });
     }

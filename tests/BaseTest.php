@@ -9,13 +9,12 @@ use Centrex\LaravelAccounting\Models\Ledger;
 use Faker\Factory as Faker;
 use Models\{Account, CompanyJournal, User};
 use Money\Currency;
-use Orchestra\Testbench\TestCase as Orchestra;
 
-class TestCase extends Orchestra
+abstract class BaseTest extends \Orchestra\Testbench\TestCase
 {
     protected $currency;
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         parent::setUp();
         $this->currency = new Currency('USD');
@@ -47,13 +46,6 @@ class TestCase extends Orchestra
         }
     }
 
-    protected function getPackageProviders($app)
-    {
-        return [
-            LaravelAccountingServiceProvider::class,
-        ];
-    }
-
     protected function getEnvironmentSetUp($app)
     {
         // Setup default database to use sqlite :memory:
@@ -65,6 +57,17 @@ class TestCase extends Orchestra
         ]);
 
         Eloquent::unguard();
+    }
+
+    /**
+     * @param \Illuminate\Foundation\Application $app
+     * @return array
+     */
+    protected function getPackageProviders($app)
+    {
+        return [
+            LaravelAccountingServiceProvider::class,
+        ];
     }
 
     /**

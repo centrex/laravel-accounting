@@ -2,6 +2,6 @@
 
 declare(strict_types = 1);
 
-use Centrex\LaravelAccounting\Tests\TestCase;
+use Centrex\LaravelAccounting\Tests\BaseTest;
 
-uses(TestCase::class)->in(__DIR__);
+uses(BaseTest::class)->in(__DIR__);

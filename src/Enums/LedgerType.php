@@ -17,6 +17,6 @@ enum LedgerType: string
     // Liability: lines of credit, accounts payable, debt, and notes payable
     // Credit accounts; -ve balance.
     case LIABILITY = 'liability';
-    case EQUITY    = 'equity'; // aka capital
-    case INCOME    = 'income'; // aka revenue
+    case EQUITY    = 'equity'; // capital
+    case INCOME    = 'income'; // revenue
 }
