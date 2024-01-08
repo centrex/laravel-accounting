@@ -2,8 +2,7 @@
 
 declare(strict_types = 1);
 
-// ensure we load our base file (PHPStorm Bug when using remote interpreter )
-require_once 'BaseTest.php';
+namespace Centrex\LaravelAccounting\Tests;
 
 use Centrex\LaravelAccounting\Accounting as AccountingService;
 use Money\Money;
@@ -50,15 +49,15 @@ class LedgerTest extends BaseTest
         $payment_1           = mt_rand(3, 30) * 1.0129; // convert us using Faker dollar amounts
 
         $transaction_group = AccountingService::newDoubleEntryTransactionGroup();
-        $transaction_group->addDollarTransaction($this->company_cash_journal, 'debit', $payment_1, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
-        $transaction_group->addDollarTransaction($this->company_ar_journal, 'credit', $payment_1, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
+        $transaction_group->addTransaction($this->company_cash_journal, 'debit', $payment_1, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
+        $transaction_group->addTransaction($this->company_ar_journal, 'credit', $payment_1, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
         $transaction_group->commit();
 
         // customer makes a payment (use double entry service)
         $transaction_group = AccountingService::newDoubleEntryTransactionGroup();
         $payment_2         = mt_rand(3, 30) * 1.075;
-        $transaction_group->addDollarTransaction($this->company_cash_journal, 'debit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
-        $transaction_group->addDollarTransaction($this->company_ar_journal, 'credit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
+        $transaction_group->addTransaction($this->company_cash_journal, 'debit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
+        $transaction_group->addTransaction($this->company_ar_journal, 'credit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
         $transaction_group->commit();
 
         // these are asset accounts, so their balances are reversed

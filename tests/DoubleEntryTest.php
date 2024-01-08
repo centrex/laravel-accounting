@@ -2,8 +2,7 @@
 
 declare(strict_types = 1);
 
-// ensure we load our base file (PHPStorm Bug when using remote interpreter )
-require_once 'BaseTest.php';
+namespace Centrex\LaravelAccounting\Tests;
 
 use Centrex\LaravelAccounting\Accounting as AccountingService;
 use Centrex\LaravelAccounting\Exceptions\{DebitsAndCreditsDoNotEqual, InvalidJournalEntryValue, InvalidJournalMethod};

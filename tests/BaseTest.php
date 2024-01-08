@@ -7,17 +7,36 @@ namespace Centrex\LaravelAccounting\Tests;
 use Centrex\LaravelAccounting\LaravelAccountingServiceProvider;
 use Centrex\LaravelAccounting\Models\Ledger;
 use Faker\Factory as Faker;
+use Illuminate\Database\Eloquent\Model;
 use Models\{Account, CompanyJournal, User};
-use Money\Currency;
+use Orchestra\Testbench\TestCase as Orchestra;
 
-abstract class BaseTest extends \Orchestra\Testbench\TestCase
+class BaseTest extends Orchestra
 {
     protected $currency;
+
+    protected $faker;
+
+    protected $company_assets_ledger;
+
+    protected $company_liability_ledger;
+
+    protected $company_equity_ledger;
+
+    protected $company_income_ledger;
+
+    protected $company_expense_ledger;
+
+    protected $company_ar_journal;
+
+    protected $company_cash_journal;
+
+    protected $company_income_journal;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->currency = new Currency('USD');
+        $this->currency = 'USD';
 
         $this->requireFilesIn(__DIR__ . '/Models');
 
@@ -56,7 +75,7 @@ abstract class BaseTest extends \Orchestra\Testbench\TestCase
             'prefix'   => '',
         ]);
 
-        Eloquent::unguard();
+        Model::unguard();
     }
 
     /**

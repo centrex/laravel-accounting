@@ -48,13 +48,13 @@ class MoneyCast implements CastsAttributes
         if ($value === null) {
             return [
                 $this->currencyColumn ?? $key . '_currency' => null,
-                $this->amountColumn   ?? $key . '_amount'     => null,
+                $this->amountColumn   ?? $key . '_amount'   => null,
             ];
         }
 
         return [
             $this->currencyColumn ?? $key . '_currency' => $value?->getCurrency()?->getCode(),
-            $this->amountColumn   ?? $key . '_amount'     => $value?->getAmount(),
+            $this->amountColumn   ?? $key . '_amount'   => $value?->getAmount(),
         ];
     }
 }
