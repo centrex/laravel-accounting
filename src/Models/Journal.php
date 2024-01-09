@@ -37,6 +37,16 @@ class Journal extends Model
     ];
 
     /**
+     * Specify the connection, since this implements multitenant solution
+     * Called via constructor to faciliate testing
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection(config('accounting.drivers.database.connection'), config('database.default'));
+    }
+
+    /**
      * Relationship to all the model instance this journal applies to.
      *
      * @todo use owner

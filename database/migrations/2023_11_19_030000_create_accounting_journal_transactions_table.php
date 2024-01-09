@@ -10,7 +10,9 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('accounting_journal_transactions', function (Blueprint $table) {
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+
+        Schema::connection($connection)->create('accounting_journal_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('transaction_group', 36)->nullable();
 
@@ -34,6 +36,8 @@ return new class() extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('accounting_journal_transactions');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        
+        Schema::connection($connection)->dropIfExists('accounting_journal_transactions');
     }
 };

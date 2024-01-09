@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class() extends Migration
 {
+
+
     public function up(): void
     {
-        Schema::create('accounting_ledgers', function (Blueprint $table) {
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+
+        Schema::connection($connection)->create('accounting_ledgers', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // One of: 'asset', 'liability', 'equity', 'income', 'expense'
             $table->string('type', 30);
@@ -20,6 +24,8 @@ return new class() extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('accounting_ledgers');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        
+        Schema::connection($connection)->dropIfExists('accounting_ledgers');
     }
 };
