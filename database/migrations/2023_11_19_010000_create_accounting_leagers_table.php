@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class() extends Migration
 {
-
-
     public function up(): void
     {
         $connection = config('accounting.drivers.database.connection', config('database.default'));
@@ -25,7 +23,7 @@ return new class() extends Migration
     public function down(): void
     {
         $connection = config('accounting.drivers.database.connection', config('database.default'));
-        
+
         Schema::connection($connection)->dropIfExists('accounting_ledgers');
     }
 };

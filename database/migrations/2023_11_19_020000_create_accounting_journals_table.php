@@ -32,7 +32,7 @@ return new class() extends Migration
     public function down(): void
     {
         $connection = config('accounting.drivers.database.connection', config('database.default'));
-        
+
         Schema::connection($connection)->dropIfExists('accounting_journals');
     }
 };
