@@ -15,7 +15,7 @@ return new class() extends Migration
         Schema::connection($connection)->create('accounting_ledgers', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // One of: 'asset', 'liability', 'equity', 'income', 'expense'
-            $table->string('type', 30);
+            $table->enum('type', ['asset', 'liability', 'equity', 'income', 'expense']);
             $table->timestamps();
         });
     }

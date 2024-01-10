@@ -13,7 +13,7 @@ return new class() extends Migration
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         Schema::connection($connection)->create('accounting_journal_transactions', function (Blueprint $table) {
-            $table->id();
+            $table->string('id', 36)->unique();
             $table->string('transaction_group', 36)->nullable();
 
             $table->unsignedBigInteger('journal_id');

@@ -6,9 +6,9 @@ return [
     'base_currency' => 'GBP',
 
     'model-classes' => [
-        'ledger'              => \Centrex\LaravelAccounting\Models\Ledger::class,
-        'journal'             => \Centrex\LaravelAccounting\Models\Journal::class,
-        'journal-transaction' => \Centrex\LaravelAccounting\Models\JournalTransaction::class,
+        'ledger'              => Centrex\LaravelAccounting\Models\Ledger::class,
+        'journal'             => Centrex\LaravelAccounting\Models\Journal::class,
+        'journal-transaction' => Centrex\LaravelAccounting\Models\JournalTransaction::class,
     ],
 
     /*
@@ -25,21 +25,5 @@ return [
             // 'connection' => 'example',
             'connection' => null,
         ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Queue Configurations
-    |--------------------------------------------------------------------------
-    |
-    | Available queue configurations.
-    |
-    */
-
-    'queue' => [
-        'enable'     => true,
-        'connection' => 'sync',
-        'queue'      => 'default',
-        'delay'      => 0,
     ],
 ];
