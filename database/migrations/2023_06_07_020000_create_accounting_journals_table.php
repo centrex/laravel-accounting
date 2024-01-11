@@ -25,6 +25,8 @@ return new class() extends Migration
             $table->string('morphed_type', 60);
             $table->bigInteger('morphed_id')->unsigned();
 
+            $table->index(['morphed_type', 'morphed_id', 'ledger_id']);
+
             $table->timestamps();
         });
     }
