@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\{HasMany, HasManyThrough};
 use Money\{Currency, Money};
 
 /**
- * @property    Money $balance
- * @property    Carbon $updated_at
- * @property    Carbon $post_date
- * @property    Carbon $created_at
+ * @property Money $balance
+ * @property Carbon $updated_at
+ * @property Carbon $post_date
+ * @property Carbon $created_at
  */
 class Ledger extends Model
 {

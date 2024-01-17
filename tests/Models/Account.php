@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Account
  *
- * @property    int         $id
- * @property 	string		$name
+ * @property int $id
+ * @property string $name
  */
 class Account extends Model
 {

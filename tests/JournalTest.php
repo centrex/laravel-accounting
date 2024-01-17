@@ -67,7 +67,7 @@ class JournalTest extends BaseTest
         $account->initJournal('USD');
         $account_journal = Account::find(1)->journal;
 
-        $product      = Product::create(['name' => 'Product 1', 'price' => mt_rand(1, 99999)]);
+        $product      = Product::create(['name' => 'Product 1', 'price'      => mt_rand(1, 99999)]);
         $qty_products = mt_rand(25000, 100000);
 
         // credit the account journal for some products that have been purchased.

@@ -1,7 +1,10 @@
 {
     "preset": "laravel",
+    "exclude": [
+        "config",
+        "build"
+    ],
     "rules": {
-        "Laravel/laravel_phpdoc_alignment": false,
         "align_multiline_comment": true,
         "single_trait_insert_per_statement": true,
         "no_trailing_comma_in_singleline": true,
@@ -13,7 +16,10 @@
         },
         "assign_null_coalescing_to_coalesce_equal": true,
         "binary_operator_spaces": {
-            "default": "align_single_space_minimal"
+            "operators": {
+                "=": "align_single_space_minimal",
+                "=>": "align_single_space_minimal"
+            }
         },
         "blank_line_after_namespace": true,
         "blank_line_after_opening_tag": true,

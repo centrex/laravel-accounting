@@ -80,7 +80,7 @@ class LedgerTest extends BaseTest
         // check the "balance due" (the amount still owed by this user)
         $this->assertEquals(
             $user_journal->getCurrentBalanceInDollars() - $dollars_paid_by_user,
-            100                                         - $total_payment_made,
+            100 - $total_payment_made,
             'User Current Balance does not reflect their payment amounts',
         );
 

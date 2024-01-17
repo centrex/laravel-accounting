@@ -30,7 +30,7 @@ trait HasAccountingJournal
      * Initialize a new journal for this model instance.
      *
      * @param  null|string|Currency  $currency
-     * @param  null|string  $ledgerId @todo should this not be an int?
+     * @param  null|string  $ledgerId  @todo should this not be an int?
      * @return mixed
      *
      * @throws JournalAlreadyExists

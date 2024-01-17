@@ -50,7 +50,7 @@ class BaseTest extends Orchestra
     /**
      * When using PHP Storm,
      *
-     * @param null $directory
+     * @param  null  $directory
      */
     public function requireFilesIn($directory = null)
     {
@@ -79,7 +79,7 @@ class BaseTest extends Orchestra
     }
 
     /**
-     * @param \Illuminate\Foundation\Application $app
+     * @param  \Illuminate\Foundation\Application  $app
      * @return array
      */
     protected function getPackageProviders($app)
