@@ -56,7 +56,7 @@ trait HasAccountingJournal
         $journal = new $journalClass();
 
         $journal->ledger_id = $ledgerId;
-        $journal->balance   = new Money(0, $currency);
+        $journal->balance = new Money(0, $currency);
 
         return $this->journal()->save($journal);
     }

@@ -96,7 +96,7 @@ class Accounting
     private function assertTransactionCreditsEqualDebits(): void
     {
         $credits = 0;
-        $debits  = 0;
+        $debits = 0;
 
         foreach ($this->transactionsPending as $transaction_pending) {
             if ($transaction_pending['method'] == 'credit') {

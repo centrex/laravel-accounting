@@ -18,7 +18,7 @@ class LedgerTest extends BaseTest
 
         // create some user and sell them some stuff on credit
         $number_of_users = mt_rand(5, 10);
-        $users           = $this->createFakeUsers($number_of_users);
+        $users = $this->createFakeUsers($number_of_users);
 
         foreach ($users as $user) {
             $user_journal = $user->initJournal('USD');
@@ -46,7 +46,7 @@ class LedgerTest extends BaseTest
 
         // customer makes a payment (use double entry service)
         $user_making_payment = $users[0];
-        $payment_1           = mt_rand(3, 30) * 1.0129; // convert us using Faker dollar amounts
+        $payment_1 = mt_rand(3, 30) * 1.0129; // convert us using Faker dollar amounts
 
         $transaction_group = AccountingService::newDoubleEntryTransactionGroup();
         $transaction_group->addTransaction($this->company_cash_journal, 'debit', $payment_1, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
@@ -55,7 +55,7 @@ class LedgerTest extends BaseTest
 
         // customer makes a payment (use double entry service)
         $transaction_group = AccountingService::newDoubleEntryTransactionGroup();
-        $payment_2         = mt_rand(3, 30) * 1.075;
+        $payment_2 = mt_rand(3, 30) * 1.075;
         $transaction_group->addTransaction($this->company_cash_journal, 'debit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
         $transaction_group->addTransaction($this->company_ar_journal, 'credit', $payment_2, 'Payment from User ' . $user_making_payment->id, $user_making_payment);
         $transaction_group->commit();

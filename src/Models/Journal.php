@@ -232,10 +232,10 @@ class Journal extends Model
     ): JournalTransaction {
         /** @var string */
         $transactionClass = config('accounting.model-classes.journal-transaction');
-        $transaction      = new $transactionClass();
+        $transaction = new $transactionClass();
 
         $transaction->credit = $credit;
-        $transaction->debit  = $debit;
+        $transaction->debit = $debit;
 
         // @todo use the journal currency, after confirming the correct
         // currency has been passed in.
@@ -245,8 +245,8 @@ class Journal extends Model
         $transaction->memo = $memo;
         // @todo the transaction needs to cast currency to an object,
         // so this will change to: `$transaction->currency = $this->currency`
-        $transaction->currency          = $currency;
-        $transaction->post_date         = $postDate ?: Carbon::now();
+        $transaction->currency = $currency;
+        $transaction->post_date = $postDate ?: Carbon::now();
         $transaction->transaction_group = $transactionGroup;
 
         $this->transactions()->save($transaction);

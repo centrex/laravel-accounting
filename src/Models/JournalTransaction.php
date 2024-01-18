@@ -97,7 +97,7 @@ class JournalTransaction extends Model
     public function referencesObject($object)
     {
         $this->reference_type = $object->getMorphClass();
-        $this->reference_id   = $object->id;
+        $this->reference_id = $object->id;
         $this->save();
 
         return $this;

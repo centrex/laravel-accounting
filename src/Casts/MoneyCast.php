@@ -26,7 +26,7 @@ class MoneyCast implements CastsAttributes
     public function get($model, string $key, $value, array $attributes)
     {
         $currencyCode = $attributes[$this->currencyColumn ?? $key . '_currency'] ?? null;
-        $minorUnits   = $attributes[$this->amountColumn ?? $key . '_amount'] ?? null;
+        $minorUnits = $attributes[$this->amountColumn ?? $key . '_amount'] ?? null;
 
         if ($currencyCode === null || $minorUnits === null) {
             return null;
