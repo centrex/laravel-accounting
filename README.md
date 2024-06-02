@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/centrex/laravel-accounting/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/centrex/laravel-accounting/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/centrex/laravel-accounting?style=flat-square)](https://packagist.org/packages/centrex/laravel-accounting)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+This package to provide a simple drop-in trait to manage accruing balances for a given model. It can also be used to create double entry based projects where you would want to credit one journal and debit another.
 
 ## Contents
 
@@ -32,13 +32,14 @@ php artisan vendor:publish --tag="accounting-migrations"
 php artisan migrate
 ```
 
-You can publish the config file with:
+You can optionally publish the config file with:
 
 ```bash
 php artisan vendor:publish --tag="accounting-config"
 ```
 
 ## Usage
+
 
 
 
