@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Models;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Centrex\LaravelAccounting\Enums\LedgerType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{HasMany, HasManyThrough};
@@ -44,6 +45,29 @@ class Ledger extends Model
     public function journal_transactions(): HasManyThrough
     {
         return $this->hasManyThrough(config('accounting.model-classes.journal-transaction'), Journal::class);
+    }
+
+    public function balanceOn(string $currency, CarbonInterface $date): Money
+    {
+        $currency = new Currency($currency);
+
+        $debit = $this->journal_transactions->where('post_date', '<=', $date->endOfDay())->reduce(
+            fn ($carry, JournalTransaction $transaction) => $transaction->debit ? $carry->add($transaction->debit) : $carry,
+            new Money(0, $currency),
+        );
+
+        $credit = $this->journal_transactions->where('post_date', '<=', $date->endOfDay())->reduce(
+            fn ($carry, JournalTransaction $transaction) => $transaction->credit ? $carry->add($transaction->credit) : $carry,
+            new Money(0, $currency),
+        );
+
+        if ($this->type === LedgerType::ASSET || $this->type === LedgerType::EXPENSE) {
+            $balance = $debit->subtract($credit);
+        } else {
+            $balance = $credit->subtract($debit);
+        }
+
+        return $balance;
     }
 
     /**
