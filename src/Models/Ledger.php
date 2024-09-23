@@ -46,17 +46,21 @@ class Ledger extends Model
         return $this->hasManyThrough(config('accounting.model-classes.journal-transaction'), Journal::class);
     }
 
-    public function balanceOn(string $currency, CarbonInterface $date): Money
+    public function balanceOn(string $currency, CarbonInterface $start, CarbonInterface $end): Money
     {
         $currency = new Currency($currency);
 
-        $debit = $this->journal_transactions->where('post_date', '<=', $date->endOfDay())->reduce(
-            fn ($carry, JournalTransaction $transaction) => $transaction->debit ? $carry->add($transaction->debit) : $carry,
+        $debit = $this->journal_transactions
+            ->when($start, fn ($query) => $query->where('post_date', '>=', $start->startOfDay()))
+            ->when($end, fn ($query) => $query->where('post_date', '<=', $end->endOfDay()))
+            ->reduce(fn ($carry, JournalTransaction $transaction) => $transaction->debit ? $carry->add($transaction->debit) : $carry,
             new Money(0, $currency),
         );
 
-        $credit = $this->journal_transactions->where('post_date', '<=', $date->endOfDay())->reduce(
-            fn ($carry, JournalTransaction $transaction) => $transaction->credit ? $carry->add($transaction->credit) : $carry,
+        $credit = $this->journal_transactions
+            ->when($start, fn ($query) => $query->where('post_date', '>=', $start->startOfDay()))
+            ->when($end, fn ($query) => $query->where('post_date', '<=', $end->endOfDay()))
+            ->reduce(fn ($carry, JournalTransaction $transaction) => $transaction->credit ? $carry->add($transaction->credit) : $carry,
             new Money(0, $currency),
         );
 
