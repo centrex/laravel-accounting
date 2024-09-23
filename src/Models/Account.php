@@ -10,4 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 class Account extends Model
 {
     use HasAccountingJournal;
+
+    protected $guarded = [];
 }

@@ -9,9 +9,8 @@ namespace Centrex\LaravelAccounting\ModelTraits;
  */
 
 use Centrex\LaravelAccounting\Exceptions\JournalAlreadyExists;
-use Centrex\LaravelAccounting\Models\Journal;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\{MorphMany, MorphOne};
 use Money\{Currency, Money};
 
 /**
@@ -23,7 +22,12 @@ trait HasAccountingJournal
 {
     public function journal(): MorphOne
     {
-        return $this->morphOne(Journal::class, 'morphed');
+        return $this->morphOne(config('accounting.model-classes.journal'), 'morphed');
+    }
+
+    public function journals(): MorphMany
+    {
+        return $this->morphMany(config('accounting.model-classes.journal'), 'morphed');
     }
 
     /**

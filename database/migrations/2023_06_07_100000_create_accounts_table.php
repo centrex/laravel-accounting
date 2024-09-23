@@ -17,7 +17,10 @@ return new class() extends Migration
             $table->string('name');
             $table->string('code', 3)->unique();
             $table->string('type', 30);
+            $table->boolean('is_cash')->default(false);
+            $table->string('description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

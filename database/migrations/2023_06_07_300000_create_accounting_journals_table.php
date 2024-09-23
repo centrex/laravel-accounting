@@ -21,9 +21,7 @@ return new class() extends Migration
             $table->bigInteger('balance');
             $table->string('currency_code', 3);
 
-            // @todo need some indexes.
-            $table->string('morphed_type', 60);
-            $table->bigInteger('morphed_id')->unsigned();
+            $table->morphs('morphed');
 
             $table->index(['morphed_type', 'morphed_id', 'ledger_id']);
 
