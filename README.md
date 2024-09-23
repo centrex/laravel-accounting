@@ -9,13 +9,13 @@ This package to provide a simple drop-in trait to manage accruing balances for a
 
 ## Contents
 
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Testing](#testing)
-  - [Changelog](#changelog)
-  - [Contributing](#contributing)
-  - [Credits](#credits)
-  - [License](#license)
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Testing](#testing)
+-   [Changelog](#changelog)
+-   [Contributing](#contributing)
+-   [Credits](#credits)
+-   [License](#license)
 
 ## Installation
 
@@ -40,32 +40,64 @@ php artisan vendor:publish --tag="accounting-config"
 
 ## Usage
 
+// Standard equation of accounting system
 
+| Dividend + Expenses + Asset | Liabilities + Owner's Equity + Revenue |
+| --------------------------- | -------------------------------------- |
+| Dividend                    | Liabilities                            |
+| Expense                     | Owner's Equity                         |
+| Asset                       | Revenue                                |
 
+// Standard accounting statements
+```
+'statements' => [
+    'balance_sheet' => [
+        'accumulated' => true,
+        'name' => 'Balance Sheet',
+        'cash_only' => false,
+        'accounts' => ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense']
+    ],
+    'income' => [
+        'name' => 'Income',
+        'cash_only' => true,
+        'accounts' => ['Revenue', 'Expense', 'Other',]
+    ],
+    'cash_flow' => [
+        'name' => 'Cash Flow',
+        'cash_only' => true,
+        'accounts' => ['Asset']
+    ]
+],
+```
 
 ## Testing
 
 🧹 Keep a modern codebase with **Pint**:
+
 ```bash
 composer lint
 ```
 
 ✅ Run refactors using **Rector**
+
 ```bash
 composer refacto
 ```
 
 ⚗️ Run static analysis using **PHPStan**:
+
 ```bash
 composer test:types
 ```
 
 ✅ Run unit tests using **PEST**
+
 ```bash
 composer test:unit
 ```
 
 🚀 Run the entire test suite:
+
 ```bash
 composer test
 ```
@@ -80,10 +112,10 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Credits
 
-- [centrex](https://github.com/centrex)
-- [All Contributors](../../contributors)
-- [scottlaurent/accounting](https://github.com/scottlaurent/accounting)
-- [consilience/accounting](https://github.com/consilience/accounting)
+-   [centrex](https://github.com/centrex)
+-   [All Contributors](../../contributors)
+-   [scottlaurent/accounting](https://github.com/scottlaurent/accounting)
+-   [consilience/accounting](https://github.com/consilience/accounting)
 
 ## License
 
