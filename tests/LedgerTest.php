@@ -12,7 +12,7 @@ use Money\Money;
  */
 class LedgerTest extends BaseTest
 {
-    public function test_ledgers()
+    public function test_ledgers(): void
     {
         $this->markTestSkipped('must be revisited.');
 

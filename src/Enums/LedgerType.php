@@ -19,4 +19,5 @@ enum LedgerType: string
     case LIABILITY = 'liability';
     case EQUITY = 'equity'; // aka capital
     case INCOME = 'income'; // aka revenue
+    case OTHER = 'other';
 }

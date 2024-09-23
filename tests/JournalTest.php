@@ -13,7 +13,7 @@ use Money\Money;
  */
 class JournalTest extends BaseTest
 {
-    public function test_journals()
+    public function test_journals(): void
     {
         // create some sample model types that will have journals
         $user = $this->createFakeUser();
@@ -51,7 +51,7 @@ class JournalTest extends BaseTest
         $this->assertEquals(-99, $user_journal->currentBalance()->getAmount());
     }
 
-    public function test_journal_object_references()
+    public function test_journal_object_references(): void
     {
         /*
         |--------------------------------------------------------------------------
@@ -111,7 +111,7 @@ class JournalTest extends BaseTest
 
         // make sure that the amount debited is correct...
         $this->assertEquals(
-            Money::USD((int) -1 * $product->price * $qty_products * 100),
+            Money::USD(-1 * $product->price * $qty_products * 100),
             $user_journal->currentBalance(),
             'Products Purchased',
         );

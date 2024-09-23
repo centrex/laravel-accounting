@@ -17,12 +17,10 @@ class CreateAccountingJournalsTable extends Migration
 
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('accounting_journals', function (Blueprint $table) {
+        Schema::create('accounting_journals', function (Blueprint $table): void {
             $table->increments('id');
             $table->unsignedInteger('ledger_id')->nullable();
             $table->bigInteger('balance');
@@ -35,10 +33,8 @@ class CreateAccountingJournalsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('accounting_journals');
     }

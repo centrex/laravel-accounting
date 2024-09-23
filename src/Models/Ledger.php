@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
+use Carbon\{Carbon, CarbonInterface};
 use Centrex\LaravelAccounting\Enums\LedgerType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{HasMany, HasManyThrough};
@@ -33,7 +32,7 @@ class Ledger extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection'), config('database.default'));
+        $this->setConnection(config('accounting.drivers.database.connection'));
     }
 
     public function journals(): HasMany
@@ -62,12 +61,10 @@ class Ledger extends Model
         );
 
         if ($this->type === LedgerType::ASSET || $this->type === LedgerType::EXPENSE) {
-            $balance = $debit->subtract($credit);
-        } else {
-            $balance = $credit->subtract($debit);
+            return $debit->subtract($credit);
         }
 
-        return $balance;
+        return $credit->subtract($debit);
     }
 
     /**
@@ -96,11 +93,9 @@ class Ledger extends Model
         );
 
         if ($this->type === LedgerType::ASSET || $this->type === LedgerType::EXPENSE) {
-            $balance = $debit->subtract($credit);
-        } else {
-            $balance = $credit->subtract($debit);
+            return $debit->subtract($credit);
         }
 
-        return $balance;
+        return $credit->subtract($debit);
     }
 }

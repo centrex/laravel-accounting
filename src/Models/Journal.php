@@ -43,7 +43,7 @@ class Journal extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection'), config('database.default'));
+        $this->setConnection(config('accounting.drivers.database.connection'));
     }
 
     /**
@@ -77,7 +77,7 @@ class Journal extends Model
         // Instead, set the balance default to zero though an attribute.
 
         static::created(
-            fn (Journal $journal) => $journal->resetCurrentBalance(),
+            fn (Journal $journal): \Money\Money => $journal->resetCurrentBalance(),
         );
     }
 
@@ -178,9 +178,7 @@ class Journal extends Model
      *
      * @return void
      */
-    public function remove()
-    {
-    }
+    public function remove() {}
 
     /**
      * Create a credit journal entry.

@@ -49,10 +49,8 @@ class BaseTest extends Orchestra
 
     /**
      * When using PHP Storm,
-     *
-     * @param  null  $directory
      */
-    public function requireFilesIn($directory = null)
+    public function requireFilesIn($directory = null): void
     {
         if ($directory) {
             foreach (scandir($directory) as $filename) {
@@ -89,10 +87,7 @@ class BaseTest extends Orchestra
         ];
     }
 
-    /**
-     * @return array
-     */
-    protected function createFakeUsers(int $qty)
+    protected function createFakeUsers(int $qty): array
     {
         $users = [];
 

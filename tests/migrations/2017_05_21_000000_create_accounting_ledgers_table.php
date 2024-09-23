@@ -9,12 +9,10 @@ class CreateAccountingLedgersTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('accounting_ledgers', function (Blueprint $table) {
+        Schema::create('accounting_ledgers', function (Blueprint $table): void {
             $table->increments('id');
             $table->string('name');
             $table->string('type', 20); // ['asset', 'liability', 'equity', 'income', 'expense']
@@ -24,10 +22,8 @@ class CreateAccountingLedgersTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('accounting_ledgers');
     }

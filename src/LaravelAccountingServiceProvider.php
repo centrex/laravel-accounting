@@ -9,7 +9,7 @@ use Illuminate\Support\ServiceProvider;
 class LaravelAccountingServiceProvider extends ServiceProvider
 {
     /** Bootstrap the application services. */
-    public function boot()
+    public function boot(): void
     {
         /*
          * Optional methods to load your package assets
@@ -45,14 +45,12 @@ class LaravelAccountingServiceProvider extends ServiceProvider
     }
 
     /** Register the application services. */
-    public function register()
+    public function register(): void
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
         // Register the main class to use with the facade
-        $this->app->singleton('accounting', function () {
-            return new Accounting();
-        });
+        $this->app->singleton('accounting', fn (): \Centrex\LaravelAccounting\Accounting => new Accounting());
     }
 }

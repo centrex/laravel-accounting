@@ -54,7 +54,7 @@ class JournalTransaction extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection'), config('database.default'));
+        $this->setConnection(config('accounting.drivers.database.connection'));
     }
 
     /** Boot. */
@@ -62,7 +62,7 @@ class JournalTransaction extends Model
     {
         parent::boot();
 
-        static::creating(function (self $transaction) {
+        static::creating(function (self $transaction): void {
             $transaction->id = (string) Str::orderedUuid();
         });
 
@@ -71,11 +71,11 @@ class JournalTransaction extends Model
         // The job can also be set up to queue only if a copy of the job is not already
         // queued for the same journal.
 
-        static::saved(function (self $transaction) {
+        static::saved(function (self $transaction): void {
             $transaction->journal->resetCurrentBalance();
         });
 
-        static::deleted(function (self $transaction) {
+        static::deleted(function (self $transaction): void {
             $transaction->journal->resetCurrentBalance();
         });
     }
@@ -92,9 +92,8 @@ class JournalTransaction extends Model
      * @deprecated use the reference relation instead.
      *
      * @param  Model  $object
-     * @return JournalTransaction
      */
-    public function referencesObject($object)
+    public function referencesObject($object): static
     {
         $this->reference_type = $object->getMorphClass();
         $this->reference_id = $object->id;

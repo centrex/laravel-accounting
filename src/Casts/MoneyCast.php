@@ -12,8 +12,7 @@ class MoneyCast implements CastsAttributes
     public function __construct(
         protected ?string $currencyColumn = null,
         protected ?string $amountColumn = null,
-    ) {
-    }
+    ) {}
 
     /**
      * The default column names are $key + '_currency' and $key + '_amount'.

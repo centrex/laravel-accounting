@@ -8,8 +8,8 @@ use Rector\Set\ValueObject\{LevelSetList, SetList};
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__.'/src',
-        __DIR__ .'/tests',
+        __DIR__ . '/src',
+        __DIR__ . '/tests',
     ])
     ->withSets([
         LevelSetList::UP_TO_PHP_83,

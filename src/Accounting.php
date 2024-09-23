@@ -25,7 +25,6 @@ class Accounting
     /**
      * @param  string  $method  'credit' or 'debit'
      * @param  Money  $money  The amount of money to credit or debit.
-     * @param  null  $referenced_object
      *
      * @throws InvalidJournalEntryValue
      * @throws InvalidJournalMethod
@@ -69,7 +68,7 @@ class Accounting
         $this->assertTransactionCreditsEqualDebits();
 
         try {
-            return DB::transaction(function () {
+            return DB::transaction(function (): string {
                 $transactionGroupUuid = (string) Str::orderedUuid();
 
                 foreach ($this->transactionsPending as $transaction_pending) {

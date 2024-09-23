@@ -65,7 +65,7 @@ class DoubleEntryTest extends BaseTest
         $this->assertEquals(JournalTransaction::where('transaction_group', $transaction_group_uuid)->count(), 4);
     }
 
-    public function test_making_sure_post_transaction_ledgers_match()
+    public function test_making_sure_post_transaction_ledgers_match(): void
     {
         $dollar_value = (int) (mt_rand(1000000, 9999999) * 1.987654321);
 
