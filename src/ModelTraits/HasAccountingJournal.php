@@ -25,11 +25,6 @@ trait HasAccountingJournal
         return $this->morphOne(config('accounting.model-classes.journal'), 'morphed');
     }
 
-    public function journals(): MorphMany
-    {
-        return $this->morphMany(config('accounting.model-classes.journal'), 'morphed');
-    }
-
     /**
      * Initialize a new journal for this model instance.
      *
