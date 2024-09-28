@@ -10,7 +10,7 @@ namespace Centrex\LaravelAccounting\ModelTraits;
 
 use Centrex\LaravelAccounting\Exceptions\JournalAlreadyExists;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{MorphMany, MorphOne};
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Money\{Currency, Money};
 
 /**

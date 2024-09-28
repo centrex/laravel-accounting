@@ -1,10 +1,9 @@
 <?php
 
 return [
-    'base_currency' => 'GBP',
+    'base_currency' => 'BDT',
 
     'model-classes' => [
-        'account'             => Centrex\LaravelAccounting\Models\Account::class,
         'ledger'              => Centrex\LaravelAccounting\Models\Ledger::class,
         'journal'             => Centrex\LaravelAccounting\Models\Journal::class,
         'journal-transaction' => Centrex\LaravelAccounting\Models\JournalTransaction::class,
