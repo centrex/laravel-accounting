@@ -138,6 +138,44 @@ class Journal extends Model
         return $this->creditBalanceOn($date)->subtract($this->debitBalanceOn($date));
     }
 
+
+        /**
+     * Get the debit only balance of the journal at the end of a given day.
+     */
+    public function debitBalanceBetween(CarbonInterface $start_date, CarbonInterface $end_date): Money
+    {
+        $balanceMinorUnits = $this->transactions()
+            ->where('post_date', '>=', $start_date->startOfDay())
+            ->where('post_date', '<=', $end_date->endOfDay())
+            ->where('currency_code', '=', $this->currency_code)
+            ->sum('debit') ?: 0;
+
+        return new Money($balanceMinorUnits, $this->currency);
+    }
+
+    /**
+     * Get the credit only balance of the journal at the end of a given day.
+     */
+    public function creditBalanceBetween(CarbonInterface $start_date, CarbonInterface $end_date): Money
+    {
+        $balanceMinorUnits = $this->transactions()
+            ->where('post_date', '>=', $start_date->startOfDay())
+            ->where('post_date', '<=', $end_date->endOfDay())
+            ->where('currency_code', '=', $this->currency_code)
+            ->sum('credit') ?: 0;
+
+        return new Money($balanceMinorUnits, $this->currency);
+    }
+
+
+    /**
+     * Get the balance of the journal for a given date.
+     */
+    public function balanceBetween(CarbonInterface $start_date, CarbonInterface $end_date): Money
+    {
+        return $this->creditBalanceBetween($start_date, $end_date)->subtract($this->debitBalanceBetween($start_date, $end_date));
+    }
+
     /**
      * Get the balance of the journal today, excluding future transactions (after today).
      */
