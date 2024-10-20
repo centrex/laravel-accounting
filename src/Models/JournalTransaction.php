@@ -128,4 +128,6 @@ class JournalTransaction extends Model
 
         return new Money(0, $this->currency);
     }
+
+    
 }
