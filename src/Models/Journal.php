@@ -77,7 +77,7 @@ class Journal extends Model
         // Instead, set the balance default to zero though an attribute.
 
         static::created(
-            fn (Journal $journal): \Money\Money => $journal->resetCurrentBalance(),
+            fn (Journal $journal): Money => $journal->resetCurrentBalance(),
         );
     }
 
@@ -138,8 +138,7 @@ class Journal extends Model
         return $this->creditBalanceOn($date)->subtract($this->debitBalanceOn($date));
     }
 
-
-        /**
+    /**
      * Get the debit only balance of the journal at the end of a given day.
      */
     public function debitBalanceBetween(CarbonInterface $start_date, CarbonInterface $end_date): Money
@@ -166,7 +165,6 @@ class Journal extends Model
 
         return new Money($balanceMinorUnits, $this->currency);
     }
-
 
     /**
      * Get the balance of the journal for a given date.

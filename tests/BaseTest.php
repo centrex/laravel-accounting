@@ -33,7 +33,7 @@ class BaseTest extends Orchestra
 
     protected $company_income_journal;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->currency = 'USD';

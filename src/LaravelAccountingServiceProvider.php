@@ -51,6 +51,6 @@ class LaravelAccountingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
         // Register the main class to use with the facade
-        $this->app->singleton('accounting', fn (): \Centrex\LaravelAccounting\Accounting => new Accounting());
+        $this->app->singleton('accounting', fn (): Accounting => new Accounting());
     }
 }

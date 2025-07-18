@@ -9,8 +9,8 @@ namespace Centrex\LaravelAccounting\ModelTraits;
  */
 
 use Centrex\LaravelAccounting\Models\JournalTransaction;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\{Collection, Model};
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @mixin Model
