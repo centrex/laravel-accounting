@@ -3,12 +3,17 @@ includes:
 
 parameters:
     level: max
+
     paths:
         - src
         - config
         - database
+
     tmpDir: build/phpstan
+
     checkOctaneCompatibility: true
     checkModelProperties: true
-    checkMissingIterableValueType: false
     reportUnmatchedIgnoredErrors: true
+
+    # If you have iterable value types (e.g., arrays of objects), you can disable this if not needed.
+    #checkMissingIterableValueType: false

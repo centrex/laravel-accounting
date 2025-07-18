@@ -3,10 +3,9 @@ name: Fix PHP code style issues
 on:
   push:
     paths:
-      - '**.php'
+      - "**.php"
 
-permissions:
-  contents: write
+permissions: write-all
 
 jobs:
   php-code-styling:
