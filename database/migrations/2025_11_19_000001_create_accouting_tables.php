@@ -12,9 +12,10 @@ return new class extends Migration
     public function up()
     {
         $prefix = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         // Chart of Accounts
-        Schema::create($prefix.'accounts', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'accounts', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -25,7 +26,7 @@ return new class extends Migration
                 'non_operating_revenue', 'operating_expense', 
                 'non_operating_expense', 'cost_of_goods_sold'
             ])->nullable();
-            $table->foreignId('parent_id')->nullable()->constrained('accounts')->onDelete('cascade');
+            $table->foreignId('parent_id')->nullable()->constrained($prefix.'accounts')->onDelete('cascade');
             $table->text('description')->nullable();
             $table->string('currency', 3)->default('BDT');
             $table->boolean('is_active')->default(true);
@@ -39,7 +40,7 @@ return new class extends Migration
         });
 
         // Journal Entries
-        Schema::create($prefix.'journal_entries', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'journal_entries', function (Blueprint $table) {
             $table->id();
             $table->string('entry_number')->unique();
             $table->date('date');
@@ -60,10 +61,10 @@ return new class extends Migration
         });
 
         // Journal Entry Lines (Double-Entry)
-        Schema::create($prefix.'journal_entry_lines', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'journal_entry_lines', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('journal_entry_id')->constrained()->onDelete('cascade');
-            $table->foreignId('account_id')->constrained()->onDelete('restrict');
+            $table->foreignId('journal_entry_id')->constrained($prefix.'journal_entries')->onDelete('cascade');
+            $table->foreignId('account_id')->constrained($prefix.'accounts')->onDelete('restrict');
             $table->enum('type', ['debit', 'credit']);
             $table->decimal('amount', 15, 2);
             $table->text('description')->nullable();
@@ -74,7 +75,7 @@ return new class extends Migration
         });
 
         // Fiscal Years
-        Schema::create($prefix.'fiscal_years', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'fiscal_years', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->date('start_date');
@@ -87,9 +88,9 @@ return new class extends Migration
         });
 
         // Fiscal Periods (Monthly)
-        Schema::create($prefix.'fiscal_periods', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'fiscal_periods', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('fiscal_year_id')->constrained()->onDelete('cascade');
+            $table->foreignId('fiscal_year_id')->constrained($prefix.'fiscal_years')->onDelete('cascade');
             $table->string('name'); // January 2024, Q1 2024, etc.
             $table->date('start_date');
             $table->date('end_date');
@@ -100,10 +101,10 @@ return new class extends Migration
         });
 
         // Account Balances (for performance)
-        Schema::create($prefix.'account_balances', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'account_balances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('account_id')->constrained()->onDelete('cascade');
-            $table->foreignId('fiscal_period_id')->constrained()->onDelete('cascade');
+            $table->foreignId('account_id')->constrained($prefix.'accounts')->onDelete('cascade');
+            $table->foreignId('fiscal_period_id')->constrained($prefix.'fiscal_periods')->onDelete('cascade');
             $table->decimal('debit', 15, 2)->default(0);
             $table->decimal('credit', 15, 2)->default(0);
             $table->decimal('balance', 15, 2)->default(0);
@@ -113,7 +114,7 @@ return new class extends Migration
         });
 
         // Customers
-        Schema::create($prefix.'customers', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'customers', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -132,7 +133,7 @@ return new class extends Migration
         });
 
         // Vendors/Suppliers
-        Schema::create($prefix.'vendors', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'vendors', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -150,10 +151,10 @@ return new class extends Migration
         });
 
         // Invoices
-        Schema::create($prefix.'invoices', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_number')->unique();
-            $table->foreignId('customer_id')->constrained()->onDelete('restrict');
+            $table->foreignId('customer_id')->constrained($prefix.'customers')->onDelete('restrict');
             $table->date('invoice_date');
             $table->date('due_date');
             $table->decimal('subtotal', 15, 2);
@@ -164,7 +165,7 @@ return new class extends Migration
             $table->string('currency', 3)->default('BDT');
             $table->enum('status', ['draft', 'sent', 'paid', 'partial', 'overdue', 'void'])->default('draft');
             $table->text('notes')->nullable();
-            $table->foreignId('journal_entry_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('journal_entry_id')->nullable()->constrained($prefix.'journal_entries')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
             
@@ -172,9 +173,9 @@ return new class extends Migration
         });
 
         // Invoice Items
-        Schema::create($prefix.'invoice_items', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'invoice_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
+            $table->foreignId('invoice_id')->constrained($prefix.'invoices')->onDelete('cascade');
             $table->string('description');
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 15, 2);
@@ -186,10 +187,10 @@ return new class extends Migration
         });
 
         // Bills (Vendor Invoices)
-        Schema::create($prefix.'bills', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'bills', function (Blueprint $table) {
             $table->id();
             $table->string('bill_number')->unique();
-            $table->foreignId('vendor_id')->constrained()->onDelete('restrict');
+            $table->foreignId('vendor_id')->constrained($prefix.'vendors')->onDelete('restrict');
             $table->date('bill_date');
             $table->date('due_date');
             $table->decimal('subtotal', 15, 2);
@@ -199,15 +200,15 @@ return new class extends Migration
             $table->string('currency', 3)->default('BDT');
             $table->enum('status', ['draft', 'approved', 'paid', 'partial', 'overdue', 'void'])->default('draft');
             $table->text('notes')->nullable();
-            $table->foreignId('journal_entry_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('journal_entry_id')->nullable()->constrained($prefix.'journal_entries')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });
 
         // Bill Items
-        Schema::create($prefix.'bill_items', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'bill_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bill_id')->constrained()->onDelete('cascade');
+            $table->foreignId('bill_id')->constrained($prefix.'bills')->onDelete('cascade');
             $table->string('description');
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 15, 2);
@@ -219,7 +220,7 @@ return new class extends Migration
         });
 
         // Payments
-        Schema::create($prefix.'payments', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'payments', function (Blueprint $table) {
             $table->id();
             $table->string('payment_number')->unique();
             $table->morphs('payable'); // invoice or bill
@@ -228,13 +229,13 @@ return new class extends Migration
             $table->string('payment_method'); // cash, check, bank_transfer, card
             $table->string('reference')->nullable();
             $table->text('notes')->nullable();
-            $table->foreignId('journal_entry_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('journal_entry_id')->nullable()->constrained($prefix.'journal_entries')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });
 
         // Tax Rates
-        Schema::create($prefix.'tax_rates', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'tax_rates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('code')->unique();
@@ -245,7 +246,7 @@ return new class extends Migration
         });
 
         // Payroll Accounts
-        Schema::create($prefix.'payroll_accounts', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'payroll_accounts', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -261,7 +262,7 @@ return new class extends Migration
         });
 
         // Payroll Entries
-        Schema::create($prefix.'payroll_entries', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'payroll_entries', function (Blueprint $table) {
             $table->id();
             $table->string('entry_number')->unique();
             $table->date('date');
@@ -282,10 +283,10 @@ return new class extends Migration
         });
 
         // Payroll Entry Lines
-        Schema::create($prefix.'payroll_entry_lines', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix.'payroll_entry_lines', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('payroll_entry_id')->constrained()->onDelete('cascade');
-            $table->foreignId('payroll_account_id')->constrained()->onDelete('restrict');
+            $table->foreignId('payroll_entry_id')->constrained($prefix.'payroll_entries')->onDelete('cascade');
+            $table->foreignId('payroll_account_id')->constrained($prefix.'payroll_accounts')->onDelete('restrict');
             $table->decimal('amount', 15, 2);
             $table->text('description')->nullable();
             $table->string('reference')->nullable();
@@ -298,23 +299,24 @@ return new class extends Migration
     public function down()
     {
         $prefix = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
         
-        Schema::dropIfExists($prefix.'payroll_entry_lines');
-        Schema::dropIfExists($prefix.'payroll_entries');
-        Schema::dropIfExists($prefix.'payroll_accounts');
-        Schema::dropIfExists($prefix.'tax_rates');
-        Schema::dropIfExists($prefix.'payments');
-        Schema::dropIfExists($prefix.'bill_items');
-        Schema::dropIfExists($prefix.'bills');
-        Schema::dropIfExists($prefix.'invoice_items');
-        Schema::dropIfExists($prefix.'invoices');
-        Schema::dropIfExists($prefix.'vendors');
-        Schema::dropIfExists($prefix.'customers');
-        Schema::dropIfExists($prefix.'account_balances');
-        Schema::dropIfExists($prefix.'fiscal_periods');
-        Schema::dropIfExists($prefix.'fiscal_years');
-        Schema::dropIfExists($prefix.'journal_entry_lines');
-        Schema::dropIfExists($prefix.'journal_entries');
-        Schema::dropIfExists($prefix.'accounts');
+        Schema::connection($connection)->dropIfExists($prefix.'payroll_entry_lines');
+        Schema::connection($connection)->dropIfExists($prefix.'payroll_entries');
+        Schema::connection($connection)->dropIfExists($prefix.'payroll_accounts');
+        Schema::connection($connection)->dropIfExists($prefix.'tax_rates');
+        Schema::connection($connection)->dropIfExists($prefix.'payments');
+        Schema::connection($connection)->dropIfExists($prefix.'bill_items');
+        Schema::connection($connection)->dropIfExists($prefix.'bills');
+        Schema::connection($connection)->dropIfExists($prefix.'invoice_items');
+        Schema::connection($connection)->dropIfExists($prefix.'invoices');
+        Schema::connection($connection)->dropIfExists($prefix.'vendors');
+        Schema::connection($connection)->dropIfExists($prefix.'customers');
+        Schema::connection($connection)->dropIfExists($prefix.'account_balances');
+        Schema::connection($connection)->dropIfExists($prefix.'fiscal_periods');
+        Schema::connection($connection)->dropIfExists($prefix.'fiscal_years');
+        Schema::connection($connection)->dropIfExists($prefix.'journal_entry_lines');
+        Schema::connection($connection)->dropIfExists($prefix.'journal_entries');
+        Schema::connection($connection)->dropIfExists($prefix.'accounts');
     }
 };
