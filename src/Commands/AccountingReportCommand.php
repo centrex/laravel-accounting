@@ -122,7 +122,7 @@ final class AccountingReportCommand extends Command
 
         $headers = ['Code', 'Account', 'Debit', 'Credit'];
 
-        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers, $data) {
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers, $data): void {
             // pretty terminal
             $this->table($headers, array_map('array_values', $rows));
             $this->line('<fg=green>Total Debits : ' . number_format($data['total_debits'], 2) . '</>');
@@ -159,7 +159,7 @@ final class AccountingReportCommand extends Command
 
         $headers = ['Section', 'Code', 'Account', 'Balance'];
 
-        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($data, $headers, $rows) {
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($data, $headers, $rows): void {
             // pretty terminal: group by section
             $this->table($headers, array_map('array_values', $rows));
             $this->line('<fg=green>Assets Total: ' . number_format($data['assets']['total'] ?? 0, 2) . '</>');
@@ -194,7 +194,7 @@ final class AccountingReportCommand extends Command
 
         $headers = ['Section', 'Code', 'Account', 'Amount'];
 
-        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($data, $headers, $rows) {
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($data, $headers, $rows): void {
             $this->table($headers, array_map('array_values', $rows));
             $this->line('<fg=green>Gross Profit: ' . number_format($data['gross_profit'], 2) . '</>');
             $this->line('<fg=green>Net Income  : ' . number_format($data['net_income'], 2) . '</>');
@@ -212,7 +212,7 @@ final class AccountingReportCommand extends Command
 
         $headers = ['Category', 'Amount'];
 
-        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers) {
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers): void {
             $this->table($headers, array_map('array_values', $rows));
         });
     }
@@ -238,7 +238,7 @@ final class AccountingReportCommand extends Command
         }
 
         // prepare data as numeric-indexed rows for CSV and JSON
-        $dataRows = array_map(fn ($r) => array_values($r), $rows);
+        $dataRows = array_map(fn ($r): array => array_values($r), $rows);
         $headerRow = $headers;
 
         // if output path provided: write file; otherwise print to STDOUT
@@ -252,7 +252,7 @@ final class AccountingReportCommand extends Command
                 $file = $path . DIRECTORY_SEPARATOR . $suffix . '.' . $ext;
             } else {
                 // if provided path has extension, respect it; otherwise append ext
-                $file = pathinfo($path, PATHINFO_EXTENSION) ? $path : $path . '.' . $ext;
+                $file = pathinfo($path, PATHINFO_EXTENSION) !== '' && pathinfo($path, PATHINFO_EXTENSION) !== '0' ? $path : $path . '.' . $ext;
             }
 
             if ($format === 'csv') {
