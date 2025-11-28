@@ -1,26 +1,53 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Centrex\LaravelAccounting\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Centrex\LaravelAccounting\Traits\AddTablePrefix;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo};
 
 class Customer extends Model
 {
+    use AddTablePrefix;
     use SoftDeletes;
 
+    protected function getTableSuffix(): string
+    {
+        return 'customers';
+    }
+
     protected $fillable = [
-        'code', 'name', 'email', 'phone', 'address', 'city', 'country',
-        'tax_id', 'currency', 'credit_limit', 'payment_terms', 'is_active'
+        'code',
+        'name',
+        'email',
+        'phone',
+        'address',
+        'city',
+        'country',
+        'tax_id',
+        'currency',
+        'credit_limit',
+        'payment_terms',
+        'is_active',
+        'modelable_type',
+        'modelable_id',
     ];
 
     protected $casts = [
-        'credit_limit' => 'decimal:2',
+        'credit_limit'  => 'decimal:2',
         'payment_terms' => 'integer',
-        'is_active' => 'boolean',
+        'is_active'     => 'boolean',
     ];
+
+    /**
+     * Polymorphic relation: Customer belongs to any model (User, Company, App\Models\Tenant, etc.)
+     */
+    public function modelable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 
     public function invoices(): HasMany
     {
@@ -29,7 +56,7 @@ class Customer extends Model
 
     public function getTotalOutstandingAttribute(): float
     {
-        return $this->invoices()
+        return (float) $this->invoices()
             ->whereIn('status', ['sent', 'partial', 'overdue'])
             ->sum(\DB::raw('total - paid_amount'));
     }

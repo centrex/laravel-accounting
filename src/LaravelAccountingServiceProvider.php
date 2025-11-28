@@ -4,19 +4,34 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting;
 
+use Centrex\LaravelAccounting\Commands\AccountingReportCommand;
+use Centrex\LaravelAccounting\Events\{InvoicePosted, PaymentRecorded};
+use Centrex\LaravelAccounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
+use Centrex\LaravelAccounting\Models\{BillItem, InvoiceItem, JournalEntry, Payment};
+use Centrex\LaravelAccounting\Observers\{BillItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Centrex\LaravelAccounting\Services\AccountingService;
 
 class LaravelAccountingServiceProvider extends ServiceProvider
 {
     /** Bootstrap the application services. */
     public function boot(): void
     {
+        // Register model observers
+        JournalEntry::observe(JournalEntryObserver::class);
+        Payment::observe(PaymentObserver::class);
+        BillItem::observe(BillItemObserver::class);
+        InvoiceItem::observe(InvoiceItemObserver::class);
+
+        // Register event listeners
+        Event::listen(InvoicePosted::class, [SyncCustomerOutstanding::class, 'handle']);
+        Event::listen(PaymentRecorded::class, [NotifyAccountingTeam::class, 'handle']);
+
         /*
          * Optional methods to load your package assets
          */
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'accounting');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'accounting');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'accounting');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
@@ -41,7 +56,9 @@ class LaravelAccountingServiceProvider extends ServiceProvider
             ], 'accounting-lang');*/
 
             // Registering package commands.
-            $this->commands([]);
+            $this->commands([
+                AccountingReportCommand::class,
+            ]);
         }
     }
 
@@ -53,6 +70,5 @@ class LaravelAccountingServiceProvider extends ServiceProvider
 
         // Register the main class to use with the facade
         $this->app->singleton('accounting', fn (): Accounting => new Accounting());
-        $this->app->singleton(AccountingService::class);
     }
 }

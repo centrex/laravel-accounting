@@ -4,109 +4,571 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting;
 
-use Carbon\Carbon;
-use Centrex\LaravelAccounting\Exceptions\{DebitsAndCreditsDoNotEqual, InvalidJournalEntryValue, InvalidJournalMethod, TransactionCouldNotBeProcessed};
-use Centrex\LaravelAccounting\Models\Journal;
-use Exception;
+use Centrex\LaravelAccounting\Models\{
+    Account,
+    Bill,
+    FiscalYear,
+    Invoice,
+    JournalEntry,
+    Payment
+};
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Money\Money;
+use RuntimeException;
 
 class Accounting
 {
-    /** @var array */
-    protected $transactionsPending = [];
-
-    public static function newDoubleEntryTransactionGroup(): Accounting
+    /**
+     * Create a journal entry with lines (returns persisted JournalEntry)
+     *
+     * $data keys:
+     *  - date, reference, type, description, currency, lines: [ [account_id, type, amount, ...], ... ]
+     */
+    public function createJournalEntry(array $data): JournalEntry
     {
-        return new self();
+        return DB::transaction(function () use ($data) {
+            // ensure we have an entry_number (unique); models may also generate this
+            $entryNumber = $data['entry_number'] ?? ('JE-' . time() . '-' . rand(1000, 9999));
+
+            $entry = JournalEntry::create([
+                'entry_number'  => $entryNumber,
+                'date'          => $data['date'],
+                'reference'     => $data['reference'] ?? null,
+                'type'          => $data['type'] ?? 'general',
+                'description'   => $data['description'] ?? null,
+                'currency'      => $data['currency'] ?? config('app.currency', 'BDT'),
+                'exchange_rate' => $data['exchange_rate'] ?? 1.0,
+                'created_by'    => $data['created_by'] ?? auth()->id(),
+                'status'        => $data['status'] ?? 'draft',
+            ]);
+
+            foreach ($data['lines'] as $line) {
+                $entry->lines()->create([
+                    'account_id'  => $line['account_id'],
+                    'type'        => strtolower($line['type']), // debit|credit
+                    'amount'      => $line['amount'],
+                    'description' => $line['description'] ?? null,
+                    'reference'   => $line['reference'] ?? null,
+                ]);
+            }
+
+            // Ensure balanced before proceeding
+            if (!$entry->isBalanced()) {
+                // keep the entry for debugging, but roll back transaction by throwing
+                throw new RuntimeException('Journal entry is not balanced. Debits must equal credits.');
+            }
+
+            return $entry;
+        });
     }
 
     /**
-     * @param  string  $method  'credit' or 'debit'
-     * @param  Money  $money  The amount of money to credit or debit.
-     *
-     * @throws InvalidJournalEntryValue
-     * @throws InvalidJournalMethod
-     *
-     * @internal param int $value
+     * Post an invoice and create journal entry
      */
-    public function addTransaction(
-        Journal $journal,
-        string $method,
-        Money $money,
-        ?string $memo = null,
-        $referenced_object = null,
-        ?Carbon $postdate = null,
-    ): void {
-        if (!in_array($method, ['credit', 'debit'])) {
-            throw new InvalidJournalMethod();
+    public function postInvoice(Invoice $invoice): JournalEntry
+    {
+        if ($invoice->status === 'paid') {
+            throw new RuntimeException('Invoice is already paid');
         }
 
-        if ($money->getAmount() <= 0) {
-            throw new InvalidJournalEntryValue();
-        }
+        return DB::transaction(function () use ($invoice): JournalEntry {
+            // Get accounts (fail fast if missing)
+            $arAccount = Account::where('code', '1200')->first()
+                ?? throw new RuntimeException('Accounts Receivable account (1200) not found');
+            $revenueAccount = Account::where('code', '4000')->first()
+                ?? throw new RuntimeException('Sales Revenue account (4000) not found');
+            $taxAccount = Account::where('code', '2300')->first()
+                ?? throw new RuntimeException('Sales Tax account (2300) not found');
 
-        $this->transactionsPending[] = [
-            'journal'           => $journal,
-            'method'            => $method,
-            'money'             => $money,
-            'memo'              => $memo,
-            'referenced_object' => $referenced_object,
-            'postdate'          => $postdate,
-        ];
+            $entry = $this->createJournalEntry([
+                'date'        => $invoice->invoice_date,
+                'reference'   => $invoice->invoice_number,
+                'type'        => 'general',
+                'description' => "Invoice {$invoice->invoice_number} - {$invoice->customer?->name}",
+                'currency'    => $invoice->currency ?? config('app.currency', 'BDT'),
+                'lines'       => [
+                    [
+                        'account_id'  => $arAccount->id,
+                        'type'        => 'debit',
+                        'amount'      => $invoice->total,
+                        'description' => 'Accounts Receivable',
+                    ],
+                    [
+                        'account_id'  => $revenueAccount->id,
+                        'type'        => 'credit',
+                        'amount'      => $invoice->subtotal,
+                        'description' => 'Sales Revenue',
+                    ],
+                    [
+                        'account_id'  => $taxAccount->id,
+                        'type'        => 'credit',
+                        'amount'      => $invoice->tax_amount,
+                        'description' => 'Sales Tax',
+                    ],
+                ],
+            ]);
+
+            $entry->post();
+
+            $invoice->update([
+                'journal_entry_id' => $entry->id,
+                'status'           => 'sent',
+            ]);
+
+            return $entry;
+        });
     }
 
-    public function transactionsPending(): array
+    /**
+     * Record invoice payment
+     */
+    public function recordInvoicePayment(Invoice $invoice, array $paymentData): Payment
     {
-        return $this->transactionsPending;
-    }
+        return DB::transaction(function () use ($invoice, $paymentData) {
+            // create payment (payment_number may be generated by model observer)
+            $payment = Payment::create([
+                'payment_number' => $paymentData['payment_number'] ?? ('PMT-' . time() . '-' . rand(1000, 9999)),
+                'payable_type'   => Invoice::class,
+                'payable_id'     => $invoice->id,
+                'payment_date'   => $paymentData['date'],
+                'amount'         => $paymentData['amount'],
+                'payment_method' => $paymentData['method'],
+                'reference'      => $paymentData['reference'] ?? null,
+                'notes'          => $paymentData['notes'] ?? null,
+            ]);
 
-    /** Save a transaction group. */
-    public function commit(): string
-    {
-        $this->assertTransactionCreditsEqualDebits();
+            // Create journal entry for payment
+            $cashAccount = Account::where('code', '1000')->first()
+                ?? throw new RuntimeException('Cash account (1000) not found');
+            $arAccount = Account::where('code', '1200')->first()
+                ?? throw new RuntimeException('Accounts Receivable account (1200) not found');
 
-        try {
-            return DB::transaction(function (): string {
-                $transactionGroupUuid = (string) Str::orderedUuid();
+            $entry = $this->createJournalEntry([
+                'date'        => $paymentData['date'],
+                'reference'   => $payment->payment_number,
+                'description' => "Payment received for Invoice {$invoice->invoice_number}",
+                'currency'    => $invoice->currency ?? config('app.currency', 'BDT'),
+                'lines'       => [
+                    [
+                        'account_id'  => $cashAccount->id,
+                        'type'        => 'debit',
+                        'amount'      => $paymentData['amount'],
+                        'description' => 'Cash received',
+                    ],
+                    [
+                        'account_id'  => $arAccount->id,
+                        'type'        => 'credit',
+                        'amount'      => $paymentData['amount'],
+                        'description' => 'Accounts Receivable',
+                    ],
+                ],
+            ]);
 
-                foreach ($this->transactionsPending as $transaction_pending) {
-                    $transaction = $transaction_pending['journal']->{$transaction_pending['method']}(
-                        $transaction_pending['money'],
-                        $transaction_pending['memo'],
-                        $transaction_pending['postdate'],
-                        $transactionGroupUuid,
-                    );
+            $entry->post();
 
-                    if ($object = $transaction_pending['referenced_object']) {
-                        $transaction->reference()->associate($object);
-                    }
-                }
+            $payment->update(['journal_entry_id' => $entry->id]);
 
-                return $transactionGroupUuid;
-            });
-        } catch (Exception $e) {
-            throw new TransactionCouldNotBeProcessed('Rolling Back Database. Message: ' . $e->getMessage());
-        }
-    }
+            // Update and refresh invoice to get current paid_amount
+            $invoice->increment('paid_amount', $paymentData['amount']);
+            $invoice->refresh();
 
-    /** @throws DebitsAndCreditsDoNotEqual */
-    private function assertTransactionCreditsEqualDebits(): void
-    {
-        $credits = 0;
-        $debits = 0;
-
-        foreach ($this->transactionsPending as $transaction_pending) {
-            if ($transaction_pending['method'] == 'credit') {
-                $credits += $transaction_pending['money']->getAmount();
+            if ((float) $invoice->paid_amount >= (float) $invoice->total) {
+                $invoice->update(['status' => 'paid']);
             } else {
-                $debits += $transaction_pending['money']->getAmount();
+                $invoice->update(['status' => 'partial']);
+            }
+
+            return $payment;
+        });
+    }
+
+    /**
+     * Post a bill (vendor invoice)
+     */
+    public function postBill(Bill $bill): JournalEntry
+    {
+        return DB::transaction(function () use ($bill): JournalEntry {
+            $apAccount = Account::where('code', '2000')->first()
+                ?? throw new RuntimeException('Accounts Payable account (2000) not found');
+            $expenseAccount = Account::where('code', '5000')->first()
+                ?? throw new RuntimeException('Expenses account (5000) not found');
+            $taxAccount = Account::where('code', '2300')->first()
+                ?? throw new RuntimeException('Tax account (2300) not found');
+
+            $entry = $this->createJournalEntry([
+                'date'        => $bill->bill_date,
+                'reference'   => $bill->bill_number,
+                'description' => "Bill {$bill->bill_number} - {$bill->vendor?->name}",
+                'currency'    => $bill->currency ?? config('app.currency', 'BDT'),
+                'lines'       => [
+                    [
+                        'account_id'  => $expenseAccount->id,
+                        'type'        => 'debit',
+                        'amount'      => $bill->subtotal,
+                        'description' => 'Expense',
+                    ],
+                    [
+                        'account_id'  => $taxAccount->id,
+                        'type'        => 'debit',
+                        'amount'      => $bill->tax_amount,
+                        'description' => 'Tax',
+                    ],
+                    [
+                        'account_id'  => $apAccount->id,
+                        'type'        => 'credit',
+                        'amount'      => $bill->total,
+                        'description' => 'Accounts Payable',
+                    ],
+                ],
+            ]);
+
+            $entry->post();
+
+            $bill->update([
+                'journal_entry_id' => $entry->id,
+                'status'           => 'approved',
+            ]);
+
+            return $entry;
+        });
+    }
+
+    /**
+     * Generate Trial Balance
+     */
+    public function getTrialBalance($startDate = null, $endDate = null): array
+    {
+        $accounts = Account::where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        $trialBalance = [];
+        $totalDebits = 0;
+        $totalCredits = 0;
+
+        foreach ($accounts as $account) {
+            $query = $account->journalEntryLines()
+                ->whereHas('journalEntry', function ($q) use ($startDate, $endDate): void {
+                    $q->where('status', 'posted');
+
+                    if ($startDate) {
+                        $q->whereDate('date', '>=', $startDate);
+                    }
+
+                    if ($endDate) {
+                        $q->whereDate('date', '<=', $endDate);
+                    }
+                });
+
+            $queryDebits = clone $query;
+            $queryCredits = clone $query;
+
+            $debits = $queryDebits->where('type', 'debit')->sum('amount');
+            $credits = $queryCredits->where('type', 'credit')->sum('amount');
+
+            $balance = $account->isDebitAccount()
+                ? ($debits - $credits)
+                : ($credits - $debits);
+
+            if (abs($balance) > 0.005) {
+                $trialBalance[] = [
+                    'account' => $account,
+                    'debit'   => $balance > 0 ? abs($balance) : 0,
+                    'credit'  => $balance < 0 ? abs($balance) : 0,
+                ];
+
+                $totalDebits += $balance > 0 ? abs($balance) : 0;
+                $totalCredits += $balance < 0 ? abs($balance) : 0;
             }
         }
 
-        if ($credits !== $debits) {
-            throw new DebitsAndCreditsDoNotEqual('In this transaction, credits == ' . $credits . ' and debits == ' . $debits);
+        return [
+            'accounts'      => $trialBalance,
+            'total_debits'  => $totalDebits,
+            'total_credits' => $totalCredits,
+            'is_balanced'   => abs($totalDebits - $totalCredits) < 0.01,
+        ];
+    }
+
+    /**
+     * Generate Balance Sheet
+     */
+    public function getBalanceSheet($date = null): array
+    {
+        $date ??= now();
+
+        $assets = $this->getAccountsByType('asset', $date);
+        $liabilities = $this->getAccountsByType('liability', $date);
+        $equity = $this->getAccountsByType('equity', $date);
+
+        // Calculate retained earnings (net income up to date)
+        $netIncome = $this->getNetIncome(null, $date);
+        $retainedEarnings = ($equity['total'] ?? 0) + $netIncome;
+
+        return [
+            'date'        => $date,
+            'assets'      => $assets,
+            'liabilities' => $liabilities,
+            'equity'      => array_merge($equity, [
+                'net_income'        => $netIncome,
+                'retained_earnings' => $retainedEarnings,
+                'total_with_income' => ($liabilities['total'] ?? 0) + $retainedEarnings,
+            ]),
+            'is_balanced' => abs(($assets['total'] ?? 0) - ((($liabilities['total'] ?? 0) + $retainedEarnings))) < 0.01,
+        ];
+    }
+
+    /**
+     * Generate Income Statement (P&L)
+     */
+    public function getIncomeStatement($startDate, $endDate): array
+    {
+        // Ensure startDate <= endDate externally
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
+
+        $grossProfit = $revenue['total'] ?? 0;
+        $netIncome = ($revenue['total'] ?? 0) - ($expenses['total'] ?? 0);
+
+        return [
+            'period' => [
+                'start' => $startDate,
+                'end'   => $endDate,
+            ],
+            'revenue'      => $revenue,
+            'expenses'     => $expenses,
+            'gross_profit' => $grossProfit,
+            'net_income'   => $netIncome,
+        ];
+    }
+
+    /**
+     * Generate Cash Flow Statement
+     */
+    public function getCashFlowStatement($startDate, $endDate): array
+    {
+        $cashAccount = Account::where('code', '1000')->first();
+
+        if (!$cashAccount) {
+            throw new RuntimeException('Cash account not found (1000)');
         }
+
+        $transactions = $cashAccount->journalEntryLines()
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate): void {
+                $q->where('status', 'posted')
+                    ->whereBetween('date', [$startDate, $endDate]);
+            })
+            ->with(['journalEntry', 'account'])
+            ->get();
+
+        $operating = 0;
+        $investing = 0;
+        $financing = 0;
+
+        foreach ($transactions as $transaction) {
+            $amount = $transaction->type === 'debit' ? $transaction->amount : -$transaction->amount;
+
+            $relatedLines = $transaction->journalEntry->lines()
+                ->where('id', '!=', $transaction->id)
+                ->with('account')
+                ->get();
+
+            foreach ($relatedLines as $line) {
+                if (in_array($line->account->type, ['revenue', 'expense'], true)) {
+                    $operating += $amount;
+                } elseif ($line->account->subtype === 'fixed_asset') {
+                    $investing += $amount;
+                } elseif (in_array($line->account->type, ['liability', 'equity'], true)) {
+                    $financing += $amount;
+                }
+            }
+        }
+
+        $netChange = $operating + $investing + $financing;
+
+        return [
+            'period'               => ['start' => $startDate, 'end' => $endDate],
+            'operating_activities' => $operating,
+            'investing_activities' => $investing,
+            'financing_activities' => $financing,
+            'net_change'           => $netChange,
+        ];
+    }
+
+    /**
+     * Helper: Get accounts by type with balances
+     *
+     * $type: account type string (asset | liability | equity | revenue | expense)
+     * $endDate: date up to which balance is computed
+     * $startDate: optional start date for period
+     */
+    protected function getAccountsByType(string $type, $endDate, $startDate = null): array
+    {
+        $accounts = Account::where('type', $type)
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        $accountsData = [];
+        $total = 0;
+
+        foreach ($accounts as $account) {
+            $query = $account->journalEntryLines()
+                ->whereHas('journalEntry', function ($q) use ($startDate, $endDate): void {
+                    $q->where('status', 'posted');
+
+                    if ($startDate) {
+                        $q->whereDate('date', '>=', $startDate);
+                    }
+
+                    if ($endDate) {
+                        $q->whereDate('date', '<=', $endDate);
+                    }
+                });
+
+            $debits = (clone $query)->where('type', 'debit')->sum('amount');
+            $credits = (clone $query)->where('type', 'credit')->sum('amount');
+
+            $balance = $account->isDebitAccount()
+                ? ($debits - $credits)
+                : ($credits - $debits);
+
+            if (abs($balance) > 0.005) {
+                $accountsData[] = [
+                    'account' => $account,
+                    'balance' => $balance,
+                ];
+                $total += $balance;
+            }
+        }
+
+        return [
+            'accounts' => $accountsData,
+            'total'    => $total,
+        ];
+    }
+
+    /**
+     * Helper: Get net income (startDate optional, endDate required)
+     */
+    protected function getNetIncome($startDate, $endDate): float
+    {
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
+
+        return (float) (($revenue['total'] ?? 0) - ($expenses['total'] ?? 0));
+    }
+
+    /**
+     * Initialize Chart of Accounts with standard accounts (idempotent)
+     */
+    public function initializeChartOfAccounts(): void
+    {
+        $accounts = [
+            // Assets
+            ['code' => '1000', 'name' => 'Cash', 'type' => 'asset', 'subtype' => 'current_asset'],
+            ['code' => '1100', 'name' => 'Bank Account', 'type' => 'asset', 'subtype' => 'current_asset'],
+            ['code' => '1200', 'name' => 'Accounts Receivable', 'type' => 'asset', 'subtype' => 'current_asset'],
+            ['code' => '1300', 'name' => 'Inventory', 'type' => 'asset', 'subtype' => 'current_asset'],
+            ['code' => '1500', 'name' => 'Prepaid Expenses', 'type' => 'asset', 'subtype' => 'current_asset'],
+            ['code' => '1700', 'name' => 'Fixed Assets', 'type' => 'asset', 'subtype' => 'fixed_asset'],
+            ['code' => '1800', 'name' => 'Accumulated Depreciation', 'type' => 'asset', 'subtype' => 'fixed_asset'],
+
+            // Liabilities
+            ['code' => '2000', 'name' => 'Accounts Payable', 'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2100', 'name' => 'Credit Card Payable', 'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2200', 'name' => 'Accrued Expenses', 'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2300', 'name' => 'Sales Tax Payable', 'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2500', 'name' => 'Long-term Debt', 'type' => 'liability', 'subtype' => 'long_term_liability'],
+
+            // Equity
+            ['code' => '3000', 'name' => "Owner's Equity", 'type' => 'equity', 'subtype' => 'equity'],
+            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => 'equity', 'subtype' => 'equity'],
+            ['code' => '3200', 'name' => "Owner's Draw", 'type' => 'equity', 'subtype' => 'equity'],
+
+            // Revenue
+            ['code' => '4000', 'name' => 'Sales Revenue', 'type' => 'revenue', 'subtype' => 'operating_revenue'],
+            ['code' => '4100', 'name' => 'Service Revenue', 'type' => 'revenue', 'subtype' => 'operating_revenue'],
+            ['code' => '4900', 'name' => 'Other Income', 'type' => 'revenue', 'subtype' => 'non_operating_revenue'],
+
+            // Expenses
+            ['code' => '5000', 'name' => 'Cost of Goods Sold', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold'],
+            ['code' => '6000', 'name' => 'Salaries & Wages', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6100', 'name' => 'Rent Expense', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6200', 'name' => 'Utilities', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6300', 'name' => 'Office Supplies', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6400', 'name' => 'Insurance', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6500', 'name' => 'Marketing & Advertising', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6600', 'name' => 'Depreciation', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6700', 'name' => 'Interest Expense', 'type' => 'expense', 'subtype' => 'non_operating_expense'],
+            ['code' => '6800', 'name' => 'Bank Fees', 'type' => 'expense', 'subtype' => 'operating_expense'],
+        ];
+
+        foreach ($accounts as $accountData) {
+            Account::firstOrCreate(
+                ['code' => $accountData['code']],
+                array_merge($accountData, ['is_system' => true]),
+            );
+        }
+    }
+
+    /**
+     * Close fiscal year (transfer net income to retained earnings)
+     */
+    public function closeFiscalYear(FiscalYear $fiscalYear): void
+    {
+        if ($fiscalYear->is_closed) {
+            throw new RuntimeException('Fiscal year is already closed');
+        }
+
+        DB::transaction(function () use ($fiscalYear): void {
+            $netIncome = $this->getNetIncome(
+                $fiscalYear->start_date,
+                $fiscalYear->end_date,
+            );
+
+            // Close income and expense accounts to retained earnings
+            $retainedEarnings = Account::where('code', '3100')->first()
+                ?? throw new RuntimeException('Retained Earnings account (3100) not found');
+
+            $incomeSummary = Account::where('code', '3900')->first();
+
+            if (!$incomeSummary) {
+                $incomeSummary = Account::create([
+                    'code'      => '3900',
+                    'name'      => 'Income Summary',
+                    'type'      => 'equity',
+                    'subtype'   => 'equity',
+                    'is_system' => true,
+                ]);
+            }
+
+            // Transfer net income to retained earnings
+            if (abs($netIncome) > 0.005) {
+                $entry = $this->createJournalEntry([
+                    'date'        => $fiscalYear->end_date,
+                    'reference'   => 'YE-' . $fiscalYear->name,
+                    'type'        => 'closing',
+                    'description' => "Closing entry for fiscal year {$fiscalYear->name}",
+                    'lines'       => [
+                        [
+                            'account_id'  => $incomeSummary->id,
+                            'type'        => $netIncome > 0 ? 'debit' : 'credit',
+                            'amount'      => abs($netIncome),
+                            'description' => 'Income Summary',
+                        ],
+                        [
+                            'account_id'  => $retainedEarnings->id,
+                            'type'        => $netIncome > 0 ? 'credit' : 'debit',
+                            'amount'      => abs($netIncome),
+                            'description' => 'Retained Earnings',
+                        ],
+                    ],
+                ]);
+
+                $entry->post();
+            }
+
+            $fiscalYear->update(['is_closed' => true]);
+        });
     }
 }

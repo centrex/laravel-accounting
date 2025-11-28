@@ -8,17 +8,17 @@ use Centrex\LaravelAccounting\Traits\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo};
 
-class JournalEntryLine extends Model
+class PayrollEntryLine extends Model
 {
     use AddTablePrefix;
 
     protected function getTableSuffix(): string
     {
-        return 'journal_entry_lines';
+        return 'payroll_entries_lines';
     }
 
     protected $fillable = [
-        'journal_entry_id', 'account_id', 'type',
+        'payroll_entry_id', 'employee_id', 'type',
         'amount', 'description', 'reference',
     ];
 
@@ -26,13 +26,13 @@ class JournalEntryLine extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function journalEntry(): BelongsTo
+    public function payrollEntry(): BelongsTo
     {
-        return $this->belongsTo(JournalEntry::class);
+        return $this->belongsTo(PayrollEntry::class);
     }
 
-    public function account(): BelongsTo
+    public function employee(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Employee::class);
     }
 }

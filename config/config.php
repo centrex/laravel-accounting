@@ -1,13 +1,16 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Base Currency
+    |--------------------------------------------------------------------------
+    |
+    | Set the base currency for the accounting system
+    |
+    */
+    
     'base_currency' => 'BDT',
-
-    'model-classes' => [
-        'ledger'              => Centrex\LaravelAccounting\Models\Ledger::class,
-        'journal'             => Centrex\LaravelAccounting\Models\Journal::class,
-        'journal-transaction' => Centrex\LaravelAccounting\Models\JournalTransaction::class,
-    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -1,25 +1,32 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Centrex\LaravelAccounting\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Centrex\LaravelAccounting\Traits\AddTablePrefix;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 class JournalEntry extends Model
 {
+    use AddTablePrefix;
     use SoftDeletes;
+
+    protected function getTableSuffix(): string
+    {
+        return 'journal_entries';
+    }
 
     protected $fillable = [
         'entry_number', 'date', 'reference', 'type', 'description',
         'currency', 'exchange_rate', 'created_by', 'approved_by',
-        'approved_at', 'status'
+        'approved_at', 'status',
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'approved_at' => 'datetime',
+        'date'          => 'date',
+        'approved_at'   => 'datetime',
         'exchange_rate' => 'decimal:6',
     ];
 
@@ -27,13 +34,13 @@ class JournalEntry extends Model
     {
         parent::boot();
 
-        static::creating(function ($entry) {
+        static::creating(function ($entry): void {
             if (!$entry->entry_number) {
                 $entry->entry_number = 'JE-' . date('Ymd') . '-' . str_pad(
                     static::whereDate('created_at', today())->count() + 1,
                     4,
                     '0',
-                    STR_PAD_LEFT
+                    STR_PAD_LEFT,
                 );
             }
         });
@@ -59,7 +66,7 @@ class JournalEntry extends Model
     {
         $debits = $this->lines()->where('type', 'debit')->sum('amount');
         $credits = $this->lines()->where('type', 'credit')->sum('amount');
-        
+
         return abs($debits - $credits) < 0.01; // Allow for rounding
     }
 
@@ -75,9 +82,9 @@ class JournalEntry extends Model
         }
 
         $this->update([
-            'status' => 'posted',
+            'status'      => 'posted',
             'approved_by' => auth()->id(),
-            'approved_at' => now()
+            'approved_at' => now(),
         ]);
 
         return true;
@@ -91,6 +98,7 @@ class JournalEntry extends Model
         }
 
         $this->update(['status' => 'void']);
+
         return true;
     }
 }

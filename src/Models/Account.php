@@ -1,26 +1,33 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Centrex\LaravelAccounting\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Centrex\LaravelAccounting\Traits\AddTablePrefix;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 // Account Model
 class Account extends Model
 {
+    use AddTablePrefix;
     use SoftDeletes;
 
+    protected function getTableSuffix(): string
+    {
+        return 'accounts';
+    }
+
     protected $fillable = [
-        'code', 'name', 'type', 'subtype', 'parent_id', 
-        'description', 'currency', 'is_active', 'is_system', 'level'
+        'code', 'name', 'type', 'subtype', 'parent_id',
+        'description', 'currency', 'is_active', 'is_system', 'level',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_system' => 'boolean',
-        'level' => 'integer',
+        'level'     => 'integer',
     ];
 
     public function parent(): BelongsTo
@@ -47,14 +54,14 @@ class Account extends Model
     public function getCurrentBalance(): float
     {
         $debits = $this->journalEntryLines()
-            ->whereHas('journalEntry', function ($q) {
+            ->whereHas('journalEntry', function ($q): void {
                 $q->where('status', 'posted');
             })
             ->where('type', 'debit')
             ->sum('amount');
 
         $credits = $this->journalEntryLines()
-            ->whereHas('journalEntry', function ($q) {
+            ->whereHas('journalEntry', function ($q): void {
                 $q->where('status', 'posted');
             })
             ->where('type', 'credit')
@@ -63,9 +70,9 @@ class Account extends Model
         // Normal balance depends on account type
         if (in_array($this->type, ['asset', 'expense'])) {
             return $debits - $credits; // Debit normal balance
-        } else {
-            return $credits - $debits; // Credit normal balance
         }
+
+        return $credits - $debits; // Credit normal balance
     }
 
     // Check if account has normal debit balance
