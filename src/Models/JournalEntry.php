@@ -1,0 +1,96 @@
+<?php
+
+namespace Centrex\LaravelAccounting\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class JournalEntry extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'entry_number', 'date', 'reference', 'type', 'description',
+        'currency', 'exchange_rate', 'created_by', 'approved_by',
+        'approved_at', 'status'
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'approved_at' => 'datetime',
+        'exchange_rate' => 'decimal:6',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($entry) {
+            if (!$entry->entry_number) {
+                $entry->entry_number = 'JE-' . date('Ymd') . '-' . str_pad(
+                    static::whereDate('created_at', today())->count() + 1,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            }
+        });
+    }
+
+    public function lines(): HasMany
+    {
+        return $this->hasMany(JournalEntryLine::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Validate double-entry (debits = credits)
+    public function isBalanced(): bool
+    {
+        $debits = $this->lines()->where('type', 'debit')->sum('amount');
+        $credits = $this->lines()->where('type', 'credit')->sum('amount');
+        
+        return abs($debits - $credits) < 0.01; // Allow for rounding
+    }
+
+    // Post journal entry
+    public function post(): bool
+    {
+        if (!$this->isBalanced()) {
+            throw new \Exception('Journal entry is not balanced');
+        }
+
+        if ($this->status === 'posted') {
+            throw new \Exception('Journal entry is already posted');
+        }
+
+        $this->update([
+            'status' => 'posted',
+            'approved_by' => auth()->id(),
+            'approved_at' => now()
+        ]);
+
+        return true;
+    }
+
+    // Void journal entry
+    public function void(): bool
+    {
+        if ($this->status !== 'posted') {
+            throw new \Exception('Only posted entries can be voided');
+        }
+
+        $this->update(['status' => 'void']);
+        return true;
+    }
+}

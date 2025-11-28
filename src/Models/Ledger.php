@@ -6,6 +6,7 @@ namespace Centrex\LaravelAccounting\Models;
 
 use Carbon\{Carbon, CarbonInterface};
 use Centrex\LaravelAccounting\Enums\LedgerType;
+use Centrex\LaravelAccounting\ModelTraits\AddTablePrefix;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{HasMany, HasManyThrough};
 use Money\{Currency, Money};
@@ -18,8 +19,12 @@ use Money\{Currency, Money};
  */
 class Ledger extends Model
 {
-    /** @var string */
-    protected $table = 'accounting_ledgers';
+    use AddTablePrefix;
+
+    protected function getTableSuffix()
+    {
+        return 'ledgers';
+    }
 
     protected $casts = [
         'type' => LedgerType::class,

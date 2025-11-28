@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting;
 
 use Illuminate\Support\ServiceProvider;
+use Centrex\LaravelAccounting\Services\AccountingService;
 
 class LaravelAccountingServiceProvider extends ServiceProvider
 {
@@ -15,9 +16,9 @@ class LaravelAccountingServiceProvider extends ServiceProvider
          * Optional methods to load your package assets
          */
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'accounting');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'accounting');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'accounting');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -40,7 +41,7 @@ class LaravelAccountingServiceProvider extends ServiceProvider
             ], 'accounting-lang');*/
 
             // Registering package commands.
-            // $this->commands([]);
+            $this->commands([]);
         }
     }
 
@@ -52,5 +53,6 @@ class LaravelAccountingServiceProvider extends ServiceProvider
 
         // Register the main class to use with the facade
         $this->app->singleton('accounting', fn (): Accounting => new Accounting());
+        $this->app->singleton(AccountingService::class);
     }
 }

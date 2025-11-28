@@ -20,8 +20,18 @@ return [
 
     'drivers' => [
         'database' => [
-            // 'connection' => 'example',
             'connection' => null,
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Table Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Prefix for all accounting tables
+    |
+    */
+
+    'table_prefix' => 'acct_',
 ];

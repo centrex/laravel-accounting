@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Models;
 
 use Centrex\LaravelAccounting\Casts\{CurrencyCast, MoneyCast};
+use Centrex\LaravelAccounting\ModelTraits\AddTablePrefix;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\{Carbon, Str};
@@ -27,8 +28,12 @@ use Money\{Currency, Money};
  */
 class JournalTransaction extends Model
 {
-    /** @var string */
-    protected $table = 'accounting_journal_transactions';
+    use AddTablePrefix;
+
+    protected function getTableSuffix()
+    {
+        return 'journal_transactions';
+    }
 
     /** @var bool` */
     public $incrementing = false;

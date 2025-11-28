@@ -10,6 +10,7 @@ namespace Centrex\LaravelAccounting\Models;
 
 use Carbon\{Carbon, CarbonInterface};
 use Centrex\LaravelAccounting\Casts\{CurrencyCast, MoneyCast};
+use Centrex\LaravelAccounting\ModelTraits\AddTablePrefix;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
 use Money\{Currency, Money};
@@ -27,8 +28,12 @@ use Money\{Currency, Money};
  */
 class Journal extends Model
 {
-    /** @var string */
-    protected $table = 'accounting_journals';
+    use AddTablePrefix;
+
+    protected function getTableSuffix()
+    {
+        return 'journals';
+    }
 
     /** @var array */
     protected $casts = [
