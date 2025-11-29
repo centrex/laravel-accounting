@@ -31,7 +31,6 @@ return new class() extends Migration
             $table->string('currency', 3)->default('BDT');
             $table->boolean('is_active')->default(true);
             $table->nullableMorphs('modelable');
-            $table->nullableMorphs('modelable');
             $table->boolean('is_system')->default(false);
             $table->integer('level')->default(1);
             $table->timestamps();
