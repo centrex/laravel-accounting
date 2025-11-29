@@ -21,8 +21,8 @@ return new class() extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->enum('type', AccountType::values());
-            $table->enum('subtype', AccountSubtype::values())->nullable();
+            $table->string('type');
+            $table->string('subtype')->nullable();
 
             // self-referencing parent (set null on delete to avoid accidental subtree deletion)
             $table->foreignId('parent_id')->nullable()->constrained($prefix . 'accounts')->onDelete('set null');

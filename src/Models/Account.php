@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Models;
 
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Centrex\LaravelAccounting\Enums\AccountSubtype;
+use Centrex\LaravelAccounting\Enums\AccountType;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -19,12 +21,24 @@ class Account extends Model
         return 'accounts';
     }
 
+    /**
+     * Specify the connection, since this implements multitenant solution
+     * Called via constructor to faciliate testing
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
+    }
+
     protected $fillable = [
         'code', 'name', 'type', 'subtype', 'parent_id',
         'description', 'currency', 'is_active', 'is_system', 'level',
     ];
 
     protected $casts = [
+        'type'      => AccountType::class,
+        'subtype'   => AccountSubtype::class,
         'is_active' => 'boolean',
         'is_system' => 'boolean',
         'level'     => 'integer',

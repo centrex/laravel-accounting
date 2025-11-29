@@ -17,6 +17,16 @@ class AccountBalance extends Model
         return 'account_balances';
     }
 
+    /**
+     * Specify the connection, since this implements multitenant solution
+     * Called via constructor to faciliate testing
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
+    }
+
     protected $fillable = [
         'account_id', 'fiscal_period_id', 'debit', 'credit', 'balance',
     ];

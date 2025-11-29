@@ -19,6 +19,16 @@ class JournalEntry extends Model
         return 'journal_entries';
     }
 
+    /**
+     * Specify the connection, since this implements multitenant solution
+     * Called via constructor to faciliate testing
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
+    }
+
     protected $fillable = [
         'entry_number', 'date', 'reference', 'type', 'description',
         'currency', 'exchange_rate', 'created_by', 'approved_by',

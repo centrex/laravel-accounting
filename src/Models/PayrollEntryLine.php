@@ -17,6 +17,16 @@ class PayrollEntryLine extends Model
         return 'payroll_entries_lines';
     }
 
+    /**
+     * Specify the connection, since this implements multitenant solution
+     * Called via constructor to faciliate testing
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
+    }
+
     protected $fillable = [
         'payroll_entry_id', 'employee_id', 'type',
         'amount', 'description', 'reference',
