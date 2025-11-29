@@ -222,7 +222,6 @@ return new class() extends Migration
             $table->string('reference')->nullable();
             $table->timestamps();
 
-            $table->index(['itemable_type', 'itemable_id']);
             $table->index('invoice_id');
         });
 
@@ -263,7 +262,6 @@ return new class() extends Migration
             $table->string('reference')->nullable();
             $table->timestamps();
 
-            $table->index(['itemable_type', 'itemable_id']);
             $table->index('bill_id');
         });
 
