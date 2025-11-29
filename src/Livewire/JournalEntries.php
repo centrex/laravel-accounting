@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Models\{Account, JournalEntry};
-use Centrex\LaravelAccounting\Services\AccountingService;
+use Centrex\LaravelAccounting\Accounting;
 use Livewire\{Component, WithPagination};
 
 class JournalEntries extends Component
@@ -66,7 +66,7 @@ class JournalEntries extends Component
             'lines.*.amount'     => 'required|numeric|min:0.01',
         ]);
 
-        $service = app(AccountingService::class);
+        $service = app(Accounting::class);
 
         try {
             $entry = $service->createJournalEntry([

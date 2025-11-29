@@ -1,3 +1,4 @@
+<x-layouts.app :title="__('Chart of Accounts')">
 <div class="chart-of-accounts">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Chart of Accounts</h2>
@@ -227,6 +228,7 @@
         </div>
     @endif
 </div>
+</x-layouts.app>
 
 <style>
     .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; }

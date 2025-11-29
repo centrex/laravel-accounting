@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Models\JournalEntry;
-use Centrex\LaravelAccounting\Services\AccountingService;
+use Centrex\LaravelAccounting\Accounting;
 use Livewire\Component;
 
 class AccountingDashboard extends Component
@@ -59,7 +59,7 @@ class AccountingDashboard extends Component
 
     public function render()
     {
-        $service = app(AccountingService::class);
+        $service = app(Accounting::class);
 
         // Get key metrics
         $incomeStatement = $service->getIncomeStatement($this->startDate, $this->endDate);

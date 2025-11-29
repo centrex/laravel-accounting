@@ -1,3 +1,4 @@
+<x-layouts.app :title="__('Accounting Journal Entries')">
 <div class="accounting-journal-entries">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
@@ -226,6 +227,7 @@
         </div>
     @endif
 </div>
+</x-layouts.app>
 
 <style>
     .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; }

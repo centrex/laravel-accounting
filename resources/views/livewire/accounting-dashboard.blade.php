@@ -1,3 +1,4 @@
+<x-layouts.app :title="__('Accounting Dashboard')">
 <div class="accounting-dashboard">
     <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Accounting Dashboard</h2>
@@ -209,3 +210,4 @@
         </div>
     </div>
 </div>
+</x-layouts.app>

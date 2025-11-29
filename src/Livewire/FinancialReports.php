@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Livewire;
 
-use Centrex\LaravelAccounting\Services\AccountingService;
+use Centrex\LaravelAccounting\Accounting;
 use Livewire\Component;
 
 class FinancialReports extends Component
@@ -25,7 +25,7 @@ class FinancialReports extends Component
 
     public function generateReport(): void
     {
-        $service = app(AccountingService::class);
+        $service = app(Accounting::class);
 
         try {
             switch ($this->reportType) {
