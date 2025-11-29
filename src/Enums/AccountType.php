@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Enums;
 
+use Centrex\LaravelAccounting\Concerns\EnumHelpers;
+
 /**
  * High-level general ledger account categories.
  *
@@ -13,6 +15,8 @@ namespace Centrex\LaravelAccounting\Enums;
  */
 enum AccountType: string
 {
+    use EnumHelpers;
+
     // Debit-balance accounts
     case ASSET = 'asset';
     case EXPENSE = 'expense';

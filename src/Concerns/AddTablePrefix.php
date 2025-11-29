@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Traits;
+namespace Centrex\LaravelAccounting\Concerns;
 
 /**
  * A model that has accounting table with prefix.

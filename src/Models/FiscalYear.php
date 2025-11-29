@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
-use Centrex\LaravelAccounting\Traits\AddTablePrefix;
-use Illuminate\Database\Eloquent\{Model};
-use Illuminate\Database\Eloquent\Relations\{HasMany};
+use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FiscalYear extends Model
 {

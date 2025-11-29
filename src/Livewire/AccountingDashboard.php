@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Livewire;
 
-use Centrex\LaravelAccounting\Models\{JournalEntry};
+use Centrex\LaravelAccounting\Models\JournalEntry;
 use Centrex\LaravelAccounting\Services\AccountingService;
-use Livewire\{Component};
+use Livewire\Component;
 
 class AccountingDashboard extends Component
 {

@@ -162,6 +162,28 @@ return new class() extends Migration
             $table->index('is_active');
         });
 
+        // Employees
+        Schema::connection($connection)->create($prefix . 'employees', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique();
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
+            $table->text('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->string('tax_id')->nullable();
+            $table->string('currency', 3)->default('BDT');
+            $table->decimal('credit_limit', 18, 2)->default(0);
+            $table->integer('payment_terms')->default(30); // days
+            $table->boolean('is_active')->default(true);
+            $table->nullableMorphs('modelable');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('is_active');
+        });
+
         // Invoices
         Schema::connection($connection)->create($prefix . 'invoices', function (Blueprint $table) use ($prefix) {
             $table->id();

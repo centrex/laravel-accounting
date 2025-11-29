@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
-use Centrex\LaravelAccounting\Traits\AddTablePrefix;
-use Illuminate\Database\Eloquent\{Model};
+use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 class FiscalPeriod extends Model

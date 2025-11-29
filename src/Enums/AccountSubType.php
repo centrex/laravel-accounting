@@ -4,8 +4,13 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Enums;
 
+use Centrex\LaravelAccounting\Concerns\EnumHelpers;
+
 enum AccountSubtype: string
 {
+    use EnumHelpers;
+
+    // Cash
     case CASH = 'cash';
 
     // Assets

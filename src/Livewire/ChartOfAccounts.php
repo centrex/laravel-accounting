@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Livewire;
 
-use Centrex\LaravelAccounting\Models\{Account};
+use Centrex\LaravelAccounting\Models\Account;
 use Livewire\{Component, WithPagination};
 
 class ChartOfAccounts extends Component
