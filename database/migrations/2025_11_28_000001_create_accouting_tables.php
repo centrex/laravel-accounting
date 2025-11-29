@@ -82,7 +82,7 @@ return new class() extends Migration
         // Fiscal Years
         Schema::connection($connection)->create($prefix . 'fiscal_years', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->date('start_date');
             $table->date('end_date');
             $table->boolean('is_closed')->default(false);
