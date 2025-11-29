@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Models;
 
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -36,6 +37,7 @@ class Invoice extends Model
 
     protected $casts = [
         'invoice_date'    => 'date',
+        'status'          => EntryStatus::class,
         'due_date'        => 'date',
         'subtotal'        => 'decimal:2',
         'tax_amount'      => 'decimal:2',

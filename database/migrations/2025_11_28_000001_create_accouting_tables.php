@@ -56,7 +56,7 @@ return new class() extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
 
             $table->timestamp('approved_at')->nullable();
-            $table->enum('status', ['draft', 'posted', 'void'])->default('draft');
+            $table->string('status')->default('draft');
             $table->timestamps();
             $table->softDeletes();
 
@@ -196,7 +196,7 @@ return new class() extends Migration
             $table->decimal('total', 18, 2);
             $table->decimal('paid_amount', 18, 2)->default(0);
             $table->string('currency', 3)->default('BDT');
-            $table->enum('status', ['draft', 'sent', 'paid', 'partial', 'overdue', 'void'])->default('draft');
+            $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
             $table->timestamps();
@@ -237,7 +237,7 @@ return new class() extends Migration
             $table->decimal('total', 18, 2);
             $table->decimal('paid_amount', 18, 2)->default(0);
             $table->string('currency', 3)->default('BDT');
-            $table->enum('status', ['draft', 'approved', 'paid', 'partial', 'overdue', 'void'])->default('draft');
+            $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
             $table->timestamps();
@@ -269,7 +269,7 @@ return new class() extends Migration
         Schema::connection($connection)->create($prefix . 'payments', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->string('payment_number')->unique();
-            $table->morphs('payable'); // invoice or bill
+            $table->morphs('modelable'); // invoice or bill
             $table->date('payment_date');
             $table->decimal('amount', 18, 2);
             $table->string('payment_method'); // cash, check, bank_transfer, card
@@ -279,7 +279,6 @@ return new class() extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['payable_type', 'payable_id']);
             $table->index('payment_date');
         });
 
@@ -325,7 +324,7 @@ return new class() extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('approved_at')->nullable();
-            $table->enum('status', ['draft', 'posted', 'void'])->default('draft');
+            $table->string('status')->default('draft');
             $table->timestamps();
             $table->softDeletes();
 

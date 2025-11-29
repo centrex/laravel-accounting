@@ -6,6 +6,7 @@ namespace Centrex\LaravelAccounting\Models;
 
 use App\Models\User;
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Centrex\LaravelAccounting\Enums\JvStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -37,6 +38,7 @@ class JournalEntry extends Model
 
     protected $casts = [
         'date'          => 'date',
+        'status'        => JvStatus::class,
         'approved_at'   => 'datetime',
         'exchange_rate' => 'decimal:6',
     ];

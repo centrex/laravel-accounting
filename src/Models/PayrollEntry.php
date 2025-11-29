@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Models;
 
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -33,6 +34,7 @@ class PayrollEntry extends Model
 
     protected $casts = [
         'date'         => 'date',
+        'status'       => EntryStatus::class,
         'total_amount' => 'decimal:2',
     ];
 
