@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Database\Seeders;
+namespace Centrex\LaravelAccounting\Database\Seeders;
 
 use Carbon\Carbon;
 use Centrex\LaravelAccounting\Models\{Account, Customer, FiscalPeriod, FiscalYear, TaxRate, Vendor};
