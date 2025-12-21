@@ -39,7 +39,8 @@
     "autoload": {
         "psr-4": {
             "Centrex\\LaravelAccounting\\": "src/",
-            "Centrex\\LaravelAccounting\\Database\\Factories\\": "database/factories/"
+            "Centrex\\LaravelAccounting\\Database\\Factories\\": "database/factories/",
+            "Centrex\\LaravelAccounting\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
