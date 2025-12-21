@@ -24,7 +24,7 @@ enum AccountType: string
     // Credit-balance accounts
     case LIABILITY = 'liability';
     case EQUITY = 'equity';   // also called Capital / Net Worth
-    case INCOME = 'income';   // same as Revenue
+    case REVENUE = 'revenue';
 
     // Optional fallback for non-standard accounts
     case OTHER = 'other';
