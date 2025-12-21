@@ -7,16 +7,24 @@ namespace Centrex\LaravelAccounting;
 use Centrex\LaravelAccounting\Commands\AccountingReportCommand;
 use Centrex\LaravelAccounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\LaravelAccounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
+use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, ChartOfAccounts, FinancialReports, JournalEntries};
 use Centrex\LaravelAccounting\Models\{BillItem, InvoiceItem, JournalEntry, Payment};
 use Centrex\LaravelAccounting\Observers\{BillItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class LaravelAccountingServiceProvider extends ServiceProvider
 {
     /** Bootstrap the application services. */
     public function boot(): void
     {
+        // Register Livewire Component
+        Livewire::component('accounting-dashboard', AccountingDashboard::class);
+        Livewire::component('chart-of-accounts', ChartOfAccounts::class);
+        Livewire::component('financian-reports', FinancialReports::class);
+        Livewire::component('juornal-entries', JournalEntries::class);
+
         // Register model observers
         JournalEntry::observe(JournalEntryObserver::class);
         Payment::observe(PaymentObserver::class);

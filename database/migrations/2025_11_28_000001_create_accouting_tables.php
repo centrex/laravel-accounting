@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 // database/migrations/2025_11_28_000001_create_accounting_tables.php
 
-use Centrex\LaravelAccounting\Enums\{AccountSubtype, AccountType};
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

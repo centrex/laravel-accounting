@@ -12,5 +12,5 @@ enum JvStatus: string
 
     case DRAFT = 'draft';
     case POSTED = 'posted';
-    case VOID = 'void'; 
+    case VOID = 'void';
 }

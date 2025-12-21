@@ -15,5 +15,5 @@ enum EntryStatus: string
     case PAID = 'paid';
     case PARTIAL = 'partial';
     case OVERDUE = 'overdue';
-    case VOID = 'void'; 
+    case VOID = 'void';
 }

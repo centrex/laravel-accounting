@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Livewire;
 
-use Centrex\LaravelAccounting\Models\{Account, JournalEntry};
 use Centrex\LaravelAccounting\Accounting;
+use Centrex\LaravelAccounting\Models\{Account, JournalEntry};
 use Livewire\{Component, WithPagination};
 
 class JournalEntries extends Component
