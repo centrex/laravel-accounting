@@ -268,7 +268,7 @@ return new class() extends Migration
         Schema::connection($connection)->create($prefix . 'payments', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->string('payment_number')->unique();
-            $table->morphs('modelable'); // invoice or bill
+            $table->nullableMorphs('payable'); // invoice or bill (payable_type, payable_id)
             $table->date('payment_date');
             $table->decimal('amount', 18, 2);
             $table->string('payment_method'); // cash, check, bank_transfer, card

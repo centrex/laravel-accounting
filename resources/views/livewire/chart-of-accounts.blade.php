@@ -1,240 +1,190 @@
 <x-layouts.app :title="__('Chart of Accounts')">
-<div class="chart-of-accounts">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Chart of Accounts</h2>
-        <button wire:click="openModal()" class="btn btn-primary">
-            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            New Account
-        </button>
-    </div>
+<x-tallui-notification />
 
-    @if (session()->has('message'))
-        <div class="alert alert-success mb-4">{{ session('message') }}</div>
-    @endif
-    @if (session()->has('error'))
-        <div class="alert alert-error mb-4">{{ session('error') }}</div>
-    @endif
+<x-tallui-page-header title="Chart of Accounts" subtitle="Manage your general ledger accounts" icon="o-rectangle-stack">
+    <x-slot:actions>
+        <x-tallui-button wire:click="openModal()" icon="o-plus" class="btn-primary btn-sm">New Account</x-tallui-button>
+    </x-slot:actions>
+</x-tallui-page-header>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input type="text" wire:model.live.debounce.300ms="search" 
-                       placeholder="Code or name..."
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
-                <select wire:model.live="typeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+{{-- Filters --}}
+<x-tallui-card class="mb-4" padding="compact">
+    <div class="flex flex-wrap gap-3 items-end p-1">
+        <div class="flex-1 min-w-52">
+            <x-tallui-form-group label="Search">
+                <x-tallui-input wire:model.live.debounce.300ms="search" placeholder="Code or name…" class="input-sm" />
+            </x-tallui-form-group>
+        </div>
+        <div class="w-48">
+            <x-tallui-form-group label="Account Type">
+                <x-tallui-select wire:model.live="typeFilter" class="select-sm">
                     <option value="">All Types</option>
                     <option value="asset">Asset</option>
                     <option value="liability">Liability</option>
                     <option value="equity">Equity</option>
                     <option value="revenue">Revenue</option>
                     <option value="expense">Expense</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button wire:click="$set('typeFilter', '')" class="w-full px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                    Clear Filters
-                </button>
-            </div>
+                </x-tallui-select>
+            </x-tallui-form-group>
         </div>
+        @if($typeFilter || $search)
+            <x-tallui-button wire:click="$set('typeFilter', ''); $set('search', '')" class="btn-ghost btn-sm mb-0.5">Clear</x-tallui-button>
+        @endif
     </div>
+</x-tallui-card>
 
-    <!-- Accounts Table -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtype</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+{{-- Accounts Table --}}
+<x-tallui-card padding="none">
+    <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+            <thead>
+                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                    <th class="pl-5">Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Subtype</th>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th class="pr-5 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-base-200">
+                @forelse($accounts as $account)
+                    <tr class="hover:bg-base-50">
+                        <td class="pl-5">
+                            <span class="font-mono text-sm text-primary font-semibold">{{ $account->code }}</span>
+                            @if($account->is_system)
+                                <x-tallui-badge type="info" class="ml-1 badge-xs">System</x-tallui-badge>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="text-sm font-medium">{{ $account->name }}</div>
+                            @if($account->description)
+                                <div class="text-xs text-base-content/40 truncate max-w-xs">{{ $account->description }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            <x-tallui-badge :type="match($account->type->value ?? $account->type) {
+                                'asset'     => 'success',
+                                'liability' => 'error',
+                                'equity'    => 'info',
+                                'revenue'   => 'success',
+                                'expense'   => 'warning',
+                                default     => 'neutral',
+                            }">
+                                {{ ucfirst($account->type->value ?? $account->type) }}
+                            </x-tallui-badge>
+                        </td>
+                        <td class="text-sm text-base-content/60">
+                            {{ $account->subtype ? ucwords(str_replace('_', ' ', $account->subtype->value ?? $account->subtype)) : '—' }}
+                        </td>
+                        <td class="text-sm text-base-content/60">{{ $account->currency }}</td>
+                        <td>
+                            <button wire:click="toggleStatus({{ $account->id }})"
+                                class="text-sm {{ $account->is_active ? 'text-success' : 'text-base-content/30' }} hover:underline">
+                                {{ $account->is_active ? 'Active' : 'Inactive' }}
+                            </button>
+                        </td>
+                        <td class="pr-5 text-right">
+                            <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
+                        </td>
                     </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($accounts as $account)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-medium text-blue-600">{{ $account->code }}</span>
-                                @if($account->is_system)
-                                    <span class="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded">System</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">{{ $account->name }}</div>
-                                @if($account->description)
-                                    <div class="text-xs text-gray-500">{{ Str::limit($account->description, 50) }}</div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                    {{ $account->type === 'asset' ? 'bg-green-100 text-green-800' : '' }}
-                                    {{ $account->type === 'liability' ? 'bg-red-100 text-red-800' : '' }}
-                                    {{ $account->type === 'equity' ? 'bg-blue-100 text-blue-800' : '' }}
-                                    {{ $account->type === 'revenue' ? 'bg-purple-100 text-purple-800' : '' }}
-                                    {{ $account->type === 'expense' ? 'bg-orange-100 text-orange-800' : '' }}">
-                                    {{ ucfirst($account->type) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $account->subtype ? ucfirst(str_replace('_', ' ', $account->subtype)) : '-' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $account->currency }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <button wire:click="toggleStatus({{ $account->id }})" 
-                                        class="text-sm {{ $account->is_active ? 'text-green-600' : 'text-gray-400' }}">
-                                    {{ $account->is_active ? 'Active' : 'Inactive' }}
-                                </button>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <button wire:click="openModal({{ $account->id }})" class="text-blue-600 hover:text-blue-900">
-                                    Edit
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                No accounts found
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="px-6 py-4 border-t">
-            {{ $accounts->links() }}
-        </div>
+                @empty
+                    <tr>
+                        <td colspan="7">
+                            <x-tallui-empty-state title="No accounts found" description="Create your first account or adjust your filters" />
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
+    <div class="px-5 py-3 border-t border-base-200">{{ $accounts->links() }}</div>
+</x-tallui-card>
 
-    <!-- Create/Edit Modal -->
-    @if($showModal)
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold">{{ $accountId ? 'Edit' : 'New' }} Account</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
+{{-- Create/Edit Modal --}}
+<x-tallui-modal id="account-modal" :title="$accountId ? 'Edit Account' : 'New Account'" icon="o-rectangle-stack" size="lg">
+    <x-slot:trigger>
+        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'account-modal'); else $dispatch('close-modal', 'account-modal')"></span>
+    </x-slot:trigger>
 
-                <form wire:submit.prevent="save">
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Code *</label>
-                            <input type="text" wire:model="code" placeholder="e.g., 1000" 
-                                   class="w-full px-3 py-2 border rounded-md @error('code') border-red-500 @enderror">
-                            @error('code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Currency *</label>
-                            <input type="text" wire:model="currency" placeholder="USD" maxlength="3"
-                                   class="w-full px-3 py-2 border rounded-md @error('currency') border-red-500 @enderror">
-                            @error('currency') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                        <input type="text" wire:model="name" placeholder="Account name" 
-                               class="w-full px-3 py-2 border rounded-md @error('name') border-red-500 @enderror">
-                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Type *</label>
-                            <select wire:model="type" class="w-full px-3 py-2 border rounded-md @error('type') border-red-500 @enderror">
-                                <option value="">Select Type</option>
-                                <option value="asset">Asset</option>
-                                <option value="liability">Liability</option>
-                                <option value="equity">Equity</option>
-                                <option value="revenue">Revenue</option>
-                                <option value="expense">Expense</option>
-                            </select>
-                            @error('type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Subtype</label>
-                            <select wire:model="subtype" class="w-full px-3 py-2 border rounded-md">
-                                <option value="">Select Subtype</option>
-                                @if($type === 'asset')
-                                    <option value="current_asset">Current Asset</option>
-                                    <option value="fixed_asset">Fixed Asset</option>
-                                @elseif($type === 'liability')
-                                    <option value="current_liability">Current Liability</option>
-                                    <option value="long_term_liability">Long-term Liability</option>
-                                @elseif($type === 'equity')
-                                    <option value="equity">Equity</option>
-                                @elseif($type === 'revenue')
-                                    <option value="operating_revenue">Operating Revenue</option>
-                                    <option value="non_operating_revenue">Non-operating Revenue</option>
-                                @elseif($type === 'expense')
-                                    <option value="cost_of_goods_sold">Cost of Goods Sold</option>
-                                    <option value="operating_expense">Operating Expense</option>
-                                    <option value="non_operating_expense">Non-operating Expense</option>
-                                @endif
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Parent Account</label>
-                        <select wire:model="parent_id" class="w-full px-3 py-2 border rounded-md">
-                            <option value="">None (Top Level)</option>
-                            @foreach($parentAccounts as $parent)
-                                <option value="{{ $parent->id }}">{{ $parent->code }} - {{ $parent->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea wire:model="description" rows="3" 
-                                  class="w-full px-3 py-2 border rounded-md"></textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" wire:model="is_active" class="rounded border-gray-300">
-                            <span class="ml-2 text-sm text-gray-700">Active</span>
-                        </label>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" wire:click="$set('showModal', false)" 
-                                class="px-4 py-2 border rounded-md hover:bg-gray-50">
-                            Cancel
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            {{ $accountId ? 'Update' : 'Create' }} Account
-                        </button>
-                    </div>
-                </form>
-            </div>
+    <form wire:submit.prevent="save" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Account Code *" :error="$errors->first('code')">
+                <x-tallui-input wire:model="code" placeholder="e.g. 1000" class="{{ $errors->has('code') ? 'input-error' : '' }}" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Currency *" :error="$errors->first('currency')">
+                <x-tallui-input wire:model="currency" placeholder="BDT" maxlength="3" class="{{ $errors->has('currency') ? 'input-error' : '' }}" />
+            </x-tallui-form-group>
         </div>
-    @endif
-</div>
-</x-layouts.app>
 
-<style>
-    .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; }
-    .btn-primary { background-color: #3b82f6; color: white; }
-    .btn-primary:hover { background-color: #2563eb; }
-    .alert { padding: 1rem; border-radius: 0.375rem; margin-bottom: 1rem; }
-    .alert-success { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-    .alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-</style>
+        <x-tallui-form-group label="Account Name *" :error="$errors->first('name')">
+            <x-tallui-input wire:model="name" placeholder="Account name" class="{{ $errors->has('name') ? 'input-error' : '' }}" />
+        </x-tallui-form-group>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Type *" :error="$errors->first('type')">
+                <x-tallui-select wire:model.live="type" class="{{ $errors->has('type') ? 'select-error' : '' }}">
+                    <option value="">Select Type</option>
+                    <option value="asset">Asset</option>
+                    <option value="liability">Liability</option>
+                    <option value="equity">Equity</option>
+                    <option value="revenue">Revenue</option>
+                    <option value="expense">Expense</option>
+                </x-tallui-select>
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Subtype">
+                <x-tallui-select wire:model="subtype">
+                    <option value="">Select Subtype</option>
+                    @if($type === 'asset')
+                        <option value="current_asset">Current Asset</option>
+                        <option value="fixed_asset">Fixed Asset</option>
+                        <option value="other_asset">Other Asset</option>
+                    @elseif($type === 'liability')
+                        <option value="current_liability">Current Liability</option>
+                        <option value="long_term_liability">Long-term Liability</option>
+                    @elseif($type === 'equity')
+                        <option value="equity">Equity</option>
+                    @elseif($type === 'revenue')
+                        <option value="operating_revenue">Operating Revenue</option>
+                        <option value="non_operating_revenue">Non-operating Revenue</option>
+                    @elseif($type === 'expense')
+                        <option value="cost_of_goods_sold">Cost of Goods Sold</option>
+                        <option value="operating_expense">Operating Expense</option>
+                        <option value="non_operating_expense">Non-operating Expense</option>
+                    @endif
+                </x-tallui-select>
+            </x-tallui-form-group>
+        </div>
+
+        <x-tallui-form-group label="Parent Account">
+            <x-tallui-select wire:model="parent_id">
+                <option value="">None (Top Level)</option>
+                @foreach($parentAccounts as $parent)
+                    <option value="{{ $parent->id }}">{{ $parent->code }} — {{ $parent->name }}</option>
+                @endforeach
+            </x-tallui-select>
+        </x-tallui-form-group>
+
+        <x-tallui-form-group label="Description">
+            <x-tallui-textarea wire:model="description" rows="2" />
+        </x-tallui-form-group>
+
+        <x-tallui-toggle wire:model="is_active" label="Active account" />
+    </form>
+
+    <x-slot:footer>
+        <x-tallui-button wire:click="$set('showModal', false)" class="btn-ghost">Cancel</x-tallui-button>
+        <x-tallui-button wire:click="save" spinner="save" class="btn-primary">
+            {{ $accountId ? 'Update' : 'Create' }} Account
+        </x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('open-account-modal', () => window.dispatchEvent(new CustomEvent('open-modal', { detail: 'account-modal' })));
+        Livewire.on('close-account-modal', () => window.dispatchEvent(new CustomEvent('close-modal', { detail: 'account-modal' })));
+    });
+</script>
+</x-layouts.app>

@@ -1,0 +1,220 @@
+<x-layouts.app :title="__('Bills')">
+<x-tallui-notification />
+
+<x-tallui-page-header title="Bills" subtitle="Manage vendor bills and payments" icon="o-shopping-cart">
+    <x-slot:actions>
+        <x-tallui-button wire:click="openCreate" icon="o-plus" class="btn-primary btn-sm">New Bill</x-tallui-button>
+    </x-slot:actions>
+</x-tallui-page-header>
+
+{{-- Filters --}}
+<x-tallui-card class="mb-4" padding="compact">
+    <div class="flex flex-wrap gap-3 items-end p-1">
+        <div class="flex-1 min-w-52">
+            <x-tallui-form-group label="Search">
+                <x-tallui-input wire:model.live.debounce.300ms="search" placeholder="Bill # or vendor…" class="input-sm" />
+            </x-tallui-form-group>
+        </div>
+        <div class="w-36">
+            <x-tallui-form-group label="Status">
+                <x-tallui-select wire:model.live="statusFilter" class="select-sm">
+                    <option value="">All</option>
+                    <option value="draft">Draft</option>
+                    <option value="approved">Approved</option>
+                    <option value="partial">Partial</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                </x-tallui-select>
+            </x-tallui-form-group>
+        </div>
+        <div class="w-40">
+            <x-tallui-form-group label="From">
+                <x-tallui-input type="date" wire:model.live="dateFrom" class="input-sm" />
+            </x-tallui-form-group>
+        </div>
+        <div class="w-40">
+            <x-tallui-form-group label="To">
+                <x-tallui-input type="date" wire:model.live="dateTo" class="input-sm" />
+            </x-tallui-form-group>
+        </div>
+    </div>
+</x-tallui-card>
+
+{{-- Bills Table --}}
+<x-tallui-card padding="none">
+    <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+            <thead>
+                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                    <th class="pl-5">Bill #</th>
+                    <th>Vendor</th>
+                    <th>Bill Date</th>
+                    <th>Due Date</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Balance</th>
+                    <th>Status</th>
+                    <th class="pr-5 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-base-200">
+                @forelse($bills as $bill)
+                    <tr class="hover:bg-base-50">
+                        <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $bill->bill_number }}</td>
+                        <td class="text-sm font-medium">{{ $bill->vendor?->name }}</td>
+                        <td class="text-sm text-base-content/60">{{ $bill->bill_date->format('M d, Y') }}</td>
+                        <td class="text-sm {{ $bill->due_date->isPast() && !in_array($bill->status->value ?? $bill->status, ['paid','void']) ? 'text-error font-medium' : 'text-base-content/60' }}">
+                            {{ $bill->due_date->format('M d, Y') }}
+                        </td>
+                        <td class="text-right text-sm font-mono font-medium">{{ number_format($bill->total, 2) }}</td>
+                        <td class="text-right text-sm font-mono {{ $bill->balance > 0 ? 'text-warning' : 'text-success' }}">
+                            {{ number_format($bill->balance, 2) }}
+                        </td>
+                        <td>
+                            <x-tallui-badge :type="match($bill->status->value ?? $bill->status) {
+                                'paid'     => 'success',
+                                'approved' => 'info',
+                                'partial'  => 'warning',
+                                'overdue'  => 'error',
+                                default    => 'neutral',
+                            }">
+                                {{ ucfirst($bill->status->value ?? $bill->status) }}
+                            </x-tallui-badge>
+                        </td>
+                        <td class="pr-5">
+                            <div class="flex justify-end gap-1">
+                                @php $status = $bill->status->value ?? $bill->status; @endphp
+                                @if($status === 'draft')
+                                    <x-tallui-button wire:click="postBill({{ $bill->id }})"
+                                        wire:confirm="Approve bill {{ $bill->bill_number }}?"
+                                        class="btn-info btn-xs" spinner>Approve</x-tallui-button>
+                                @endif
+                                @if(in_array($status, ['approved', 'partial']) && $bill->balance > 0)
+                                    <x-tallui-button wire:click="openPayModal({{ $bill->id }})" class="btn-success btn-xs">Pay</x-tallui-button>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8">
+                            <x-tallui-empty-state title="No bills found" description="Record your first vendor bill" />
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    <div class="px-5 py-3 border-t border-base-200">{{ $bills->links() }}</div>
+</x-tallui-card>
+
+{{-- Create Bill Modal --}}
+<x-tallui-modal id="bill-modal" title="New Bill" icon="o-shopping-cart" size="xl">
+    <x-slot:trigger>
+        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'bill-modal'); else $dispatch('close-modal', 'bill-modal')"></span>
+    </x-slot:trigger>
+
+    <form wire:submit.prevent="save" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Vendor *" :error="$errors->first('vendor_id')">
+                <x-tallui-select wire:model="vendor_id" class="{{ $errors->has('vendor_id') ? 'select-error' : '' }}">
+                    <option value="">Select Vendor</option>
+                    @foreach($vendors as $vendor)
+                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                    @endforeach
+                </x-tallui-select>
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Currency">
+                <x-tallui-input wire:model="currency" maxlength="3" class="input-sm" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Bill Date *" :error="$errors->first('bill_date')">
+                <x-tallui-input type="date" wire:model="bill_date" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Due Date *" :error="$errors->first('due_date')">
+                <x-tallui-input type="date" wire:model="due_date" />
+            </x-tallui-form-group>
+        </div>
+
+        {{-- Line Items --}}
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-sm font-semibold text-base-content/70">Line Items</label>
+                <x-tallui-button wire:click="addItem" icon="o-plus" class="btn-ghost btn-xs">Add Item</x-tallui-button>
+            </div>
+            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                @foreach($items as $i => $item)
+                    <div class="flex gap-2 items-start bg-base-50 border border-base-200 p-2 rounded-xl">
+                        <div class="flex-1">
+                            <x-tallui-input wire:model="items.{{ $i }}.description" placeholder="Description" class="input-sm" />
+                        </div>
+                        <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.quantity" placeholder="Qty" class="input input-sm w-20 border-base-300 text-right" />
+                        <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.unit_price" placeholder="Price" class="input input-sm w-28 border-base-300 text-right" />
+                        <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.tax_rate" placeholder="Tax%" class="input input-sm w-20 border-base-300 text-right" />
+                        <x-tallui-button wire:click="removeItem({{ $i }})" icon="o-trash" class="btn-ghost btn-sm text-error" />
+                    </div>
+                @endforeach
+            </div>
+            <div class="mt-3 p-3 bg-base-50 rounded-xl border border-base-200 text-sm">
+                <div class="flex justify-between mb-1">
+                    <span class="text-base-content/60">Subtotal</span>
+                    <span class="font-mono">{{ number_format($this->subtotal, 2) }}</span>
+                </div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-base-content/60">Tax</span>
+                    <span class="font-mono">{{ number_format($this->taxTotal, 2) }}</span>
+                </div>
+                <div class="flex justify-between font-bold border-t border-base-200 pt-1 mt-1">
+                    <span>Total</span>
+                    <span class="font-mono">{{ number_format($this->total, 2) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <x-tallui-form-group label="Notes">
+            <x-tallui-textarea wire:model="notes" rows="2" placeholder="Optional notes…" />
+        </x-tallui-form-group>
+    </form>
+
+    <x-slot:footer>
+        <x-tallui-button wire:click="$set('showModal', false)" class="btn-ghost">Cancel</x-tallui-button>
+        <x-tallui-button wire:click="save" spinner="save" class="btn-primary">Create Bill</x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+
+{{-- Pay Bill Modal --}}
+<x-tallui-modal id="pay-bill-modal" title="Record Bill Payment" icon="o-banknotes" size="md">
+    <x-slot:trigger>
+        <span x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-bill-modal'); else $dispatch('close-modal', 'pay-bill-modal')"></span>
+    </x-slot:trigger>
+
+    <form wire:submit.prevent="recordPayment" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Payment Date *" :error="$errors->first('pay_date')">
+                <x-tallui-input type="date" wire:model="pay_date" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Amount *" :error="$errors->first('pay_amount')">
+                <x-tallui-input type="number" step="0.01" wire:model="pay_amount" class="text-right" />
+            </x-tallui-form-group>
+        </div>
+        <x-tallui-form-group label="Payment Method *">
+            <x-tallui-select wire:model="pay_method">
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="check">Check</option>
+                <option value="card">Card</option>
+                <option value="other">Other</option>
+            </x-tallui-select>
+        </x-tallui-form-group>
+        <x-tallui-form-group label="Reference">
+            <x-tallui-input wire:model="pay_reference" placeholder="Transaction ID, check #…" />
+        </x-tallui-form-group>
+    </form>
+
+    <x-slot:footer>
+        <x-tallui-button wire:click="$set('showPayModal', false)" class="btn-ghost">Cancel</x-tallui-button>
+        <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-warning">Record Payment</x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+</x-layouts.app>

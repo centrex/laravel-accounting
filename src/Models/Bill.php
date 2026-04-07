@@ -6,22 +6,19 @@ namespace Centrex\LaravelAccounting\Models;
 
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\EntryStatus;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 class Bill extends Model
 {
     use AddTablePrefix;
+    use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
         return 'bills';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -29,23 +26,44 @@ class Bill extends Model
     }
 
     protected $fillable = [
-        'bill_number', 'vendor_id', 'date', 'due_date', 'total_amount', 'status',
+        'bill_number', 'vendor_id', 'bill_date', 'due_date',
+        'subtotal', 'tax_amount', 'total', 'paid_amount',
+        'currency', 'status', 'notes', 'journal_entry_id',
     ];
 
     protected $casts = [
-        'date'         => 'date',
-        'status'       => EntryStatus::class,
-        'due_date'     => 'date',
-        'total_amount' => 'decimal:2',
+        'bill_date'  => 'date',
+        'due_date'   => 'date',
+        'status'     => EntryStatus::class,
+        'subtotal'   => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total'      => 'decimal:2',
+        'paid_amount' => 'decimal:2',
     ];
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 
     public function items(): HasMany
     {
         return $this->hasMany(BillItem::class);
     }
 
-    public function vendor(): BelongsTo
+    public function payments(): HasMany
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->hasMany(Payment::class, 'payable_id')
+            ->where('payable_type', self::class);
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function getBalanceAttribute(): float
+    {
+        return $this->total - $this->paid_amount;
     }
 }

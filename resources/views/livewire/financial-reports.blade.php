@@ -1,4 +1,6 @@
 <x-layouts.app :title="__('Financial Reports')">
+{{-- New tallui-based layout --}}
+<x-tallui-notification />
 <div class="financial-reports">
     <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Financial Reports</h2>
