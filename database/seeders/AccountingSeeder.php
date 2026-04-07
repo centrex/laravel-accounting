@@ -5,12 +5,23 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Database\Seeders;
 
 use Carbon\Carbon;
-use Centrex\LaravelAccounting\Models\{Account, Customer, FiscalPeriod, FiscalYear, TaxRate, Vendor};
 use Illuminate\Database\Seeder;
+use Centrex\LaravelAccounting\Models\{
+    Account,
+    Customer,
+    Vendor,
+    FiscalYear,
+    FiscalPeriod,
+    TaxRate
+};
+use Centrex\LaravelAccounting\Enums\{
+    AccountType,
+    AccountSubtype
+};
 
 class AccountingSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $this->seedChartOfAccounts();
         $this->seedFiscalYears();
@@ -19,349 +30,273 @@ class AccountingSeeder extends Seeder
         $this->seedTaxRates();
     }
 
-    protected function seedChartOfAccounts()
+    protected function seedChartOfAccounts(): void
     {
         $accounts = [
-            // ASSETS (1000-1999)
-            [
-                'code'        => '1000',
-                'name'        => 'Cash',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Cash on hand and in bank',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '1050',
-                'name'      => 'Petty Cash',
-                'type'      => 'asset',
-                'subtype'   => 'current_asset',
-                'parent_id' => null,
-                'is_system' => true,
-            ],
-            [
-                'code'        => '1100',
-                'name'        => 'Bank Account - Operating',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Primary business checking account',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '1200',
-                'name'        => 'Accounts Receivable',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Money owed by customers',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '1300',
-                'name'        => 'Inventory',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Goods held for sale',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '1400',
-                'name'        => 'Allowance for Doubtful Accounts',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Estimated uncollectible receivables',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '1500',
-                'name'        => 'Prepaid Expenses',
-                'type'        => 'asset',
-                'subtype'     => 'current_asset',
-                'description' => 'Expenses paid in advance',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '1700',
-                'name'        => 'Fixed Assets',
-                'type'        => 'asset',
-                'subtype'     => 'fixed_asset',
-                'description' => 'Long-term tangible assets',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '1750',
-                'name'      => 'Equipment',
-                'type'      => 'asset',
-                'subtype'   => 'fixed_asset',
-                'is_system' => true,
-            ],
-            [
-                'code'        => '1800',
-                'name'        => 'Accumulated Depreciation',
-                'type'        => 'asset',
-                'subtype'     => 'fixed_asset',
-                'description' => 'Contra-asset account for depreciation',
-                'is_system'   => true,
-            ],
 
-            // LIABILITIES (2000-2999)
+            /* ==========================================================
+             | ASSETS (1000–1999)
+             ==========================================================*/
             [
-                'code'        => '2000',
-                'name'        => 'Accounts Payable',
-                'type'        => 'liability',
-                'subtype'     => 'current_liability',
-                'description' => 'Money owed to vendors',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '2100',
-                'name'      => 'Credit Card Payable',
-                'type'      => 'liability',
-                'subtype'   => 'current_liability',
+                'code' => '1000',
+                'name' => 'Cash',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::CASH,
                 'is_system' => true,
             ],
             [
-                'code'        => '2200',
-                'name'        => 'Accrued Expenses',
-                'type'        => 'liability',
-                'subtype'     => 'current_liability',
-                'description' => 'Expenses incurred but not yet paid',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '2250',
-                'name'      => 'Salaries Payable',
-                'type'      => 'liability',
-                'subtype'   => 'current_liability',
+                'code' => '1050',
+                'name' => 'Petty Cash',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::PETTY_CASH_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code'        => '2300',
-                'name'        => 'Sales Tax Payable',
-                'type'        => 'liability',
-                'subtype'     => 'current_liability',
-                'description' => 'Sales tax collected from customers',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '2400',
-                'name'      => 'Income Tax Payable',
-                'type'      => 'liability',
-                'subtype'   => 'current_liability',
+                'code' => '1100',
+                'name' => 'Bank – Operating',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::CHECKING_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code'        => '2500',
-                'name'        => 'Long-term Debt',
-                'type'        => 'liability',
-                'subtype'     => 'long_term_liability',
-                'description' => 'Loans and notes payable',
-                'is_system'   => true,
-            ],
-
-            // EQUITY (3000-3999)
-            [
-                'code'        => '3000',
-                'name'        => 'Owner\'s Equity',
-                'type'        => 'equity',
-                'subtype'     => 'equity',
-                'description' => 'Owner investment in business',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '3100',
-                'name'        => 'Retained Earnings',
-                'type'        => 'equity',
-                'subtype'     => 'equity',
-                'description' => 'Accumulated profits',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '3200',
-                'name'        => 'Owner\'s Draw',
-                'type'        => 'equity',
-                'subtype'     => 'equity',
-                'description' => 'Owner withdrawals',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '3900',
-                'name'        => 'Income Summary',
-                'type'        => 'equity',
-                'subtype'     => 'equity',
-                'description' => 'Temporary account for closing entries',
-                'is_system'   => true,
-            ],
-
-            // REVENUE (4000-4999)
-            [
-                'code'        => '4000',
-                'name'        => 'Sales Revenue',
-                'type'        => 'revenue',
-                'subtype'     => 'operating_revenue',
-                'description' => 'Revenue from product sales',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '4100',
-                'name'        => 'Service Revenue',
-                'type'        => 'revenue',
-                'subtype'     => 'operating_revenue',
-                'description' => 'Revenue from services',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '4200',
-                'name'      => 'Consulting Revenue',
-                'type'      => 'revenue',
-                'subtype'   => 'operating_revenue',
+                'code' => '1200',
+                'name' => 'Accounts Receivable',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::ACCOUNTS_RECEIVABLE,
                 'is_system' => true,
             ],
             [
-                'code'        => '4900',
-                'name'        => 'Other Income',
-                'type'        => 'revenue',
-                'subtype'     => 'non_operating_revenue',
-                'description' => 'Non-operating income',
-                'is_system'   => true,
+                'code' => '1250',
+                'name' => 'Allowance for Doubtful Accounts',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::CONTRA_ACCOUNT,
+                'is_system' => true,
             ],
             [
-                'code'      => '4910',
-                'name'      => 'Interest Income',
-                'type'      => 'revenue',
-                'subtype'   => 'non_operating_revenue',
+                'code' => '1300',
+                'name' => 'Inventory',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::CURRENT_ASSET,
+                'is_system' => true,
+            ],
+            [
+                'code' => '1500',
+                'name' => 'Prepaid Expenses',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::PREPAID_EXPENSES,
+                'is_system' => true,
+            ],
+            [
+                'code' => '1700',
+                'name' => 'Property, Plant & Equipment',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::FIXED_ASSET,
+                'is_system' => true,
+            ],
+            [
+                'code' => '1800',
+                'name' => 'Accumulated Depreciation',
+                'type' => AccountType::ASSET,
+                'subtype' => AccountSubtype::CONTRA_ACCOUNT,
                 'is_system' => true,
             ],
 
-            // EXPENSES (5000-6999)
+            /* ==========================================================
+             | LIABILITIES (2000–2999)
+             ==========================================================*/
             [
-                'code'        => '5000',
-                'name'        => 'Cost of Goods Sold',
-                'type'        => 'expense',
-                'subtype'     => 'cost_of_goods_sold',
-                'description' => 'Direct costs of products sold',
-                'is_system'   => true,
-            ],
-            [
-                'code'        => '6000',
-                'name'        => 'Salaries & Wages',
-                'type'        => 'expense',
-                'subtype'     => 'operating_expense',
-                'description' => 'Employee compensation',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '6100',
-                'name'      => 'Rent Expense',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2000',
+                'name' => 'Accounts Payable',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::ACCOUNTS_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code'        => '6200',
-                'name'        => 'Utilities',
-                'type'        => 'expense',
-                'subtype'     => 'operating_expense',
-                'description' => 'Electric, water, gas, internet',
-                'is_system'   => true,
-            ],
-            [
-                'code'      => '6300',
-                'name'      => 'Office Supplies',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2100',
+                'name' => 'Credit Card Payable',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::CREDIT_CARD_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code'      => '6400',
-                'name'      => 'Insurance',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2200',
+                'name' => 'Accrued Expenses',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::ACCRUAL_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code'      => '6500',
-                'name'      => 'Marketing & Advertising',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2250',
+                'name' => 'Salaries Payable',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::SALARIES_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code'      => '6600',
-                'name'      => 'Depreciation Expense',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2300',
+                'name' => 'Sales Tax Payable',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::TAX_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code'      => '6700',
-                'name'      => 'Interest Expense',
-                'type'      => 'expense',
-                'subtype'   => 'non_operating_expense',
+                'code' => '2400',
+                'name' => 'Income Tax Payable',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::WITHHOLDING_TAX_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code'      => '6800',
-                'name'      => 'Bank Fees',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '2500',
+                'name' => 'Long-term Loan',
+                'type' => AccountType::LIABILITY,
+                'subtype' => AccountSubtype::LOAN_ACCOUNT,
+                'is_system' => true,
+            ],
+
+            /* ==========================================================
+             | EQUITY (3000–3999)
+             ==========================================================*/
+            [
+                'code' => '3000',
+                'name' => 'Capital',
+                'type' => AccountType::EQUITY,
+                'subtype' => AccountSubtype::CAPITAL_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code'        => '6900',
-                'name'        => 'Professional Fees',
-                'type'        => 'expense',
-                'subtype'     => 'operating_expense',
-                'description' => 'Legal, accounting, consulting',
-                'is_system'   => true,
+                'code' => '3100',
+                'name' => 'Retained Earnings',
+                'type' => AccountType::EQUITY,
+                'subtype' => AccountSubtype::RETAINED_EARNINGS_ACCOUNT,
+                'is_system' => true,
             ],
             [
-                'code'      => '6950',
-                'name'      => 'Travel & Entertainment',
-                'type'      => 'expense',
-                'subtype'   => 'operating_expense',
+                'code' => '3200',
+                'name' => 'Owner Drawings',
+                'type' => AccountType::EQUITY,
+                'subtype' => AccountSubtype::DRAWINGS_ACCOUNT,
+                'is_system' => true,
+            ],
+            [
+                'code' => '3900',
+                'name' => 'Income Summary',
+                'type' => AccountType::EQUITY,
+                'subtype' => AccountSubtype::MEMORANDUM_ACCOUNT,
+                'is_system' => true,
+            ],
+
+            /* ==========================================================
+             | REVENUE (4000–4999)
+             ==========================================================*/
+            [
+                'code' => '4000',
+                'name' => 'Sales Revenue',
+                'type' => AccountType::REVENUE,
+                'subtype' => AccountSubtype::OPERATING_REVENUE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '4100',
+                'name' => 'Service Revenue',
+                'type' => AccountType::REVENUE,
+                'subtype' => AccountSubtype::OPERATING_REVENUE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '4900',
+                'name' => 'Other Income',
+                'type' => AccountType::REVENUE,
+                'subtype' => AccountSubtype::NON_OPERATING_REVENUE,
+                'is_system' => true,
+            ],
+
+            /* ==========================================================
+             | EXPENSES (5000–6999)
+             ==========================================================*/
+            [
+                'code' => '5000',
+                'name' => 'Cost of Goods Sold',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::COST_OF_GOODS_SOLD,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6000',
+                'name' => 'Salaries & Wages',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::SALARIES_AND_WAGES_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6100',
+                'name' => 'Rent Expense',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::RENT_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6200',
+                'name' => 'Utilities Expense',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::UTILITIES_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6600',
+                'name' => 'Depreciation Expense',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::DEPRECIATION_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6700',
+                'name' => 'Interest Expense',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::INTEREST_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code' => '6800',
+                'name' => 'Bank Charges',
+                'type' => AccountType::EXPENSE,
+                'subtype' => AccountSubtype::BANK_FEES_EXPENSE,
                 'is_system' => true,
             ],
         ];
 
-        foreach ($accounts as $accountData) {
-            Account::firstOrCreate(
-                ['code' => $accountData['code']],
-                $accountData,
-            );
+        foreach ($accounts as $account) {
+            Account::firstOrCreate(['code' => $account['code']], $account);
         }
     }
 
-    protected function seedFiscalYears()
+    protected function seedFiscalYears(): void
     {
-        $currentYear = now()->year;
+        $year = now()->year;
 
         for ($i = -1; $i <= 1; $i++) {
-            $year = $currentYear + $i;
-            $fiscalYear = FiscalYear::firstOrCreate(
-                ['name' => "FY {$year}"],
+            $fy = FiscalYear::firstOrCreate(
+                ['name' => "FY " . ($year + $i)],
                 [
-                    'start_date' => Carbon::create($year, 1, 1),
-                    'end_date'   => Carbon::create($year, 12, 31),
+                    'start_date' => Carbon::create($year + $i, 1, 1),
+                    'end_date' => Carbon::create($year + $i, 12, 31),
                     'is_current' => $i === 0,
-                    'is_closed'  => $i < 0,
-                ],
+                    'is_closed' => $i < 0,
+                ]
             );
 
-            // Create monthly periods
-            for ($month = 1; $month <= 12; $month++) {
-                $startDate = Carbon::create($year, $month, 1);
-                $endDate = $startDate->copy()->endOfMonth();
-
+            for ($m = 1; $m <= 12; $m++) {
+                $start = Carbon::create($year + $i, $m, 1);
                 FiscalPeriod::firstOrCreate(
                     [
-                        'fiscal_year_id' => $fiscalYear->id,
-                        'name'           => $startDate->format('F Y'),
+                        'fiscal_year_id' => $fy->id,
+                        'name' => $start->format('F Y'),
                     ],
                     [
-                        'start_date' => $startDate,
-                        'end_date'   => $endDate,
-                        'is_closed'  => $i < 0 || ($i === 0 && $month < now()->month),
-                    ],
+                        'start_date' => $start,
+                        'end_date' => $start->copy()->endOfMonth(),
+                        'is_closed' => $i < 0,
+                    ]
                 );
             }
         }

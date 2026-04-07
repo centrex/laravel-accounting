@@ -7,25 +7,96 @@ namespace Centrex\LaravelAccounting\Enums;
 use Centrex\LaravelAccounting\Concerns\EnumHelpers;
 
 /**
- * High-level general ledger account categories.
+ * General Ledger Account Types (IFRS-aligned).
  *
  * Natural balances:
- * - Asset & Expense accounts → Debit (increase)
- * - Liability, Equity & Income accounts → Credit (increase)
+ * - Debit-balance accounts increase on debit
+ * - Credit-balance accounts increase on credit
+ *
+ * Used for:
+ * - Chart of Accounts structure
+ * - Journal validation
+ * - Financial statement classification
  */
 enum AccountType: string
 {
     use EnumHelpers;
 
-    // Debit-balance accounts
+    /**
+     * Assets
+     *
+     * Resources controlled by the entity from which
+     * future economic benefits are expected.
+     *
+     * Natural balance: Debit
+     * IFRS Reference: IAS 1
+     */
     case ASSET = 'asset';
+
+    /**
+     * Expenses
+     *
+     * Decreases in economic benefits during the accounting period
+     * in the form of outflows or depletions of assets.
+     *
+     * Includes:
+     * - Cost of Goods Sold (IAS 2)
+     * - Operating Expenses
+     * - Finance Costs (IAS 23)
+     *
+     * Natural balance: Debit
+     */
     case EXPENSE = 'expense';
 
-    // Credit-balance accounts
+    /**
+     * Liabilities
+     *
+     * Present obligations of the entity arising from past events,
+     * the settlement of which is expected to result in an outflow
+     * of economic resources.
+     *
+     * Natural balance: Credit
+     * IFRS Reference: IAS 1, IAS 37
+     */
     case LIABILITY = 'liability';
-    case EQUITY = 'equity';   // also called Capital / Net Worth
+
+    /**
+     * Equity
+     *
+     * Residual interest in the assets of the entity
+     * after deducting all liabilities.
+     *
+     * Includes:
+     * - Share capital
+     * - Retained earnings
+     * - Reserves
+     *
+     * Natural balance: Credit
+     */
+    case EQUITY = 'equity';
+
+    /**
+     * Revenue (Income)
+     *
+     * Increases in economic benefits during the accounting period
+     * arising from ordinary activities of the entity.
+     *
+     * Natural balance: Credit
+     * IFRS Reference: IFRS 15
+     */
     case REVENUE = 'revenue';
 
-    // Optional fallback for non-standard accounts
+    /**
+     * Other / Technical Accounts
+     *
+     * Used only for internal, transitional, or technical purposes.
+     *
+     * Examples:
+     * - Contra accounts
+     * - Suspense accounts
+     * - Clearing / transit accounts
+     *
+     * ⚠ Must never appear in published financial statements.
+     */
     case OTHER = 'other';
 }
