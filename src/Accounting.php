@@ -233,6 +233,66 @@ class Accounting
     }
 
     /**
+     * Record bill payment (mirrors recordInvoicePayment for vendor bills)
+     */
+    public function recordBillPayment(Bill $bill, array $paymentData): Payment
+    {
+        return DB::transaction(function () use ($bill, $paymentData) {
+            $payment = Payment::create([
+                'payment_number' => $paymentData['payment_number'] ?? ('PMT-' . time() . '-' . random_int(1000, 9999)),
+                'payable_type'   => Bill::class,
+                'payable_id'     => $bill->id,
+                'payment_date'   => $paymentData['date'],
+                'amount'         => $paymentData['amount'],
+                'payment_method' => $paymentData['method'],
+                'reference'      => $paymentData['reference'] ?? null,
+                'notes'          => $paymentData['notes'] ?? null,
+            ]);
+
+            $cashAccount = Account::where('code', '1000')->first()
+                ?? throw new RuntimeException('Cash account (1000) not found');
+            $apAccount = Account::where('code', '2000')->first()
+                ?? throw new RuntimeException('Accounts Payable account (2000) not found');
+
+            $entry = $this->createJournalEntry([
+                'date'        => $paymentData['date'],
+                'reference'   => $payment->payment_number,
+                'description' => "Payment for Bill {$bill->bill_number}",
+                'currency'    => $bill->currency ?? config('app.currency', 'BDT'),
+                'lines'       => [
+                    [
+                        'account_id'  => $apAccount->id,
+                        'type'        => 'debit',
+                        'amount'      => $paymentData['amount'],
+                        'description' => 'Accounts Payable',
+                    ],
+                    [
+                        'account_id'  => $cashAccount->id,
+                        'type'        => 'credit',
+                        'amount'      => $paymentData['amount'],
+                        'description' => 'Cash paid',
+                    ],
+                ],
+            ]);
+
+            $entry->post();
+
+            $payment->update(['journal_entry_id' => $entry->id]);
+
+            $bill->increment('paid_amount', $paymentData['amount']);
+            $bill->refresh();
+
+            if ((float) $bill->paid_amount >= (float) $bill->total) {
+                $bill->update(['status' => 'paid']);
+            } else {
+                $bill->update(['status' => 'partial']);
+            }
+
+            return $payment;
+        });
+    }
+
+    /**
      * Generate Trial Balance
      */
     public function getTrialBalance($startDate = null, $endDate = null): array
