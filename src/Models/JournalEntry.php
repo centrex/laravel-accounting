@@ -43,22 +43,6 @@ class JournalEntry extends Model
         'exchange_rate' => 'decimal:6',
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($entry): void {
-            if (!$entry->entry_number) {
-                $entry->entry_number = 'JE-' . date('Ymd') . '-' . str_pad(
-                    (string) (static::whereDate('created_at', today())->count() + 1),
-                    4,
-                    '0',
-                    STR_PAD_LEFT,
-                );
-            }
-        });
-    }
-
     public function lines(): HasMany
     {
         return $this->hasMany(JournalEntryLine::class);

@@ -47,22 +47,6 @@ class Invoice extends Model
         'exchange_rate'   => 'decimal:6',
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($invoice): void {
-            if (!$invoice->invoice_number) {
-                $invoice->invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(
-                    (string) (static::whereDate('created_at', today())->count() + 1),
-                    4,
-                    '0',
-                    STR_PAD_LEFT,
-                );
-            }
-        });
-    }
-
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

@@ -12,7 +12,7 @@ class InvoiceObserver
     {
         if (empty($invoice->invoice_number)) {
             $invoice->invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(
-                Invoice::whereDate('created_at', today())->count() + 1,
+                (string) (Invoice::whereDate('created_at', today())->count() + 1),
                 4,
                 '0',
                 STR_PAD_LEFT,

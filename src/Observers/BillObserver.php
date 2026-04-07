@@ -12,7 +12,7 @@ class BillObserver
     {
         if (empty($bill->bill_number)) {
             $bill->bill_number = 'BILL-' . date('Ymd') . '-' . str_pad(
-                Bill::whereDate('created_at', today())->count() + 1,
+                (string) (Bill::whereDate('created_at', today())->count() + 1),
                 4,
                 '0',
                 STR_PAD_LEFT,
