@@ -25,42 +25,42 @@
     <x-tallui-stat
         title="Total Revenue"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['revenue'], 2)"
-        icon="o-arrow-trending-up"
+        icon="heroicon-o-arrow-trending-up"
         icon-color="text-success"
         desc="Income for period"
     />
     <x-tallui-stat
         title="Total Expenses"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['expenses'], 2)"
-        icon="o-arrow-trending-down"
+        icon="heroicon-o-arrow-trending-down"
         icon-color="text-error"
         desc="Expenses for period"
     />
     <x-tallui-stat
         :title="$metrics['net_income'] >= 0 ? 'Net Profit' : 'Net Loss'"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format(abs($metrics['net_income']), 2)"
-        :icon="$metrics['net_income'] >= 0 ? 'o-face-smile' : 'o-face-frown'"
+        :icon="$metrics['net_income'] >= 0 ? 'heroicon-o-face-smile' : 'heroicon-o-face-frown'"
         :icon-color="$metrics['net_income'] >= 0 ? 'text-primary' : 'text-error'"
         :desc="$metrics['net_income'] >= 0 ? 'Profitable' : 'Loss-making'"
     />
     <x-tallui-stat
         title="Total Assets"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_assets'], 2)"
-        icon="o-building-library"
+        icon="heroicon-o-building-library"
         icon-color="text-info"
         desc="Current assets"
     />
     <x-tallui-stat
         title="Liabilities"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_liabilities'], 2)"
-        icon="o-banknotes"
+        icon="heroicon-o-banknotes"
         icon-color="text-warning"
         desc="Current liabilities"
     />
     <x-tallui-stat
         title="Equity"
         :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_equity'], 2)"
-        icon="o-scale"
+        icon="heroicon-o-scale"
         icon-color="text-secondary"
         desc="Owner's equity"
     />
@@ -71,7 +71,7 @@
     <x-tallui-card class="hover:shadow-md transition-all cursor-pointer group" padding="compact">
         <a href="{{ route('accounting.journal') }}" class="flex items-center gap-3 p-1">
             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <x-tallui-icon name="o-pencil-square" class="w-5 h-5 text-primary" />
+                <x-tallui-icon name="heroicon-o-pencil-square" class="w-5 h-5 text-primary" />
             </div>
             <div>
                 <div class="font-semibold text-sm">Journal Entry</div>
@@ -83,7 +83,7 @@
     <x-tallui-card class="hover:shadow-md transition-all cursor-pointer group" padding="compact">
         <a href="{{ route('accounting.invoices') }}" class="flex items-center gap-3 p-1">
             <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center group-hover:bg-success/20 transition-colors">
-                <x-tallui-icon name="o-document-text" class="w-5 h-5 text-success" />
+                <x-tallui-icon name="heroicon-o-document-text" class="w-5 h-5 text-success" />
             </div>
             <div>
                 <div class="font-semibold text-sm">Invoices</div>
@@ -95,7 +95,7 @@
     <x-tallui-card class="hover:shadow-md transition-all cursor-pointer group" padding="compact">
         <a href="{{ route('accounting.bills') }}" class="flex items-center gap-3 p-1">
             <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center group-hover:bg-warning/20 transition-colors">
-                <x-tallui-icon name="o-shopping-cart" class="w-5 h-5 text-warning" />
+                <x-tallui-icon name="heroicon-o-shopping-cart" class="w-5 h-5 text-warning" />
             </div>
             <div>
                 <div class="font-semibold text-sm">Bills</div>
@@ -107,7 +107,7 @@
     <x-tallui-card class="hover:shadow-md transition-all cursor-pointer group" padding="compact">
         <a href="{{ route('accounting.reports') }}" class="flex items-center gap-3 p-1">
             <div class="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
-                <x-tallui-icon name="o-chart-pie" class="w-5 h-5 text-secondary" />
+                <x-tallui-icon name="heroicon-o-chart-pie" class="w-5 h-5 text-secondary" />
             </div>
             <div>
                 <div class="font-semibold text-sm">Reports</div>
@@ -118,7 +118,7 @@
 </div>
 
 {{-- Recent Journal Entries --}}
-<x-tallui-card title="Recent Journal Entries" icon="o-clock">
+<x-tallui-card title="Recent Journal Entries" icon="heroicon-o-clock">
     <x-slot:actions>
         <a href="{{ route('accounting.journal') }}" class="text-sm text-primary hover:underline">View All</a>
     </x-slot:actions>

@@ -1,10 +1,10 @@
 <x-layouts.app :title="__('Vendors')">
 <x-tallui-notification />
 
-<x-tallui-page-header title="Vendors" subtitle="Manage your vendor / supplier directory" icon="o-building-storefront">
+<x-tallui-page-header title="Vendors" subtitle="Manage your vendor / supplier directory" icon="heroicon-o-building-storefront">
     <x-slot:actions>
         <x-tallui-toggle wire:model.live="showInactive" label="Show inactive" class="toggle-sm" />
-        <x-tallui-button wire:click="openModal()" icon="o-plus" class="btn-primary btn-sm">New Vendor</x-tallui-button>
+        <x-tallui-button wire:click="openModal()" icon="heroicon-o-plus" class="btn-primary btn-sm">New Vendor</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -49,8 +49,8 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
-                                <x-tallui-button wire:click="openModal({{ $vendor->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
-                                <x-tallui-button wire:click="toggleStatus({{ $vendor->id }})" icon="{{ $vendor->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
+                                <x-tallui-button wire:click="openModal({{ $vendor->id }})" icon="heroicon-o-pencil" class="btn-ghost btn-xs" />
+                                <x-tallui-button wire:click="toggleStatus({{ $vendor->id }})" icon="{{ $vendor->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
                         </td>
                     </tr>
@@ -68,7 +68,7 @@
 </x-tallui-card>
 
 {{-- Vendor Modal --}}
-<x-tallui-modal id="vendor-modal" :title="$vendorId ? 'Edit Vendor' : 'New Vendor'" icon="o-building-storefront" size="lg">
+<x-tallui-modal id="vendor-modal" :title="$vendorId ? 'Edit Vendor' : 'New Vendor'" icon="heroicon-o-building-storefront" size="lg">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'vendor-modal'); else $dispatch('close-modal', 'vendor-modal')"></span>
     </x-slot:trigger>

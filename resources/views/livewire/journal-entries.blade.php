@@ -1,9 +1,9 @@
 <x-layouts.app :title="__('Journal Entries')">
 <x-tallui-notification />
 
-<x-tallui-page-header title="Journal Entries" subtitle="Double-entry bookkeeping transactions" icon="o-pencil-square">
+<x-tallui-page-header title="Journal Entries" subtitle="Double-entry bookkeeping transactions" icon="heroicon-o-pencil-square">
     <x-slot:actions>
-        <x-tallui-button wire:click="$set('showModal', true)" icon="o-plus" class="btn-primary btn-sm">New Entry</x-tallui-button>
+        <x-tallui-button wire:click="$set('showModal', true)" icon="heroicon-o-plus" class="btn-primary btn-sm">New Entry</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -115,7 +115,7 @@
 </x-tallui-card>
 
 {{-- Create Modal --}}
-<x-tallui-modal id="journal-modal" title="New Journal Entry" icon="o-pencil-square" size="xl">
+<x-tallui-modal id="journal-modal" title="New Journal Entry" icon="heroicon-o-pencil-square" size="xl">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'journal-modal'); else $dispatch('close-modal', 'journal-modal')"></span>
     </x-slot:trigger>
@@ -138,7 +138,7 @@
         <div>
             <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-semibold text-base-content/70">Entry Lines</label>
-                <x-tallui-button wire:click="addLine" icon="o-plus" class="btn-ghost btn-xs">Add Line</x-tallui-button>
+                <x-tallui-button wire:click="addLine" icon="heroicon-o-plus" class="btn-ghost btn-xs">Add Line</x-tallui-button>
             </div>
 
             <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
@@ -159,7 +159,7 @@
                         </select>
                         <input type="number" step="0.01" wire:model.lazy="lines.{{ $index }}.amount"
                                placeholder="0.00" class="input input-sm w-28 border-base-300 text-right" />
-                        <x-tallui-button wire:click="removeLine({{ $index }})" icon="o-trash" class="btn-ghost btn-sm text-error" />
+                        <x-tallui-button wire:click="removeLine({{ $index }})" icon="heroicon-o-trash" class="btn-ghost btn-sm text-error" />
                     </div>
                 @endforeach
             </div>

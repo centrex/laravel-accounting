@@ -1,9 +1,9 @@
 <x-layouts.app :title="__('Bills')">
 <x-tallui-notification />
 
-<x-tallui-page-header title="Bills" subtitle="Manage vendor bills and payments" icon="o-shopping-cart">
+<x-tallui-page-header title="Bills" subtitle="Manage vendor bills and payments" icon="heroicon-o-shopping-cart">
     <x-slot:actions>
-        <x-tallui-button wire:click="openCreate" icon="o-plus" class="btn-primary btn-sm">New Bill</x-tallui-button>
+        <x-tallui-button wire:click="openCreate" icon="heroicon-o-plus" class="btn-primary btn-sm">New Bill</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -108,7 +108,7 @@
 </x-tallui-card>
 
 {{-- Create Bill Modal --}}
-<x-tallui-modal id="bill-modal" title="New Bill" icon="o-shopping-cart" size="xl">
+<x-tallui-modal id="bill-modal" title="New Bill" icon="heroicon-o-shopping-cart" size="xl">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'bill-modal'); else $dispatch('close-modal', 'bill-modal')"></span>
     </x-slot:trigger>
@@ -141,7 +141,7 @@
         <div>
             <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-semibold text-base-content/70">Line Items</label>
-                <x-tallui-button wire:click="addItem" icon="o-plus" class="btn-ghost btn-xs">Add Item</x-tallui-button>
+                <x-tallui-button wire:click="addItem" icon="heroicon-o-plus" class="btn-ghost btn-xs">Add Item</x-tallui-button>
             </div>
             <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
                 @foreach($items as $i => $item)
@@ -152,7 +152,7 @@
                         <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.quantity" placeholder="Qty" class="input input-sm w-20 border-base-300 text-right" />
                         <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.unit_price" placeholder="Price" class="input input-sm w-28 border-base-300 text-right" />
                         <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.tax_rate" placeholder="Tax%" class="input input-sm w-20 border-base-300 text-right" />
-                        <x-tallui-button wire:click="removeItem({{ $i }})" icon="o-trash" class="btn-ghost btn-sm text-error" />
+                        <x-tallui-button wire:click="removeItem({{ $i }})" icon="heroicon-o-trash" class="btn-ghost btn-sm text-error" />
                     </div>
                 @endforeach
             </div>
@@ -184,7 +184,7 @@
 </x-tallui-modal>
 
 {{-- Pay Bill Modal --}}
-<x-tallui-modal id="pay-bill-modal" title="Record Bill Payment" icon="o-banknotes" size="md">
+<x-tallui-modal id="pay-bill-modal" title="Record Bill Payment" icon="heroicon-o-banknotes" size="md">
     <x-slot:trigger>
         <span x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-bill-modal'); else $dispatch('close-modal', 'pay-bill-modal')"></span>
     </x-slot:trigger>
