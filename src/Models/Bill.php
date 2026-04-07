@@ -8,6 +8,7 @@ use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Bill extends Model
@@ -47,14 +48,31 @@ class Bill extends Model
     {
         parent::boot();
 
-        static::creating(static function (self $bill): void {
-            if (empty($bill->bill_number)) {
+        static::creating(function (self $bill): void {
+            if ($bill->bill_number) return;
+
+            DB::connection($bill->getConnectionName())->transaction(function () use ($bill) {
+
+                $date = now()->format('Ymd');
+
+                $lastBill = self::query()
+                    ->whereDate('created_at', now()->toDateString())
+                    ->orderByDesc('id') // safer than bill_number
+                    ->lockForUpdate()
+                    ->first();
+
+                $sequence = 1;
+
+                if ($lastBill && preg_match('/(\d+)$/', $lastBill->bill_number, $m)) {
+                    $sequence = ((int) $m[1]) + 1;
+                }
+
                 $bill->bill_number = sprintf(
-                    'BILL-%s-%s',
-                    now()->format('Ymd-His'),
-                    Str::lower(Str::random(4)),
+                    'BILL-%s-%05d',
+                    $date,
+                    $sequence
                 );
-            }
+            });
         });
     }
 

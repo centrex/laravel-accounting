@@ -8,6 +8,7 @@ use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Invoice extends Model
@@ -52,14 +53,31 @@ class Invoice extends Model
     {
         parent::boot();
 
-        static::creating(static function (self $invoice): void {
-            if (empty($invoice->invoice_number)) {
+        static::creating(function (self $invoice): void {
+            if ($invoice->invoice_number) return;
+
+            DB::connection($invoice->getConnectionName())->transaction(function () use ($invoice) {
+
+                $date = now()->format('Ymd');
+
+                $lastInvoice = self::query()
+                    ->whereDate('created_at', now()->toDateString())
+                    ->orderByDesc('id') // safer than invoice_number
+                    ->lockForUpdate()
+                    ->first();
+
+                $sequence = 1;
+
+                if ($lastInvoice && preg_match('/(\d+)$/', $lastInvoice->invoice_number, $m)) {
+                    $sequence = ((int) $m[1]) + 1;
+                }
+
                 $invoice->invoice_number = sprintf(
-                    'INV-%s-%s',
-                    now()->format('Ymd-His'),
-                    Str::lower(Str::random(4)),
+                    'INV-%s-%05d',
+                    $date,
+                    $sequence
                 );
-            }
+            });
         });
     }
 
