@@ -32,7 +32,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number', 'customer_id', 'invoice_date', 'due_date',
         'subtotal', 'tax_amount', 'discount_amount', 'total',
-        'paid_amount', 'currency', 'status', 'notes', 'journal_entry_id',
+        'paid_amount', 'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
     ];
 
     protected $casts = [
@@ -44,6 +44,7 @@ class Invoice extends Model
         'discount_amount' => 'decimal:2',
         'total'           => 'decimal:2',
         'paid_amount'     => 'decimal:2',
+        'exchange_rate'   => 'decimal:6',
     ];
 
     protected static function boot()

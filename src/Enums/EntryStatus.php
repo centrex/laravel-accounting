@@ -29,6 +29,16 @@ enum EntryStatus: string
     case DRAFT = 'draft';
 
     /**
+     * Sent
+     *
+     * Entry has been finalized and sent to the counterparty
+     * (e.g., invoice sent, bill sent for approval).
+     *
+     * No accounting impact until issued.
+     */
+    case SENT = 'sent';
+
+    /**
      * Issued
      *
      * Entry has been finalized and formally issued

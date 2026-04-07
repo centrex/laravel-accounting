@@ -80,11 +80,12 @@ class Accounting
                 ?? throw new RuntimeException('Sales Tax account (2300) not found');
 
             $entry = $this->createJournalEntry([
-                'date'        => $invoice->invoice_date,
-                'reference'   => $invoice->invoice_number,
-                'type'        => 'general',
-                'description' => "Invoice {$invoice->invoice_number} - {$invoice->customer?->name}",
-                'currency'    => $invoice->currency ?? config('app.currency', 'BDT'),
+                'date'          => $invoice->invoice_date,
+                'reference'     => $invoice->invoice_number,
+                'type'          => 'general',
+                'description'   => "Invoice {$invoice->invoice_number} - {$invoice->customer?->name}",
+                'currency'      => $invoice->currency ?? config('app.currency', 'BDT'),
+                'exchange_rate' => $invoice->exchange_rate ?? 1.0,
                 'lines'       => [
                     [
                         'account_id'  => $arAccount->id,
@@ -195,10 +196,11 @@ class Accounting
                 ?? throw new RuntimeException('Tax account (2300) not found');
 
             $entry = $this->createJournalEntry([
-                'date'        => $bill->bill_date,
-                'reference'   => $bill->bill_number,
-                'description' => "Bill {$bill->bill_number} - {$bill->vendor?->name}",
-                'currency'    => $bill->currency ?? config('app.currency', 'BDT'),
+                'date'          => $bill->bill_date,
+                'reference'     => $bill->bill_number,
+                'description'   => "Bill {$bill->bill_number} - {$bill->vendor?->name}",
+                'currency'      => $bill->currency ?? config('app.currency', 'BDT'),
+                'exchange_rate' => $bill->exchange_rate ?? 1.0,
                 'lines'       => [
                     [
                         'account_id'  => $expenseAccount->id,

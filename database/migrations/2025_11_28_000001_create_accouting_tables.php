@@ -195,6 +195,7 @@ return new class() extends Migration
             $table->decimal('total', 18, 2);
             $table->decimal('paid_amount', 18, 2)->default(0);
             $table->string('currency', 3)->default('BDT');
+            $table->decimal('exchange_rate', 10, 6)->default(1.000000);
             $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
@@ -236,6 +237,7 @@ return new class() extends Migration
             $table->decimal('total', 18, 2);
             $table->decimal('paid_amount', 18, 2)->default(0);
             $table->string('currency', 3)->default('BDT');
+            $table->decimal('exchange_rate', 10, 6)->default(1.000000);
             $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');

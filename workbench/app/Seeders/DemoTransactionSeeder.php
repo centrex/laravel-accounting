@@ -99,15 +99,16 @@ class DemoTransactionSeeder extends Seeder
             ],
         );
 
-        // ── Invoice 1: fully paid ────────────────────────────────────────────
+        // ── Invoice 1: fully paid (BDT, base currency) ──────────────────────
         $inv1 = Invoice::create([
-            'customer_id'  => $cust1->id,
-            'invoice_date' => $this->periodStart->copy()->addDays(2),
-            'due_date'     => $this->periodStart->copy()->addDays(32),
-            'currency'     => 'BDT',
-            'subtotal'     => 50_000.00,
-            'tax_amount'   => 7_500.00,
-            'total'        => 57_500.00,
+            'customer_id'   => $cust1->id,
+            'invoice_date'  => $this->periodStart->copy()->addDays(2),
+            'due_date'      => $this->periodStart->copy()->addDays(32),
+            'currency'      => 'BDT',
+            'exchange_rate' => 1.000000,
+            'subtotal'      => 50_000.00,
+            'tax_amount'    => 7_500.00,
+            'total'         => 57_500.00,
         ]);
         $inv1->items()->createMany([
             ['description' => 'ERP Implementation Phase 1', 'quantity' => 1, 'unit_price' => 35_000.00, 'total' => 35_000.00],
@@ -120,15 +121,16 @@ class DemoTransactionSeeder extends Seeder
             'method' => 'bank_transfer',
         ]);
 
-        // ── Invoice 2: partially paid ────────────────────────────────────────
+        // ── Invoice 2: partially paid (USD foreign currency) ────────────────
         $inv2 = Invoice::create([
-            'customer_id'  => $cust2->id,
-            'invoice_date' => $this->periodStart->copy()->addDays(7),
-            'due_date'     => $this->periodStart->copy()->addDays(37),
-            'currency'     => 'BDT',
-            'subtotal'     => 80_000.00,
-            'tax_amount'   => 12_000.00,
-            'total'        => 92_000.00,
+            'customer_id'   => $cust2->id,
+            'invoice_date'  => $this->periodStart->copy()->addDays(7),
+            'due_date'      => $this->periodStart->copy()->addDays(37),
+            'currency'      => 'USD',
+            'exchange_rate' => 110.000000,  // 1 USD = 110 BDT
+            'subtotal'      => 80_000.00,
+            'tax_amount'    => 12_000.00,
+            'total'         => 92_000.00,
         ]);
         $inv2->items()->create([
             'description' => 'Annual Software License',
@@ -143,15 +145,16 @@ class DemoTransactionSeeder extends Seeder
             'method' => 'cheque',
         ]);
 
-        // ── Invoice 3: draft (not yet sent) ─────────────────────────────────
+        // ── Invoice 3: draft (not yet sent, BDT) ────────────────────────────
         $inv3 = Invoice::create([
-            'customer_id'  => $cust3->id,
-            'invoice_date' => now(),
-            'due_date'     => now()->addDays(30),
-            'currency'     => 'BDT',
-            'subtotal'     => 15_000.00,
-            'tax_amount'   => 2_250.00,
-            'total'        => 17_250.00,
+            'customer_id'   => $cust3->id,
+            'invoice_date'  => now(),
+            'due_date'      => now()->addDays(30),
+            'currency'      => 'BDT',
+            'exchange_rate' => 1.000000,
+            'subtotal'      => 15_000.00,
+            'tax_amount'    => 2_250.00,
+            'total'         => 17_250.00,
         ]);
         $inv3->items()->create([
             'description' => 'Consulting Services',
@@ -191,15 +194,16 @@ class DemoTransactionSeeder extends Seeder
             ],
         );
 
-        // ── Bill 1: paid ─────────────────────────────────────────────────────
+        // ── Bill 1: paid (BDT, base currency) ───────────────────────────────
         $bill1 = Bill::create([
-            'vendor_id'  => $vend1->id,
-            'bill_date'  => $this->periodStart->copy()->addDays(1),
-            'due_date'   => $this->periodStart->copy()->addDays(31),
-            'currency'   => 'BDT',
-            'subtotal'   => 12_000.00,
-            'tax_amount' => 1_800.00,
-            'total'      => 13_800.00,
+            'vendor_id'     => $vend1->id,
+            'bill_date'     => $this->periodStart->copy()->addDays(1),
+            'due_date'      => $this->periodStart->copy()->addDays(31),
+            'currency'      => 'BDT',
+            'exchange_rate' => 1.000000,
+            'subtotal'      => 12_000.00,
+            'tax_amount'    => 1_800.00,
+            'total'         => 13_800.00,
         ]);
         $bill1->items()->createMany([
             ['description' => 'A4 Paper (20 reams)',  'quantity' => 20, 'unit_price' =>  400.00, 'total' =>  8_000.00],
@@ -212,15 +216,16 @@ class DemoTransactionSeeder extends Seeder
             'method' => 'bank_transfer',
         ]);
 
-        // ── Bill 2: unpaid (pending) ─────────────────────────────────────────
+        // ── Bill 2: unpaid/pending (USD foreign currency) ───────────────────
         $bill2 = Bill::create([
-            'vendor_id'  => $vend2->id,
-            'bill_date'  => now()->subDays(5),
-            'due_date'   => now()->addDays(10),
-            'currency'   => 'BDT',
-            'subtotal'   => 6_000.00,
-            'tax_amount' => 900.00,
-            'total'      => 6_900.00,
+            'vendor_id'     => $vend2->id,
+            'bill_date'     => now()->subDays(5),
+            'due_date'      => now()->addDays(10),
+            'currency'      => 'USD',
+            'exchange_rate' => 110.000000,  // 1 USD = 110 BDT
+            'subtotal'      => 6_000.00,
+            'tax_amount'    => 900.00,
+            'total'         => 6_900.00,
         ]);
         $bill2->items()->create([
             'description' => 'Monthly VPS Hosting',

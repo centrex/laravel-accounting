@@ -28,17 +28,18 @@ class Bill extends Model
     protected $fillable = [
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
         'subtotal', 'tax_amount', 'total', 'paid_amount',
-        'currency', 'status', 'notes', 'journal_entry_id',
+        'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
     ];
 
     protected $casts = [
         'bill_date'   => 'date',
         'due_date'    => 'date',
         'status'      => EntryStatus::class,
-        'subtotal'    => 'decimal:2',
-        'tax_amount'  => 'decimal:2',
-        'total'       => 'decimal:2',
-        'paid_amount' => 'decimal:2',
+        'subtotal'      => 'decimal:2',
+        'tax_amount'    => 'decimal:2',
+        'total'         => 'decimal:2',
+        'paid_amount'   => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
     ];
 
     public function vendor(): BelongsTo

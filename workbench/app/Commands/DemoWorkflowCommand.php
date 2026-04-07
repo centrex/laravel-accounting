@@ -98,13 +98,14 @@ class DemoWorkflowCommand extends Command
 
         // Create invoice
         $invoice = Invoice::create([
-            'customer_id'  => $customer->id,
-            'invoice_date' => today()->subDays(10),
-            'due_date'     => today()->addDays(20),
-            'currency'     => config('accounting.base_currency', 'BDT'),
-            'subtotal'     => 10_000.00,
-            'tax_amount'   => 1_500.00,
-            'total'        => 11_500.00,
+            'customer_id'   => $customer->id,
+            'invoice_date'  => today()->subDays(10),
+            'due_date'      => today()->addDays(20),
+            'currency'      => config('accounting.base_currency', 'BDT'),
+            'exchange_rate' => 1.000000,
+            'subtotal'      => 10_000.00,
+            'tax_amount'    => 1_500.00,
+            'total'         => 11_500.00,
         ]);
         $invoice->items()->createMany([
             ['description' => 'Web Development Services', 'quantity' => 2, 'unit_price' => 4_000.00, 'total' => 8_000.00],
@@ -136,14 +137,16 @@ class DemoWorkflowCommand extends Command
 
         $customer = $this->ensureCustomer('DEMO-CUST-02', 'Global Industries Ltd', 'ar@globalindustries.example.com');
 
+        // USD invoice — exchange rate 110 BDT/USD
         $invoice = Invoice::create([
-            'customer_id'  => $customer->id,
-            'invoice_date' => today()->subDays(5),
-            'due_date'     => today()->addDays(25),
-            'currency'     => config('accounting.base_currency', 'BDT'),
-            'subtotal'     => 20_000.00,
-            'tax_amount'   => 3_000.00,
-            'total'        => 23_000.00,
+            'customer_id'   => $customer->id,
+            'invoice_date'  => today()->subDays(5),
+            'due_date'      => today()->addDays(25),
+            'currency'      => 'USD',
+            'exchange_rate' => 110.000000,  // 1 USD = 110 BDT
+            'subtotal'      => 20_000.00,
+            'tax_amount'    => 3_000.00,
+            'total'         => 23_000.00,
         ]);
         $invoice->items()->create([
             'description' => 'Annual Support Contract',
@@ -151,7 +154,7 @@ class DemoWorkflowCommand extends Command
             'unit_price'  => 20_000.00,
             'total'       => 20_000.00,
         ]);
-        $this->line("  Invoice  : {$invoice->invoice_number}  total = {$invoice->total}");
+        $this->line("  Invoice  : {$invoice->invoice_number}  {$invoice->currency} {$invoice->total}  rate = {$invoice->exchange_rate}");
 
         Accounting::postInvoice($invoice);
 
@@ -162,7 +165,7 @@ class DemoWorkflowCommand extends Command
             'method' => 'cheque',
         ]);
         $invoice->refresh();
-        $this->line("  After partial payment — status = {$invoice->status->value}  balance = {$invoice->balance}");
+        $this->line("  After partial payment — status = {$invoice->status->value}  balance = {$invoice->currency} {$invoice->balance}");
     }
 
     // -------------------------------------------------------------------------
@@ -176,13 +179,14 @@ class DemoWorkflowCommand extends Command
         $this->line("  Vendor   : {$vendor->name} (#{$vendor->id})");
 
         $bill = Bill::create([
-            'vendor_id' => $vendor->id,
-            'bill_date' => today()->subDays(3),
-            'due_date'  => today()->addDays(27),
-            'currency'  => config('accounting.base_currency', 'BDT'),
-            'subtotal'  => 8_000.00,
-            'tax_amount'=> 1_200.00,
-            'total'     => 9_200.00,
+            'vendor_id'     => $vendor->id,
+            'bill_date'     => today()->subDays(3),
+            'due_date'      => today()->addDays(27),
+            'currency'      => config('accounting.base_currency', 'BDT'),
+            'exchange_rate' => 1.000000,
+            'subtotal'      => 8_000.00,
+            'tax_amount'    => 1_200.00,
+            'total'         => 9_200.00,
         ]);
         $bill->items()->createMany([
             ['description' => 'A4 Paper (10 reams)', 'quantity' => 10, 'unit_price' => 500.00, 'total' => 5_000.00],
