@@ -4,7 +4,7 @@
 <x-tallui-page-header
     title="Accounting Dashboard"
     subtitle="Financial overview for your business"
-    icon="o-chart-bar-square"
+    icon="hericon-o-chart-bar-square"
 >
     <x-slot:actions>
         <x-tallui-select wire:model.live="dateRange" class="select-sm">
