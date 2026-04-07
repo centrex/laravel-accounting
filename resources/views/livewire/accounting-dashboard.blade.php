@@ -124,7 +124,7 @@
     </x-slot:actions>
 
     @if($recentEntries->isEmpty())
-        <x-tallui-empty-state title="No journal entries yet" description="Create your first journal entry to get started" icon="o-document-text" />
+        <x-tallui-empty-state title="No journal entries yet" description="Create your first journal entry to get started" icon="heroicon-o-document-text" />
     @else
         <div class="overflow-x-auto">
             <table class="table table-sm w-full">
