@@ -189,7 +189,7 @@ class Bills extends Component
 
     public function getSubtotalProperty(): float
     {
-        return collect($this->items)->sum(fn ($i) => ($i['quantity'] ?? 0) * ($i['unit_price'] ?? 0));
+        return collect($this->items)->sum(fn ($i): int|float => ($i['quantity'] ?? 0) * ($i['unit_price'] ?? 0));
     }
 
     public function getTaxTotalProperty(): float
@@ -222,6 +222,6 @@ class Bills extends Component
 
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
 
-        return view('accounting::livewire.bills', compact('bills', 'vendors'));
+        return view('accounting::livewire.bills', ['bills' => $bills, 'vendors' => $vendors]);
     }
 }

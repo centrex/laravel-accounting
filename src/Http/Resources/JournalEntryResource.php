@@ -24,7 +24,7 @@ class JournalEntryResource extends JsonResource
             'is_balanced'   => $this->when(!$this->relationLoaded('lines'), null, fn () => $this->isBalanced()),
             'total_debits'  => $this->when($this->relationLoaded('lines'), fn () => $this->lines->where('type', 'debit')->sum('amount')),
             'lines'         => JournalEntryLineResource::collection($this->whenLoaded('lines')),
-            'creator'       => $this->whenLoaded('creator', fn () => [
+            'creator'       => $this->whenLoaded('creator', fn (): array => [
                 'id'   => $this->creator->id,
                 'name' => $this->creator->name,
             ]),

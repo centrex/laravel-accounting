@@ -133,6 +133,6 @@ class Vendors extends Component
             ->orderBy('name')
             ->paginate(config('accounting.per_page.vendors', 20));
 
-        return view('accounting::livewire.vendors', compact('vendors'));
+        return view('accounting::livewire.vendors', ['vendors' => $vendors]);
     }
 }

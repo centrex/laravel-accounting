@@ -27,7 +27,7 @@ class ReportController extends Controller
 
             return response()->json([
                 'data' => [
-                    'accounts' => collect($data['accounts'])->map(fn ($row) => [
+                    'accounts' => collect($data['accounts'])->map(fn ($row): array => [
                         'account' => [
                             'id'   => $row['account']->id,
                             'code' => $row['account']->code,
@@ -100,7 +100,7 @@ class ReportController extends Controller
         foreach ($data as $key => $value) {
             if (is_array($value) && isset($value['accounts'])) {
                 $formatted[$key] = [
-                    'accounts' => collect($value['accounts'])->map(fn ($row) => [
+                    'accounts' => collect($value['accounts'])->map(fn ($row): array => [
                         'account' => is_array($row['account'] ?? null) ? $row['account'] : [
                             'id'   => $row['account']->id ?? null,
                             'code' => $row['account']->code ?? null,
