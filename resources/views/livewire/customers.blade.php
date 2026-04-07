@@ -1,7 +1,7 @@
 <div>
 <x-tallui-notification />
 
-<x-tallui-page-header title="Customers" subtitle="Manage your customer directory" icon="o-user-group">
+<x-tallui-page-header title="Customers" subtitle="Manage your customer directory" icon="heroicon-o-user-group">
     <x-slot:actions>
         <x-tallui-toggle wire:model.live="showInactive" label="Show inactive" class="toggle-sm" />
         <x-tallui-button wire:click="openModal()" icon="heroicon-o-plus" class="btn-primary btn-sm">New Customer</x-tallui-button>
@@ -72,7 +72,7 @@
 </x-tallui-card>
 
 {{-- Customer Modal --}}
-<x-tallui-modal id="customer-modal" :title="$customerId ? 'Edit Customer' : 'New Customer'" icon="o-user-group" size="lg">
+<x-tallui-modal id="customer-modal" :title="$customerId ? 'Edit Customer' : 'New Customer'" icon="heroicon-o-user-group" size="lg">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'customer-modal'); else $dispatch('close-modal', 'customer-modal')"></span>
     </x-slot:trigger>
