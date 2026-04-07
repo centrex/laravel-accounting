@@ -140,9 +140,13 @@ class JournalEntries extends Component
             ->orderBy('code')
             ->get();
 
+        $layout = view()->exists('layouts.app')
+        ? 'layouts.app'
+        : 'components.layouts.app';
+
         return view('accounting::livewire.journal-entries', [
             'entries'  => $entries,
             'accounts' => $accounts,
-        ])->layout('components.layouts.app', ['title' => __('Journal Entries')]);
+        ])->layout($layout, ['title' => __('Journal Entries')]);
     }
 }

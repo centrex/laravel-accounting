@@ -128,9 +128,13 @@ class ChartOfAccounts extends Component
             ->orderBy('code')
             ->get();
 
+        $layout = view()->exists('layouts.app')
+        ? 'layouts.app'
+        : 'components.layouts.app';
+
         return view('accounting::livewire.chart-of-accounts', [
             'accounts'       => $accounts,
             'parentAccounts' => $parentAccounts,
-        ])->layout('components.layouts.app', ['title' => __('Chart of Accounts')]);
+        ])->layout($layout, ['title' => __('Chart of Accounts')]);
     }
 }

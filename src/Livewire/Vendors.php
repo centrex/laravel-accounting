@@ -133,6 +133,10 @@ class Vendors extends Component
             ->orderBy('name')
             ->paginate(config('accounting.per_page.vendors', 20));
 
-        return view('accounting::livewire.vendors', ['vendors' => $vendors])->layout('components.layouts.app', ['title' => __('Vendors')]);
+        $layout = view()->exists('layouts.app')
+        ? 'layouts.app'
+        : 'components.layouts.app';
+
+        return view('accounting::livewire.vendors', ['vendors' => $vendors])->layout($layout, ['title' => __('Vendors')]);
     }
 }

@@ -80,9 +80,13 @@ class AccountingDashboard extends Component
             ->limit(10)
             ->get();
 
+        $layout = view()->exists('layouts.app')
+                ? 'layouts.app'
+                : 'components.layouts.app';
+
         return view('accounting::livewire.accounting-dashboard', [
             'metrics'       => $metrics,
             'recentEntries' => $recentEntries,
-        ])->layout('components.layouts.app', ['title' => __('Accounting Dashboard')]);
+        ])->layout($layout, ['title' => __('Accounting Dashboard')]);
     }
 }
