@@ -143,6 +143,6 @@ class JournalEntries extends Component
         return view('accounting::livewire.journal-entries', [
             'entries'  => $entries,
             'accounts' => $accounts,
-        ]);
+        ])->layout('components.layouts.app', ['title' => __('Journal Entries')]);
     }
 }

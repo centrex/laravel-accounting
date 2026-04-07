@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Chart of Accounts')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header title="Chart of Accounts" subtitle="Manage your general ledger accounts" icon="heroicon-o-rectangle-stack">
@@ -187,4 +187,4 @@
         Livewire.on('close-account-modal', () => window.dispatchEvent(new CustomEvent('close-modal', { detail: 'account-modal' })));
     });
 </script>
-</x-layouts.app>
+</div>

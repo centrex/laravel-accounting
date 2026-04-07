@@ -222,6 +222,6 @@ class Bills extends Component
 
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
 
-        return view('accounting::livewire.bills', ['bills' => $bills, 'vendors' => $vendors]);
+        return view('accounting::livewire.bills', ['bills' => $bills, 'vendors' => $vendors])->layout('components.layouts.app', ['title' => __('Bills')]);
     }
 }

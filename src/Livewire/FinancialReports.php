@@ -62,6 +62,6 @@ class FinancialReports extends Component
 
     public function render()
     {
-        return view('accounting::livewire.financial-reports');
+        return view('accounting::livewire.financial-reports')->layout('components.layouts.app', ['title' => __('Financial Reports')]);
     }
 }

@@ -83,6 +83,6 @@ class AccountingDashboard extends Component
         return view('accounting::livewire.accounting-dashboard', [
             'metrics'       => $metrics,
             'recentEntries' => $recentEntries,
-        ]);
+        ])->layout('components.layouts.app', ['title' => __('Accounting Dashboard')]);
     }
 }

@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Customers')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header title="Customers" subtitle="Manage your customer directory" icon="o-user-group">
@@ -135,4 +135,4 @@
         </x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
-</x-layouts.app>
+</div>

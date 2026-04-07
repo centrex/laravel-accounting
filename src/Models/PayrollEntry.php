@@ -29,13 +29,16 @@ class PayrollEntry extends Model
     }
 
     protected $fillable = [
-        'entry_number', 'date', 'description', 'total_amount', 'status',
+        'entry_number', 'date', 'reference', 'description',
+        'currency', 'type', 'exchange_rate',
+        'created_by', 'approved_by', 'approved_at', 'status',
     ];
 
     protected $casts = [
-        'date'         => 'date',
-        'status'       => EntryStatus::class,
-        'total_amount' => 'decimal:2',
+        'date'          => 'date',
+        'approved_at'   => 'datetime',
+        'status'        => EntryStatus::class,
+        'exchange_rate' => 'decimal:6',
     ];
 
     public function lines(): HasMany

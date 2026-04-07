@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Vendors')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header title="Vendors" subtitle="Manage your vendor / supplier directory" icon="heroicon-o-building-storefront">
@@ -126,4 +126,4 @@
         </x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
-</x-layouts.app>
+</div>

@@ -233,6 +233,6 @@ class Invoices extends Component
 
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
 
-        return view('accounting::livewire.invoices', ['invoices' => $invoices, 'customers' => $customers]);
+        return view('accounting::livewire.invoices', ['invoices' => $invoices, 'customers' => $customers])->layout('components.layouts.app', ['title' => __('Invoices')]);
     }
 }

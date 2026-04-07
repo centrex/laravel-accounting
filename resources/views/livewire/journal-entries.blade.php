@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Journal Entries')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header title="Journal Entries" subtitle="Double-entry bookkeeping transactions" icon="heroicon-o-pencil-square">
@@ -183,4 +183,4 @@
         <x-tallui-button wire:click="create" spinner="create" class="btn-primary">Create Entry</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
-</x-layouts.app>
+</div>

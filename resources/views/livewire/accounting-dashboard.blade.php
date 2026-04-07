@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Accounting Dashboard')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header
@@ -162,4 +162,4 @@
         </div>
     @endif
 </x-tallui-card>
-</x-layouts.app>
+</div>

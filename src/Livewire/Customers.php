@@ -140,6 +140,6 @@ class Customers extends Component
             ->orderBy('name')
             ->paginate(config('accounting.per_page.customers', 20));
 
-        return view('accounting::livewire.customers', ['customers' => $customers]);
+        return view('accounting::livewire.customers', ['customers' => $customers])->layout('components.layouts.app', ['title' => __('Customers')]);
     }
 }

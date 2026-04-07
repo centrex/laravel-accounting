@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Invoices')">
+<div>
 <x-tallui-notification />
 
 <x-tallui-page-header title="Invoices" subtitle="Manage customer invoices and payments" icon="heroicon-o-document-text">
@@ -227,4 +227,4 @@
         <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-success">Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
-</x-layouts.app>
+</div>

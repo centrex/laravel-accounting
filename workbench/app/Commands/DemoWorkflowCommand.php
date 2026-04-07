@@ -9,8 +9,10 @@ use Centrex\LaravelAccounting\Models\{
     Account,
     Bill,
     Customer,
+    Employee,
     FiscalYear,
     Invoice,
+    PayrollEntry,
     Vendor
 };
 use Illuminate\Console\Command;
@@ -23,8 +25,9 @@ use Illuminate\Console\Command;
  *  3. Customer invoice → post → partial payment
  *  4. Vendor bill     → post → payment
  *  5. Manual journal entry (rent)
- *  6. Financial reports (trial balance, P&L, balance sheet, cash flow)
- *  7. Fiscal year closing
+ *  6. Payroll run     → post salary JE → pay employees
+ *  7. Financial reports (trial balance, P&L, balance sheet, cash flow)
+ *  8. Fiscal year closing
  *
  * Usage:
  *   php artisan accounting:demo
@@ -48,10 +51,11 @@ class DemoWorkflowCommand extends Command
         $this->step3PartiallyPaidInvoice();
         $this->step4VendorBill();
         $this->step5ManualJournalEntry();
-        $this->step6FinancialReports();
+        $this->step6Payroll();
+        $this->step7FinancialReports();
 
         if (! $this->option('skip-close')) {
-            $this->step7CloseFiscalYear();
+            $this->step8CloseFiscalYear();
         }
 
         $this->newLine();
@@ -235,11 +239,109 @@ class DemoWorkflowCommand extends Command
     }
 
     // -------------------------------------------------------------------------
-    // Step 6 – Financial Reports
+    // Step 6 – Payroll
     // -------------------------------------------------------------------------
-    private function step6FinancialReports(): void
+    private function step6Payroll(): void
     {
-        $this->sectionHeader('Step 6 — Financial Reports');
+        $this->sectionHeader('Step 6 — Payroll Run');
+
+        // Employees
+        $employees = [
+            ['code' => 'EMP-001', 'name' => 'Alice Rahman',  'email' => 'alice@example.com',  'currency' => 'BDT'],
+            ['code' => 'EMP-002', 'name' => 'Bob Hossain',   'email' => 'bob@example.com',    'currency' => 'BDT'],
+            ['code' => 'EMP-003', 'name' => 'Carol Ahmed',   'email' => 'carol@example.com',  'currency' => 'BDT'],
+        ];
+
+        $salaries = [
+            'EMP-001' => ['gross' => 60_000.00, 'tax' => 6_000.00],
+            'EMP-002' => ['gross' => 45_000.00, 'tax' => 4_500.00],
+            'EMP-003' => ['gross' => 35_000.00, 'tax' => 3_500.00],
+        ];
+
+        foreach ($employees as $data) {
+            Employee::firstOrCreate(['code' => $data['code']], $data);
+        }
+
+        $grossTotal = array_sum(array_column($salaries, 'gross'));
+        $taxTotal   = array_sum(array_column($salaries, 'tax'));
+        $netTotal   = $grossTotal - $taxTotal;
+
+        $this->line(sprintf(
+            '  Employees: %d  Gross: %s  Tax withheld: %s  Net payable: %s',
+            count($employees),
+            number_format($grossTotal, 2),
+            number_format($taxTotal, 2),
+            number_format($netTotal, 2),
+        ));
+
+        // Create payroll entry record
+        $payroll = PayrollEntry::create([
+            'entry_number' => 'PAY-' . now()->format('Ym') . '-001',
+            'date'         => today()->endOfMonth(),
+            'reference'    => 'SALARY-' . now()->format('Ym'),
+            'description'  => 'Monthly salary run — ' . now()->format('F Y'),
+            'currency'     => 'BDT',
+            'type'         => 'salary',
+            'exchange_rate'=> 1.000000,
+            'status'       => 'draft',
+        ]);
+        $this->line("  PayrollEntry : {$payroll->entry_number}  status = {$payroll->status->value}");
+
+        // ── JE 1: recognise payroll expense ────────────────────────────────
+        // DR Salaries & Wages Expense (6000)  gross total
+        //   CR Salaries Payable (2250)         net payable to employees
+        //   CR Income Tax Payable (2400)       tax withheld
+        $salaryExpense = Account::where('code', '6000')->firstOrFail();
+        $salaryPayable = Account::where('code', '2250')->firstOrFail();
+        $taxPayable    = Account::where('code', '2400')->firstOrFail();
+
+        $expenseEntry = Accounting::createJournalEntry([
+            'date'        => today()->endOfMonth(),
+            'reference'   => $payroll->entry_number,
+            'type'        => 'general',
+            'description' => "Payroll expense — {$payroll->description}",
+            'currency'    => 'BDT',
+            'lines'       => [
+                ['account_id' => $salaryExpense->id, 'type' => 'debit',  'amount' => $grossTotal, 'description' => 'Gross salaries'],
+                ['account_id' => $salaryPayable->id, 'type' => 'credit', 'amount' => $netTotal,   'description' => 'Net salaries payable'],
+                ['account_id' => $taxPayable->id,    'type' => 'credit', 'amount' => $taxTotal,   'description' => 'Income tax withheld'],
+            ],
+        ]);
+        $expenseEntry->post();
+        $this->line("  Expense JE   : {$expenseEntry->entry_number}  balanced = " . ($expenseEntry->isBalanced() ? 'yes' : 'no'));
+        $this->showJournalLines($expenseEntry);
+
+        // ── JE 2: pay net salaries from bank ───────────────────────────────
+        // DR Salaries Payable (2250)
+        //   CR Bank – Operating (1100)
+        $bank = Account::where('code', '1100')->firstOrFail();
+
+        $paymentEntry = Accounting::createJournalEntry([
+            'date'        => today()->endOfMonth(),
+            'reference'   => $payroll->entry_number . '-PMT',
+            'type'        => 'general',
+            'description' => "Salary disbursement — {$payroll->description}",
+            'currency'    => 'BDT',
+            'lines'       => [
+                ['account_id' => $salaryPayable->id, 'type' => 'debit',  'amount' => $netTotal, 'description' => 'Salary payment'],
+                ['account_id' => $bank->id,          'type' => 'credit', 'amount' => $netTotal, 'description' => 'Bank transfer'],
+            ],
+        ]);
+        $paymentEntry->post();
+        $this->line("  Payment JE   : {$paymentEntry->entry_number}  balanced = " . ($paymentEntry->isBalanced() ? 'yes' : 'no'));
+        $this->showJournalLines($paymentEntry);
+
+        // Mark payroll as issued
+        $payroll->update(['status' => 'issued']);
+        $this->line("  PayrollEntry status → {$payroll->refresh()->status->value}");
+    }
+
+    // -------------------------------------------------------------------------
+    // Step 7 – Financial Reports
+    // -------------------------------------------------------------------------
+    private function step7FinancialReports(): void
+    {
+        $this->sectionHeader('Step 7 — Financial Reports');
 
         $start = today()->startOfYear()->toDateString();
         $end   = today()->toDateString();
@@ -287,11 +389,11 @@ class DemoWorkflowCommand extends Command
     }
 
     // -------------------------------------------------------------------------
-    // Step 7 – Close Fiscal Year
+    // Step 8 – Close Fiscal Year
     // -------------------------------------------------------------------------
-    private function step7CloseFiscalYear(): void
+    private function step8CloseFiscalYear(): void
     {
-        $this->sectionHeader('Step 7 — Fiscal Year Closing');
+        $this->sectionHeader('Step 8 — Fiscal Year Closing');
 
         // Use the current year's fiscal year if it exists; otherwise warn and skip.
         $fy = FiscalYear::where('name', 'FY ' . now()->year)->first()

@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Financial Reports')">
+<div>
 {{-- New tallui-based layout --}}
 <x-tallui-notification />
 <div class="financial-reports">
@@ -250,7 +250,7 @@
         </div>
     @endif
 </div>
-</x-layouts.app>
+</div>
 
 <style>
     .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; }

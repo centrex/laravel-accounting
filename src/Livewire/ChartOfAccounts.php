@@ -131,6 +131,6 @@ class ChartOfAccounts extends Component
         return view('accounting::livewire.chart-of-accounts', [
             'accounts'       => $accounts,
             'parentAccounts' => $parentAccounts,
-        ]);
+        ])->layout('components.layouts.app', ['title' => __('Chart of Accounts')]);
     }
 }

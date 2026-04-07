@@ -7,7 +7,6 @@ namespace Centrex\LaravelAccounting\Models;
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
-// Employee Model
 class Employee extends Model
 {
     use AddTablePrefix;
@@ -18,13 +17,22 @@ class Employee extends Model
         return 'employees';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
+
+    protected $fillable = [
+        'code', 'name', 'email', 'phone', 'address',
+        'city', 'country', 'tax_id', 'currency',
+        'credit_limit', 'payment_terms', 'is_active',
+        'modelable_type', 'modelable_id',
+    ];
+
+    protected $casts = [
+        'credit_limit'  => 'decimal:2',
+        'payment_terms' => 'integer',
+        'is_active'     => 'boolean',
+    ];
 }
