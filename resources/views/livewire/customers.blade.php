@@ -4,7 +4,7 @@
 <x-tallui-page-header title="Customers" subtitle="Manage your customer directory" icon="o-user-group">
     <x-slot:actions>
         <x-tallui-toggle wire:model.live="showInactive" label="Show inactive" class="toggle-sm" />
-        <x-tallui-button wire:click="openModal()" icon="o-plus" class="btn-primary btn-sm">New Customer</x-tallui-button>
+        <x-tallui-button wire:click="openModal()" icon="heroicon-o-plus" class="btn-primary btn-sm">New Customer</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -53,8 +53,8 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
-                                <x-tallui-button wire:click="openModal({{ $customer->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
-                                <x-tallui-button wire:click="toggleStatus({{ $customer->id }})" icon="{{ $customer->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
+                                <x-tallui-button wire:click="openModal({{ $customer->id }})" icon="heroicon-o-pencil" class="btn-ghost btn-xs" />
+                                <x-tallui-button wire:click="toggleStatus({{ $customer->id }})" icon="{{ $customer->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
                         </td>
                     </tr>
