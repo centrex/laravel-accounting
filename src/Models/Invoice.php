@@ -8,6 +8,7 @@ use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
@@ -46,6 +47,21 @@ class Invoice extends Model
         'paid_amount'     => 'decimal:2',
         'exchange_rate'   => 'decimal:6',
     ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(static function (self $invoice): void {
+            if (empty($invoice->invoice_number)) {
+                $invoice->invoice_number = sprintf(
+                    'INV-%s-%s',
+                    now()->format('Ymd-His'),
+                    Str::lower(Str::random(4)),
+                );
+            }
+        });
+    }
 
     public function customer(): BelongsTo
     {

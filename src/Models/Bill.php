@@ -8,6 +8,7 @@ use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Support\Str;
 
 class Bill extends Model
 {
@@ -41,6 +42,21 @@ class Bill extends Model
         'paid_amount'   => 'decimal:2',
         'exchange_rate' => 'decimal:6',
     ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(static function (self $bill): void {
+            if (empty($bill->bill_number)) {
+                $bill->bill_number = sprintf(
+                    'BILL-%s-%s',
+                    now()->format('Ymd-His'),
+                    Str::lower(Str::random(4)),
+                );
+            }
+        });
+    }
 
     public function vendor(): BelongsTo
     {
