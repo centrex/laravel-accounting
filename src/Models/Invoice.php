@@ -53,7 +53,7 @@ class Invoice extends Model
         static::creating(function ($invoice): void {
             if (!$invoice->invoice_number) {
                 $invoice->invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(
-                    static::whereDate('created_at', today())->count() + 1,
+                    (string) (static::whereDate('created_at', today())->count() + 1),
                     4,
                     '0',
                     STR_PAD_LEFT,

@@ -50,7 +50,7 @@ class JournalEntry extends Model
         static::creating(function ($entry): void {
             if (!$entry->entry_number) {
                 $entry->entry_number = 'JE-' . date('Ymd') . '-' . str_pad(
-                    static::whereDate('created_at', today())->count() + 1,
+                    (string) (static::whereDate('created_at', today())->count() + 1),
                     4,
                     '0',
                     STR_PAD_LEFT,
