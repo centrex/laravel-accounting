@@ -49,6 +49,7 @@ class Invoice extends Model
         'exchange_rate'   => 'decimal:6',
     ];
 
+    #[\Override]
     protected static function boot(): void
     {
         parent::boot();
