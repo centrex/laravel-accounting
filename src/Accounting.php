@@ -435,7 +435,7 @@ class Accounting
             foreach ($relatedLines as $line) {
                 if (in_array($line->account->type, ['revenue', 'expense'], true)) {
                     $operating += $amount;
-                } elseif ($line->account->subtype === 'fixed_asset') {
+                } elseif ($line->account->subtype === \Centrex\LaravelAccounting\Enums\AccountSubtype::FIXED_ASSET) {
                     $investing += $amount;
                 } elseif (in_array($line->account->type, ['liability', 'equity'], true)) {
                     $financing += $amount;
@@ -541,9 +541,9 @@ class Accounting
             ['code' => '2500', 'name' => 'Long-term Debt', 'type' => 'liability', 'subtype' => 'long_term_liability'],
 
             // Equity
-            ['code' => '3000', 'name' => "Owner's Equity", 'type' => 'equity', 'subtype' => 'equity'],
-            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => 'equity', 'subtype' => 'equity'],
-            ['code' => '3200', 'name' => "Owner's Draw", 'type' => 'equity', 'subtype' => 'equity'],
+            ['code' => '3000', 'name' => "Owner's Equity", 'type' => 'equity', 'subtype' => 'capital_account'],
+            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => 'equity', 'subtype' => 'retained_earnings_account'],
+            ['code' => '3200', 'name' => "Owner's Draw", 'type' => 'equity', 'subtype' => 'drawings_account'],
 
             // Revenue
             ['code' => '4000', 'name' => 'Sales Revenue', 'type' => 'revenue', 'subtype' => 'operating_revenue'],
@@ -552,15 +552,15 @@ class Accounting
 
             // Expenses
             ['code' => '5000', 'name' => 'Cost of Goods Sold', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold'],
-            ['code' => '6000', 'name' => 'Salaries & Wages', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6100', 'name' => 'Rent Expense', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6200', 'name' => 'Utilities', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6300', 'name' => 'Office Supplies', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6400', 'name' => 'Insurance', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6500', 'name' => 'Marketing & Advertising', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6600', 'name' => 'Depreciation', 'type' => 'expense', 'subtype' => 'operating_expense'],
-            ['code' => '6700', 'name' => 'Interest Expense', 'type' => 'expense', 'subtype' => 'non_operating_expense'],
-            ['code' => '6800', 'name' => 'Bank Fees', 'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '6000', 'name' => 'Salaries & Wages', 'type' => 'expense', 'subtype' => 'salaries_and_wages_expense'],
+            ['code' => '6100', 'name' => 'Rent Expense', 'type' => 'expense', 'subtype' => 'rent_expense'],
+            ['code' => '6200', 'name' => 'Utilities', 'type' => 'expense', 'subtype' => 'utilities_expense'],
+            ['code' => '6300', 'name' => 'Office Supplies', 'type' => 'expense', 'subtype' => 'office_supplies_expense'],
+            ['code' => '6400', 'name' => 'Insurance', 'type' => 'expense', 'subtype' => 'insurance_expense'],
+            ['code' => '6500', 'name' => 'Marketing & Advertising', 'type' => 'expense', 'subtype' => 'marketing_expense'],
+            ['code' => '6600', 'name' => 'Depreciation', 'type' => 'expense', 'subtype' => 'depreciation_expense'],
+            ['code' => '6700', 'name' => 'Interest Expense', 'type' => 'expense', 'subtype' => 'interest_expense'],
+            ['code' => '6800', 'name' => 'Bank Fees', 'type' => 'expense', 'subtype' => 'bank_fees_expense'],
         ];
 
         foreach ($accounts as $accountData) {
@@ -597,7 +597,7 @@ class Accounting
                     'code'      => '3900',
                     'name'      => 'Income Summary',
                     'type'      => 'equity',
-                    'subtype'   => 'equity',
+                    'subtype'   => 'memorandum_account',
                     'is_system' => true,
                 ]);
             }
