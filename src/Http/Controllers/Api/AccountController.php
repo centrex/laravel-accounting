@@ -40,11 +40,11 @@ class AccountController extends Controller
         $prefix = config('accounting.table_prefix', 'acct_');
 
         $validated = Validator::make($request->all(), [
-            'code'        => ["required", 'string', "unique:{$prefix}accounts,code"],
+            'code'        => ['required', 'string', "unique:{$prefix}accounts,code"],
             'name'        => ['required', 'string', 'max:255'],
             'type'        => ['required', 'string', 'in:asset,liability,equity,revenue,expense,other'],
             'subtype'     => ['nullable', 'string'],
-            'parent_id'   => ["nullable", "exists:{$prefix}accounts,id"],
+            'parent_id'   => ['nullable', "exists:{$prefix}accounts,id"],
             'description' => ['nullable', 'string'],
             'currency'    => ['nullable', 'string', 'size:3'],
             'is_active'   => ['nullable', 'boolean'],
@@ -60,11 +60,11 @@ class AccountController extends Controller
         $prefix = config('accounting.table_prefix', 'acct_');
 
         $validated = Validator::make($request->all(), [
-            'code'        => ["sometimes", "string", "unique:{$prefix}accounts,code,{$account->id}"],
+            'code'        => ['sometimes', 'string', "unique:{$prefix}accounts,code,{$account->id}"],
             'name'        => ['sometimes', 'string', 'max:255'],
             'type'        => ['sometimes', 'string', 'in:asset,liability,equity,revenue,expense,other'],
             'subtype'     => ['nullable', 'string'],
-            'parent_id'   => ["nullable", "exists:{$prefix}accounts,id"],
+            'parent_id'   => ['nullable', "exists:{$prefix}accounts,id"],
             'description' => ['nullable', 'string'],
             'currency'    => ['nullable', 'string', 'size:3'],
             'is_active'   => ['nullable', 'boolean'],
@@ -79,8 +79,8 @@ class AccountController extends Controller
     {
         return response()->json([
             'data' => [
-                'account'         => new AccountResource($account),
-                'current_balance' => $account->getCurrentBalance(),
+                'account'          => new AccountResource($account),
+                'current_balance'  => $account->getCurrentBalance(),
                 'is_debit_account' => $account->isDebitAccount(),
             ],
         ]);

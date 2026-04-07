@@ -11,22 +11,35 @@ class Vendors extends Component
 {
     use WithPagination;
 
-    public string $search       = '';
-    public bool $showInactive   = false;
-    public bool $showModal      = false;
+    public string $search = '';
 
-    public ?int $vendorId       = null;
-    public string $code         = '';
-    public string $name         = '';
-    public string $email        = '';
-    public string $phone        = '';
-    public string $address      = '';
-    public string $city         = '';
-    public string $country      = '';
-    public string $tax_id       = '';
-    public string $currency     = '';
-    public int $payment_terms   = 30;
-    public bool $is_active      = true;
+    public bool $showInactive = false;
+
+    public bool $showModal = false;
+
+    public ?int $vendorId = null;
+
+    public string $code = '';
+
+    public string $name = '';
+
+    public string $email = '';
+
+    public string $phone = '';
+
+    public string $address = '';
+
+    public string $city = '';
+
+    public string $country = '';
+
+    public string $tax_id = '';
+
+    public string $currency = '';
+
+    public int $payment_terms = 30;
+
+    public bool $is_active = true;
 
     protected array $queryString = ['search'];
 
@@ -39,24 +52,24 @@ class Vendors extends Component
     {
         $this->resetValidation();
         $this->reset(['vendorId', 'code', 'name', 'email', 'phone', 'address', 'city', 'country', 'tax_id']);
-        $this->currency      = config('accounting.base_currency', 'BDT');
+        $this->currency = config('accounting.base_currency', 'BDT');
         $this->payment_terms = 30;
-        $this->is_active     = true;
+        $this->is_active = true;
 
         if ($id) {
-            $vendor             = Vendor::findOrFail($id);
-            $this->vendorId     = $vendor->id;
-            $this->code         = $vendor->code;
-            $this->name         = $vendor->name;
-            $this->email        = $vendor->email ?? '';
-            $this->phone        = $vendor->phone ?? '';
-            $this->address      = $vendor->address ?? '';
-            $this->city         = $vendor->city ?? '';
-            $this->country      = $vendor->country ?? '';
-            $this->tax_id       = $vendor->tax_id ?? '';
-            $this->currency     = $vendor->currency;
+            $vendor = Vendor::findOrFail($id);
+            $this->vendorId = $vendor->id;
+            $this->code = $vendor->code;
+            $this->name = $vendor->name;
+            $this->email = $vendor->email ?? '';
+            $this->phone = $vendor->phone ?? '';
+            $this->address = $vendor->address ?? '';
+            $this->city = $vendor->city ?? '';
+            $this->country = $vendor->country ?? '';
+            $this->tax_id = $vendor->tax_id ?? '';
+            $this->currency = $vendor->currency;
             $this->payment_terms = $vendor->payment_terms;
-            $this->is_active    = $vendor->is_active;
+            $this->is_active = $vendor->is_active;
         }
 
         $this->showModal = true;
@@ -65,8 +78,8 @@ class Vendors extends Component
     public function save(): void
     {
         $prefix = config('accounting.table_prefix', 'acct_');
-        $table  = $prefix . 'vendors';
-        $id     = $this->vendorId;
+        $table = $prefix . 'vendors';
+        $id = $this->vendorId;
 
         $this->validate([
             'code'          => "required|unique:{$table},code,{$id}",
@@ -104,7 +117,7 @@ class Vendors extends Component
     public function toggleStatus(int $id): void
     {
         $vendor = Vendor::findOrFail($id);
-        $vendor->update(['is_active' => ! $vendor->is_active]);
+        $vendor->update(['is_active' => !$vendor->is_active]);
         $this->dispatch('notify', type: 'info', message: 'Vendor status updated.');
     }
 
@@ -116,7 +129,7 @@ class Vendors extends Component
                     ->orWhere('code', 'like', '%' . $this->search . '%')
                     ->orWhere('email', 'like', '%' . $this->search . '%');
             }))
-            ->when(! $this->showInactive, fn ($q) => $q->where('is_active', true))
+            ->when(!$this->showInactive, fn ($q) => $q->where('is_active', true))
             ->orderBy('name')
             ->paginate(config('accounting.per_page.vendors', 20));
 

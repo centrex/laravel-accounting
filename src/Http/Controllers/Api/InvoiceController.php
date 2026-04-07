@@ -39,14 +39,14 @@ class InvoiceController extends Controller
         $data = $request->validated();
 
         $invoice = DB::transaction(function () use ($data): Invoice {
-            $currency  = $data['currency'] ?? config('accounting.base_currency', 'BDT');
-            $subtotal  = 0;
+            $currency = $data['currency'] ?? config('accounting.base_currency', 'BDT');
+            $subtotal = 0;
             $taxAmount = 0;
 
             foreach ($data['items'] as $item) {
-                $amount    = $item['quantity'] * $item['unit_price'];
-                $itemTax   = $amount * (($item['tax_rate'] ?? 0) / 100);
-                $subtotal  += $amount;
+                $amount = $item['quantity'] * $item['unit_price'];
+                $itemTax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $subtotal += $amount;
                 $taxAmount += $itemTax;
             }
 
@@ -65,7 +65,7 @@ class InvoiceController extends Controller
 
             foreach ($data['items'] as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
-                $tax    = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $tax = $amount * (($item['tax_rate'] ?? 0) / 100);
 
                 InvoiceItem::create([
                     'invoice_id'  => $invoice->id,
@@ -108,7 +108,7 @@ class InvoiceController extends Controller
             $entry = $this->accounting->postInvoice($invoice);
 
             return response()->json([
-                'data'          => new InvoiceResource($invoice->fresh(['customer', 'items'])),
+                'data'             => new InvoiceResource($invoice->fresh(['customer', 'items'])),
                 'journal_entry_id' => $entry->id,
             ]);
         } catch (\Throwable $e) {

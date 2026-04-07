@@ -14,39 +14,54 @@ class Invoices extends Component
     use WithPagination;
 
     // Filters
-    public string $search       = '';
+    public string $search = '';
+
     public string $statusFilter = '';
-    public string $dateFrom     = '';
-    public string $dateTo       = '';
+
+    public string $dateFrom = '';
+
+    public string $dateTo = '';
 
     // Modal state
-    public bool $showModal    = false;
+    public bool $showModal = false;
+
     public bool $showPayModal = false;
 
     // Invoice form
-    public ?int $invoiceId    = null;
-    public ?int $customer_id  = null;
+    public ?int $invoiceId = null;
+
+    public ?int $customer_id = null;
+
     public string $invoice_date = '';
-    public string $due_date     = '';
-    public string $currency     = '';
-    public string $notes        = '';
-    public array $items         = [];
+
+    public string $due_date = '';
+
+    public string $currency = '';
+
+    public string $notes = '';
+
+    public array $items = [];
 
     // Payment form
     public ?int $payingInvoiceId = null;
-    public string $pay_date      = '';
-    public string $pay_amount    = '';
-    public string $pay_method    = 'bank_transfer';
+
+    public string $pay_date = '';
+
+    public string $pay_amount = '';
+
+    public string $pay_method = 'bank_transfer';
+
     public string $pay_reference = '';
-    public string $pay_notes     = '';
+
+    public string $pay_notes = '';
 
     protected array $queryString = ['search', 'statusFilter'];
 
     public function mount(): void
     {
         $this->invoice_date = now()->format('Y-m-d');
-        $this->due_date     = now()->addDays(30)->format('Y-m-d');
-        $this->currency     = config('accounting.base_currency', 'BDT');
+        $this->due_date = now()->addDays(30)->format('Y-m-d');
+        $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
     }
 
@@ -70,8 +85,8 @@ class Invoices extends Component
     {
         $this->reset(['invoiceId', 'customer_id', 'notes', 'items']);
         $this->invoice_date = now()->format('Y-m-d');
-        $this->due_date     = now()->addDays(30)->format('Y-m-d');
-        $this->currency     = config('accounting.base_currency', 'BDT');
+        $this->due_date = now()->addDays(30)->format('Y-m-d');
+        $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
         $this->showModal = true;
     }
@@ -79,23 +94,23 @@ class Invoices extends Component
     public function save(): void
     {
         $this->validate([
-            'customer_id'        => 'required|integer',
-            'invoice_date'       => 'required|date',
-            'due_date'           => 'required|date|after_or_equal:invoice_date',
-            'items'              => 'required|array|min:1',
+            'customer_id'         => 'required|integer',
+            'invoice_date'        => 'required|date',
+            'due_date'            => 'required|date|after_or_equal:invoice_date',
+            'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string',
-            'items.*.quantity'   => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+            'items.*.unit_price'  => 'required|numeric|min:0',
         ]);
 
         DB::transaction(function (): void {
-            $subtotal  = 0;
+            $subtotal = 0;
             $taxAmount = 0;
 
             foreach ($this->items as $item) {
-                $amount    = $item['quantity'] * $item['unit_price'];
-                $itemTax   = $amount * (($item['tax_rate'] ?? 0) / 100);
-                $subtotal  += $amount;
+                $amount = $item['quantity'] * $item['unit_price'];
+                $itemTax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $subtotal += $amount;
                 $taxAmount += $itemTax;
             }
 
@@ -114,7 +129,7 @@ class Invoices extends Component
 
             foreach ($this->items as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
-                $tax    = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $tax = $amount * (($item['tax_rate'] ?? 0) / 100);
 
                 InvoiceItem::create([
                     'invoice_id'  => $invoice->id,
@@ -147,14 +162,14 @@ class Invoices extends Component
 
     public function openPayModal(int $id): void
     {
-        $invoice               = Invoice::findOrFail($id);
+        $invoice = Invoice::findOrFail($id);
         $this->payingInvoiceId = $id;
-        $this->pay_date        = now()->format('Y-m-d');
-        $this->pay_amount      = number_format($invoice->balance, 2, '.', '');
-        $this->pay_method      = 'bank_transfer';
-        $this->pay_reference   = '';
-        $this->pay_notes       = '';
-        $this->showPayModal    = true;
+        $this->pay_date = now()->format('Y-m-d');
+        $this->pay_amount = number_format($invoice->balance, 2, '.', '');
+        $this->pay_method = 'bank_transfer';
+        $this->pay_reference = '';
+        $this->pay_notes = '';
+        $this->showPayModal = true;
     }
 
     public function recordPayment(): void

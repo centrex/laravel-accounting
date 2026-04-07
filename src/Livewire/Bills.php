@@ -13,26 +13,40 @@ class Bills extends Component
 {
     use WithPagination;
 
-    public string $search       = '';
-    public string $statusFilter = '';
-    public string $dateFrom     = '';
-    public string $dateTo       = '';
+    public string $search = '';
 
-    public bool $showModal    = false;
+    public string $statusFilter = '';
+
+    public string $dateFrom = '';
+
+    public string $dateTo = '';
+
+    public bool $showModal = false;
+
     public bool $showPayModal = false;
 
-    public ?int $billId     = null;
-    public ?int $vendor_id  = null;
-    public string $bill_date = '';
-    public string $due_date  = '';
-    public string $currency  = '';
-    public string $notes     = '';
-    public array $items      = [];
+    public ?int $billId = null;
 
-    public ?int $payingBillId   = null;
-    public string $pay_date     = '';
-    public string $pay_amount   = '';
-    public string $pay_method   = 'bank_transfer';
+    public ?int $vendor_id = null;
+
+    public string $bill_date = '';
+
+    public string $due_date = '';
+
+    public string $currency = '';
+
+    public string $notes = '';
+
+    public array $items = [];
+
+    public ?int $payingBillId = null;
+
+    public string $pay_date = '';
+
+    public string $pay_amount = '';
+
+    public string $pay_method = 'bank_transfer';
+
     public string $pay_reference = '';
 
     protected array $queryString = ['search', 'statusFilter'];
@@ -40,8 +54,8 @@ class Bills extends Component
     public function mount(): void
     {
         $this->bill_date = now()->format('Y-m-d');
-        $this->due_date  = now()->addDays(30)->format('Y-m-d');
-        $this->currency  = config('accounting.base_currency', 'BDT');
+        $this->due_date = now()->addDays(30)->format('Y-m-d');
+        $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
     }
 
@@ -60,8 +74,8 @@ class Bills extends Component
     {
         $this->reset(['billId', 'vendor_id', 'notes', 'items']);
         $this->bill_date = now()->format('Y-m-d');
-        $this->due_date  = now()->addDays(30)->format('Y-m-d');
-        $this->currency  = config('accounting.base_currency', 'BDT');
+        $this->due_date = now()->addDays(30)->format('Y-m-d');
+        $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
         $this->showModal = true;
     }
@@ -69,23 +83,23 @@ class Bills extends Component
     public function save(): void
     {
         $this->validate([
-            'vendor_id'          => 'required|integer',
-            'bill_date'          => 'required|date',
-            'due_date'           => 'required|date|after_or_equal:bill_date',
-            'items'              => 'required|array|min:1',
+            'vendor_id'           => 'required|integer',
+            'bill_date'           => 'required|date',
+            'due_date'            => 'required|date|after_or_equal:bill_date',
+            'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string',
-            'items.*.quantity'   => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+            'items.*.unit_price'  => 'required|numeric|min:0',
         ]);
 
         DB::transaction(function (): void {
-            $subtotal  = 0;
+            $subtotal = 0;
             $taxAmount = 0;
 
             foreach ($this->items as $item) {
-                $amount    = $item['quantity'] * $item['unit_price'];
-                $itemTax   = $amount * (($item['tax_rate'] ?? 0) / 100);
-                $subtotal  += $amount;
+                $amount = $item['quantity'] * $item['unit_price'];
+                $itemTax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $subtotal += $amount;
                 $taxAmount += $itemTax;
             }
 
@@ -135,13 +149,13 @@ class Bills extends Component
 
     public function openPayModal(int $id): void
     {
-        $bill              = Bill::findOrFail($id);
+        $bill = Bill::findOrFail($id);
         $this->payingBillId = $id;
-        $this->pay_date    = now()->format('Y-m-d');
-        $this->pay_amount  = number_format($bill->balance, 2, '.', '');
-        $this->pay_method  = 'bank_transfer';
+        $this->pay_date = now()->format('Y-m-d');
+        $this->pay_amount = number_format($bill->balance, 2, '.', '');
+        $this->pay_method = 'bank_transfer';
         $this->pay_reference = '';
-        $this->showPayModal  = true;
+        $this->showPayModal = true;
     }
 
     public function recordPayment(): void

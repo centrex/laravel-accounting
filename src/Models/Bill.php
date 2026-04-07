@@ -32,12 +32,12 @@ class Bill extends Model
     ];
 
     protected $casts = [
-        'bill_date'  => 'date',
-        'due_date'   => 'date',
-        'status'     => EntryStatus::class,
-        'subtotal'   => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'total'      => 'decimal:2',
+        'bill_date'   => 'date',
+        'due_date'    => 'date',
+        'status'      => EntryStatus::class,
+        'subtotal'    => 'decimal:2',
+        'tax_amount'  => 'decimal:2',
+        'total'       => 'decimal:2',
         'paid_amount' => 'decimal:2',
     ];
 

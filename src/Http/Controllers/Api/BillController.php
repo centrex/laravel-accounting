@@ -39,14 +39,14 @@ class BillController extends Controller
         $data = $request->validated();
 
         $bill = DB::transaction(function () use ($data): Bill {
-            $currency  = $data['currency'] ?? config('accounting.base_currency', 'BDT');
-            $subtotal  = 0;
+            $currency = $data['currency'] ?? config('accounting.base_currency', 'BDT');
+            $subtotal = 0;
             $taxAmount = 0;
 
             foreach ($data['items'] as $item) {
-                $amount    = $item['quantity'] * $item['unit_price'];
-                $itemTax   = $amount * (($item['tax_rate'] ?? 0) / 100);
-                $subtotal  += $amount;
+                $amount = $item['quantity'] * $item['unit_price'];
+                $itemTax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $subtotal += $amount;
                 $taxAmount += $itemTax;
             }
 
@@ -64,7 +64,7 @@ class BillController extends Controller
 
             foreach ($data['items'] as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
-                $tax    = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $tax = $amount * (($item['tax_rate'] ?? 0) / 100);
 
                 BillItem::create([
                     'bill_id'     => $bill->id,

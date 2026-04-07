@@ -5,19 +5,19 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Database\Seeders;
 
 use Carbon\Carbon;
-use Illuminate\Database\Seeder;
+use Centrex\LaravelAccounting\Enums\{
+    AccountSubtype,
+    AccountType
+};
 use Centrex\LaravelAccounting\Models\{
     Account,
     Customer,
-    Vendor,
-    FiscalYear,
     FiscalPeriod,
-    TaxRate
+    FiscalYear,
+    TaxRate,
+    Vendor
 };
-use Centrex\LaravelAccounting\Enums\{
-    AccountType,
-    AccountSubtype
-};
+use Illuminate\Database\Seeder;
 
 class AccountingSeeder extends Seeder
 {
@@ -38,66 +38,66 @@ class AccountingSeeder extends Seeder
              | ASSETS (1000–1999)
              ==========================================================*/
             [
-                'code' => '1000',
-                'name' => 'Cash',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::CASH,
+                'code'      => '1000',
+                'name'      => 'Cash',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::CASH,
                 'is_system' => true,
             ],
             [
-                'code' => '1050',
-                'name' => 'Petty Cash',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::PETTY_CASH_ACCOUNT,
+                'code'      => '1050',
+                'name'      => 'Petty Cash',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::PETTY_CASH_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '1100',
-                'name' => 'Bank – Operating',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::CHECKING_ACCOUNT,
+                'code'      => '1100',
+                'name'      => 'Bank – Operating',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::CHECKING_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '1200',
-                'name' => 'Accounts Receivable',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::ACCOUNTS_RECEIVABLE,
+                'code'      => '1200',
+                'name'      => 'Accounts Receivable',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::ACCOUNTS_RECEIVABLE,
                 'is_system' => true,
             ],
             [
-                'code' => '1250',
-                'name' => 'Allowance for Doubtful Accounts',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::CONTRA_ACCOUNT,
+                'code'      => '1250',
+                'name'      => 'Allowance for Doubtful Accounts',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::CONTRA_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '1300',
-                'name' => 'Inventory',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::CURRENT_ASSET,
+                'code'      => '1300',
+                'name'      => 'Inventory',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::CURRENT_ASSET,
                 'is_system' => true,
             ],
             [
-                'code' => '1500',
-                'name' => 'Prepaid Expenses',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::PREPAID_EXPENSES,
+                'code'      => '1500',
+                'name'      => 'Prepaid Expenses',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::PREPAID_EXPENSES,
                 'is_system' => true,
             ],
             [
-                'code' => '1700',
-                'name' => 'Property, Plant & Equipment',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::FIXED_ASSET,
+                'code'      => '1700',
+                'name'      => 'Property, Plant & Equipment',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::FIXED_ASSET,
                 'is_system' => true,
             ],
             [
-                'code' => '1800',
-                'name' => 'Accumulated Depreciation',
-                'type' => AccountType::ASSET,
-                'subtype' => AccountSubtype::CONTRA_ACCOUNT,
+                'code'      => '1800',
+                'name'      => 'Accumulated Depreciation',
+                'type'      => AccountType::ASSET,
+                'subtype'   => AccountSubtype::CONTRA_ACCOUNT,
                 'is_system' => true,
             ],
 
@@ -105,52 +105,52 @@ class AccountingSeeder extends Seeder
              | LIABILITIES (2000–2999)
              ==========================================================*/
             [
-                'code' => '2000',
-                'name' => 'Accounts Payable',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::ACCOUNTS_PAYABLE,
+                'code'      => '2000',
+                'name'      => 'Accounts Payable',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::ACCOUNTS_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code' => '2100',
-                'name' => 'Credit Card Payable',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::CREDIT_CARD_PAYABLE,
+                'code'      => '2100',
+                'name'      => 'Credit Card Payable',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::CREDIT_CARD_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code' => '2200',
-                'name' => 'Accrued Expenses',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::ACCRUAL_ACCOUNT,
+                'code'      => '2200',
+                'name'      => 'Accrued Expenses',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::ACCRUAL_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '2250',
-                'name' => 'Salaries Payable',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::SALARIES_PAYABLE,
+                'code'      => '2250',
+                'name'      => 'Salaries Payable',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::SALARIES_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code' => '2300',
-                'name' => 'Sales Tax Payable',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::TAX_ACCOUNT,
+                'code'      => '2300',
+                'name'      => 'Sales Tax Payable',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::TAX_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '2400',
-                'name' => 'Income Tax Payable',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::WITHHOLDING_TAX_PAYABLE,
+                'code'      => '2400',
+                'name'      => 'Income Tax Payable',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::WITHHOLDING_TAX_PAYABLE,
                 'is_system' => true,
             ],
             [
-                'code' => '2500',
-                'name' => 'Long-term Loan',
-                'type' => AccountType::LIABILITY,
-                'subtype' => AccountSubtype::LOAN_ACCOUNT,
+                'code'      => '2500',
+                'name'      => 'Long-term Loan',
+                'type'      => AccountType::LIABILITY,
+                'subtype'   => AccountSubtype::LOAN_ACCOUNT,
                 'is_system' => true,
             ],
 
@@ -158,31 +158,31 @@ class AccountingSeeder extends Seeder
              | EQUITY (3000–3999)
              ==========================================================*/
             [
-                'code' => '3000',
-                'name' => 'Capital',
-                'type' => AccountType::EQUITY,
-                'subtype' => AccountSubtype::CAPITAL_ACCOUNT,
+                'code'      => '3000',
+                'name'      => 'Capital',
+                'type'      => AccountType::EQUITY,
+                'subtype'   => AccountSubtype::CAPITAL_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '3100',
-                'name' => 'Retained Earnings',
-                'type' => AccountType::EQUITY,
-                'subtype' => AccountSubtype::RETAINED_EARNINGS_ACCOUNT,
+                'code'      => '3100',
+                'name'      => 'Retained Earnings',
+                'type'      => AccountType::EQUITY,
+                'subtype'   => AccountSubtype::RETAINED_EARNINGS_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '3200',
-                'name' => 'Owner Drawings',
-                'type' => AccountType::EQUITY,
-                'subtype' => AccountSubtype::DRAWINGS_ACCOUNT,
+                'code'      => '3200',
+                'name'      => 'Owner Drawings',
+                'type'      => AccountType::EQUITY,
+                'subtype'   => AccountSubtype::DRAWINGS_ACCOUNT,
                 'is_system' => true,
             ],
             [
-                'code' => '3900',
-                'name' => 'Income Summary',
-                'type' => AccountType::EQUITY,
-                'subtype' => AccountSubtype::MEMORANDUM_ACCOUNT,
+                'code'      => '3900',
+                'name'      => 'Income Summary',
+                'type'      => AccountType::EQUITY,
+                'subtype'   => AccountSubtype::MEMORANDUM_ACCOUNT,
                 'is_system' => true,
             ],
 
@@ -190,24 +190,24 @@ class AccountingSeeder extends Seeder
              | REVENUE (4000–4999)
              ==========================================================*/
             [
-                'code' => '4000',
-                'name' => 'Sales Revenue',
-                'type' => AccountType::REVENUE,
-                'subtype' => AccountSubtype::OPERATING_REVENUE,
+                'code'      => '4000',
+                'name'      => 'Sales Revenue',
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::OPERATING_REVENUE,
                 'is_system' => true,
             ],
             [
-                'code' => '4100',
-                'name' => 'Service Revenue',
-                'type' => AccountType::REVENUE,
-                'subtype' => AccountSubtype::OPERATING_REVENUE,
+                'code'      => '4100',
+                'name'      => 'Service Revenue',
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::OPERATING_REVENUE,
                 'is_system' => true,
             ],
             [
-                'code' => '4900',
-                'name' => 'Other Income',
-                'type' => AccountType::REVENUE,
-                'subtype' => AccountSubtype::NON_OPERATING_REVENUE,
+                'code'      => '4900',
+                'name'      => 'Other Income',
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::NON_OPERATING_REVENUE,
                 'is_system' => true,
             ],
 
@@ -215,52 +215,52 @@ class AccountingSeeder extends Seeder
              | EXPENSES (5000–6999)
              ==========================================================*/
             [
-                'code' => '5000',
-                'name' => 'Cost of Goods Sold',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::COST_OF_GOODS_SOLD,
+                'code'      => '5000',
+                'name'      => 'Cost of Goods Sold',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::COST_OF_GOODS_SOLD,
                 'is_system' => true,
             ],
             [
-                'code' => '6000',
-                'name' => 'Salaries & Wages',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::SALARIES_AND_WAGES_EXPENSE,
+                'code'      => '6000',
+                'name'      => 'Salaries & Wages',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::SALARIES_AND_WAGES_EXPENSE,
                 'is_system' => true,
             ],
             [
-                'code' => '6100',
-                'name' => 'Rent Expense',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::RENT_EXPENSE,
+                'code'      => '6100',
+                'name'      => 'Rent Expense',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::RENT_EXPENSE,
                 'is_system' => true,
             ],
             [
-                'code' => '6200',
-                'name' => 'Utilities Expense',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::UTILITIES_EXPENSE,
+                'code'      => '6200',
+                'name'      => 'Utilities Expense',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::UTILITIES_EXPENSE,
                 'is_system' => true,
             ],
             [
-                'code' => '6600',
-                'name' => 'Depreciation Expense',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::DEPRECIATION_EXPENSE,
+                'code'      => '6600',
+                'name'      => 'Depreciation Expense',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::DEPRECIATION_EXPENSE,
                 'is_system' => true,
             ],
             [
-                'code' => '6700',
-                'name' => 'Interest Expense',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::INTEREST_EXPENSE,
+                'code'      => '6700',
+                'name'      => 'Interest Expense',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::INTEREST_EXPENSE,
                 'is_system' => true,
             ],
             [
-                'code' => '6800',
-                'name' => 'Bank Charges',
-                'type' => AccountType::EXPENSE,
-                'subtype' => AccountSubtype::BANK_FEES_EXPENSE,
+                'code'      => '6800',
+                'name'      => 'Bank Charges',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::BANK_FEES_EXPENSE,
                 'is_system' => true,
             ],
         ];
@@ -276,13 +276,13 @@ class AccountingSeeder extends Seeder
 
         for ($i = -1; $i <= 1; $i++) {
             $fy = FiscalYear::firstOrCreate(
-                ['name' => "FY " . ($year + $i)],
+                ['name' => 'FY ' . ($year + $i)],
                 [
                     'start_date' => Carbon::create($year + $i, 1, 1),
-                    'end_date' => Carbon::create($year + $i, 12, 31),
+                    'end_date'   => Carbon::create($year + $i, 12, 31),
                     'is_current' => $i === 0,
-                    'is_closed' => $i < 0,
-                ]
+                    'is_closed'  => $i < 0,
+                ],
             );
 
             for ($m = 1; $m <= 12; $m++) {
@@ -290,13 +290,13 @@ class AccountingSeeder extends Seeder
                 FiscalPeriod::firstOrCreate(
                     [
                         'fiscal_year_id' => $fy->id,
-                        'name' => $start->format('F Y'),
+                        'name'           => $start->format('F Y'),
                     ],
                     [
                         'start_date' => $start,
-                        'end_date' => $start->copy()->endOfMonth(),
-                        'is_closed' => $i < 0,
-                    ]
+                        'end_date'   => $start->copy()->endOfMonth(),
+                        'is_closed'  => $i < 0,
+                    ],
                 );
             }
         }

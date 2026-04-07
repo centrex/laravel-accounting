@@ -27,7 +27,7 @@ class ReportController extends Controller
 
             return response()->json([
                 'data' => [
-                    'accounts'      => collect($data['accounts'])->map(fn ($row) => [
+                    'accounts' => collect($data['accounts'])->map(fn ($row) => [
                         'account' => [
                             'id'   => $row['account']->id,
                             'code' => $row['account']->code,

@@ -17,7 +17,6 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
     ->prefix(config('accounting.api_prefix', 'api/accounting'))
     ->name('accounting.api.')
     ->group(function (): void {
-
         // Chart of Accounts
         Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
         Route::post('accounts', [AccountController::class, 'store'])->name('accounts.store');

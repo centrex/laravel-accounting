@@ -16,8 +16,8 @@ class StoreCustomerRequest extends FormRequest
     public function rules(): array
     {
         $customerId = $this->route('customer')?->id;
-        $prefix     = config('accounting.table_prefix', 'acct_');
-        $table      = $prefix . 'customers';
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $table = $prefix . 'customers';
 
         return [
             'code'          => ['required', 'string', 'max:50', "unique:{$table},code,{$customerId}"],

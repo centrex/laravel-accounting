@@ -16,12 +16,12 @@ class RecordPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date'           => ['required', 'date'],
-            'amount'         => ['required', 'numeric', 'min:0.01'],
-            'method'         => ['required', 'string', 'in:cash,check,bank_transfer,card,other'],
-            'reference'      => ['nullable', 'string', 'max:255'],
-            'notes'          => ['nullable', 'string'],
-            'account_code'   => ['nullable', 'string', 'max:50'],
+            'date'         => ['required', 'date'],
+            'amount'       => ['required', 'numeric', 'min:0.01'],
+            'method'       => ['required', 'string', 'in:cash,check,bank_transfer,card,other'],
+            'reference'    => ['nullable', 'string', 'max:255'],
+            'notes'        => ['nullable', 'string'],
+            'account_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

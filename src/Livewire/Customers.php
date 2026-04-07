@@ -12,23 +12,37 @@ class Customers extends Component
     use WithPagination;
 
     public string $search = '';
+
     public bool $showInactive = false;
+
     public bool $showModal = false;
 
     // Form fields
-    public ?int $customerId  = null;
-    public string $code      = '';
-    public string $name      = '';
-    public string $email     = '';
-    public string $phone     = '';
-    public string $address   = '';
-    public string $city      = '';
-    public string $country   = '';
-    public string $tax_id    = '';
-    public string $currency  = '';
-    public string $credit_limit   = '0';
-    public int $payment_terms     = 30;
-    public bool $is_active        = true;
+    public ?int $customerId = null;
+
+    public string $code = '';
+
+    public string $name = '';
+
+    public string $email = '';
+
+    public string $phone = '';
+
+    public string $address = '';
+
+    public string $city = '';
+
+    public string $country = '';
+
+    public string $tax_id = '';
+
+    public string $currency = '';
+
+    public string $credit_limit = '0';
+
+    public int $payment_terms = 30;
+
+    public bool $is_active = true;
 
     protected array $queryString = ['search'];
 
@@ -41,26 +55,26 @@ class Customers extends Component
     {
         $this->resetValidation();
         $this->reset(['customerId', 'code', 'name', 'email', 'phone', 'address', 'city', 'country', 'tax_id']);
-        $this->currency      = config('accounting.base_currency', 'BDT');
-        $this->credit_limit  = '0';
+        $this->currency = config('accounting.base_currency', 'BDT');
+        $this->credit_limit = '0';
         $this->payment_terms = 30;
-        $this->is_active     = true;
+        $this->is_active = true;
 
         if ($id) {
-            $customer           = Customer::findOrFail($id);
-            $this->customerId   = $customer->id;
-            $this->code         = $customer->code;
-            $this->name         = $customer->name;
-            $this->email        = $customer->email ?? '';
-            $this->phone        = $customer->phone ?? '';
-            $this->address      = $customer->address ?? '';
-            $this->city         = $customer->city ?? '';
-            $this->country      = $customer->country ?? '';
-            $this->tax_id       = $customer->tax_id ?? '';
-            $this->currency     = $customer->currency;
+            $customer = Customer::findOrFail($id);
+            $this->customerId = $customer->id;
+            $this->code = $customer->code;
+            $this->name = $customer->name;
+            $this->email = $customer->email ?? '';
+            $this->phone = $customer->phone ?? '';
+            $this->address = $customer->address ?? '';
+            $this->city = $customer->city ?? '';
+            $this->country = $customer->country ?? '';
+            $this->tax_id = $customer->tax_id ?? '';
+            $this->currency = $customer->currency;
             $this->credit_limit = $customer->credit_limit;
             $this->payment_terms = $customer->payment_terms;
-            $this->is_active    = $customer->is_active;
+            $this->is_active = $customer->is_active;
         }
 
         $this->showModal = true;
@@ -69,8 +83,8 @@ class Customers extends Component
     public function save(): void
     {
         $prefix = config('accounting.table_prefix', 'acct_');
-        $table  = $prefix . 'customers';
-        $id     = $this->customerId;
+        $table = $prefix . 'customers';
+        $id = $this->customerId;
 
         $this->validate([
             'code'          => "required|unique:{$table},code,{$id}",
@@ -110,7 +124,7 @@ class Customers extends Component
     public function toggleStatus(int $id): void
     {
         $customer = Customer::findOrFail($id);
-        $customer->update(['is_active' => ! $customer->is_active]);
+        $customer->update(['is_active' => !$customer->is_active]);
         $this->dispatch('notify', type: 'info', message: 'Customer status updated.');
     }
 
@@ -122,7 +136,7 @@ class Customers extends Component
                     ->orWhere('code', 'like', '%' . $this->search . '%')
                     ->orWhere('email', 'like', '%' . $this->search . '%');
             }))
-            ->when(! $this->showInactive, fn ($q) => $q->where('is_active', true))
+            ->when(!$this->showInactive, fn ($q) => $q->where('is_active', true))
             ->orderBy('name')
             ->paginate(config('accounting.per_page.customers', 20));
 

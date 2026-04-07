@@ -16,8 +16,8 @@ class StoreVendorRequest extends FormRequest
     public function rules(): array
     {
         $vendorId = $this->route('vendor')?->id;
-        $prefix   = config('accounting.table_prefix', 'acct_');
-        $table    = $prefix . 'vendors';
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $table = $prefix . 'vendors';
 
         return [
             'code'          => ['required', 'string', 'max:50', "unique:{$table},code,{$vendorId}"],
