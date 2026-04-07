@@ -121,7 +121,7 @@ class BillController extends Controller
                 $bill->increment('paid_amount', $request->amount);
                 $bill->refresh();
 
-                $status = (float) $bill->paid_amount >= (float) $bill->total ? 'paid' : 'partial';
+                $status = (float) $bill->paid_amount >= (float) $bill->total ? 'settled' : 'partially_settled';
                 $bill->update(['status' => $status]);
 
                 return $payment;

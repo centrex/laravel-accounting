@@ -68,7 +68,7 @@ class Customer extends Model
     public function getTotalOutstandingAttribute(): float
     {
         return (float) $this->invoices()
-            ->whereIn('status', ['sent', 'partial', 'overdue'])
+            ->whereIn('status', ['issued', 'partially_settled', 'overdue'])
             ->sum(DB::raw('total - paid_amount'));
     }
 }

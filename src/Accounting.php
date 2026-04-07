@@ -66,7 +66,7 @@ class Accounting
      */
     public function postInvoice(Invoice $invoice): JournalEntry
     {
-        if ($invoice->status === 'paid') {
+        if ($invoice->status === \Centrex\LaravelAccounting\Enums\EntryStatus::SETTLED) {
             throw new RuntimeException('Invoice is already paid');
         }
 
@@ -111,7 +111,7 @@ class Accounting
 
             $invoice->update([
                 'journal_entry_id' => $entry->id,
-                'status'           => 'sent',
+                'status'           => 'issued',
             ]);
 
             return $entry;
@@ -172,9 +172,9 @@ class Accounting
             $invoice->refresh();
 
             if ((float) $invoice->paid_amount >= (float) $invoice->total) {
-                $invoice->update(['status' => 'paid']);
+                $invoice->update(['status' => 'settled']);
             } else {
-                $invoice->update(['status' => 'partial']);
+                $invoice->update(['status' => 'partially_settled']);
             }
 
             return $payment;
@@ -225,7 +225,7 @@ class Accounting
 
             $bill->update([
                 'journal_entry_id' => $entry->id,
-                'status'           => 'approved',
+                'status'           => 'issued',
             ]);
 
             return $entry;
@@ -283,9 +283,9 @@ class Accounting
             $bill->refresh();
 
             if ((float) $bill->paid_amount >= (float) $bill->total) {
-                $bill->update(['status' => 'paid']);
+                $bill->update(['status' => 'settled']);
             } else {
-                $bill->update(['status' => 'partial']);
+                $bill->update(['status' => 'partially_settled']);
             }
 
             return $payment;

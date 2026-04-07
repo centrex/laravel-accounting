@@ -180,7 +180,7 @@ class Bills extends Component
 
             $bill->increment('paid_amount', $this->pay_amount);
             $bill->refresh();
-            $bill->update(['status' => (float) $bill->paid_amount >= (float) $bill->total ? 'paid' : 'partial']);
+            $bill->update(['status' => (float) $bill->paid_amount >= (float) $bill->total ? 'settled' : 'partially_settled']);
         });
 
         $this->dispatch('notify', type: 'success', message: 'Payment recorded!');

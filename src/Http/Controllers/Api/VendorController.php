@@ -48,7 +48,7 @@ class VendorController extends Controller
 
     public function destroy(Vendor $vendor): JsonResponse
     {
-        if ($vendor->bills()->whereIn('status', ['approved', 'partial'])->exists()) {
+        if ($vendor->bills()->whereIn('status', ['issued', 'partially_settled'])->exists()) {
             return response()->json(['message' => 'Cannot delete vendor with outstanding bills'], 422);
         }
 

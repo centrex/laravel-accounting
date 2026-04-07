@@ -66,7 +66,7 @@ class Vendor extends Model
     public function getTotalOutstandingAttribute(): float
     {
         return (float) $this->bills()
-            ->whereIn('status', ['approved', 'partial', 'overdue'])
+            ->whereIn('status', ['issued', 'partially_settled', 'overdue'])
             ->sum(DB::raw('total - paid_amount'));
     }
 }

@@ -48,7 +48,7 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): JsonResponse
     {
-        if ($customer->invoices()->whereIn('status', ['sent', 'partial', 'overdue'])->exists()) {
+        if ($customer->invoices()->whereIn('status', ['issued', 'partially_settled', 'overdue'])->exists()) {
             return response()->json(['message' => 'Cannot delete customer with outstanding invoices'], 422);
         }
 
