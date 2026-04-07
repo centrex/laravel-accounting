@@ -6,6 +6,7 @@ namespace Workbench\App\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Workbench\App\Commands\DemoWorkflowCommand;
 
 class WorkbenchServiceProvider extends ServiceProvider
 {
@@ -16,5 +17,11 @@ class WorkbenchServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Route::view('/', 'welcome');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                DemoWorkflowCommand::class,
+            ]);
+        }
     }
 }
