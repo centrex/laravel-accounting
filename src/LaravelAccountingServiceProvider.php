@@ -7,10 +7,10 @@ namespace Centrex\LaravelAccounting;
 use Centrex\LaravelAccounting\Commands\AccountingReportCommand;
 use Centrex\LaravelAccounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\LaravelAccounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, FinancialReports, Invoices, JournalEntries, Vendors};
-use Centrex\LaravelAccounting\Models\{Bill, BillItem, Invoice, InvoiceItem, JournalEntry, Payment};
-use Centrex\LaravelAccounting\Observers\{BillItemObserver, BillObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
-use Illuminate\Support\Facades\Event;
+use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\LaravelAccounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
+use Centrex\LaravelAccounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
+use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -26,6 +26,7 @@ class LaravelAccountingServiceProvider extends ServiceProvider
         Livewire::component('journal-entries', JournalEntries::class);
         Livewire::component('accounting-invoices', Invoices::class);
         Livewire::component('accounting-bills', Bills::class);
+        Livewire::component('accounting-expenses', Expenses::class);
         Livewire::component('accounting-customers', Customers::class);
         Livewire::component('accounting-vendors', Vendors::class);
 
@@ -36,10 +37,16 @@ class LaravelAccountingServiceProvider extends ServiceProvider
         Bill::observe(BillObserver::class);
         BillItem::observe(BillItemObserver::class);
         InvoiceItem::observe(InvoiceItemObserver::class);
+        Expense::observe(ExpenseObserver::class);
+        ExpenseItem::observe(ExpenseItemObserver::class);
 
         // Register event listeners
         Event::listen(InvoicePosted::class, [SyncCustomerOutstanding::class, 'handle']);
         Event::listen(PaymentRecorded::class, [NotifyAccountingTeam::class, 'handle']);
+
+        // Register authorization gates.
+        // Host application may override any gate by re-defining it after the provider boots.
+        $this->registerGates();
 
         /*
          * Optional methods to load your package assets
@@ -74,6 +81,81 @@ class LaravelAccountingServiceProvider extends ServiceProvider
             $this->commands([
                 AccountingReportCommand::class,
             ]);
+        }
+    }
+
+    /**
+     * Register default authorization gates for accounting actions.
+     *
+     * Each gate falls back to the `accounting-admin` super-gate so host apps
+     * can grant blanket access by defining that single gate, or override
+     * individual abilities for fine-grained control.
+     *
+     * Default behaviour: denies everyone (safe default).
+     * Override in AppServiceProvider after calling parent::boot().
+     */
+    protected function registerGates(): void
+    {
+        $abilities = [
+            // Journal entries
+            'accounting.journal.view',
+            'accounting.journal.create',
+            'accounting.journal.post',
+            'accounting.journal.void',
+
+            // Invoices & bills
+            'accounting.invoice.view',
+            'accounting.invoice.create',
+            'accounting.invoice.post',
+            'accounting.invoice.payment',
+            'accounting.bill.view',
+            'accounting.bill.create',
+            'accounting.bill.post',
+            'accounting.bill.payment',
+
+            // Expenses
+            'accounting.expense.view',
+            'accounting.expense.create',
+            'accounting.expense.payment',
+
+            // Reports (read-only)
+            'accounting.reports.view',
+
+            // Chart of accounts
+            'accounting.accounts.view',
+            'accounting.accounts.manage',
+
+            // Customers & vendors
+            'accounting.customers.view',
+            'accounting.customers.manage',
+            'accounting.vendors.view',
+            'accounting.vendors.manage',
+
+            // Fiscal year & budgets
+            'accounting.fiscal-year.close',
+            'accounting.budget.view',
+            'accounting.budget.manage',
+            'accounting.budget.approve',
+        ];
+
+        foreach ($abilities as $ability) {
+            // Only define the gate if the host app has not already registered it
+            if (! Gate::has($ability)) {
+                Gate::define($ability, static function ($user): bool {
+                    // Allow if the user passes the super-gate
+                    if (Gate::has('accounting-admin') && Gate::forUser($user)->check('accounting-admin')) {
+                        return true;
+                    }
+
+                    // Fall back to a config-driven role attribute check
+                    $roleAttribute = config('accounting.admin_role_attribute', null);
+                    if ($roleAttribute && method_exists($user, 'hasRole')) {
+                        return $user->hasRole(config('accounting.admin_roles', []));
+                    }
+
+                    return false;
+                });
+            }
         }
     }
 

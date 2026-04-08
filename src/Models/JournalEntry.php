@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting\Models;
 
-use App\Models\User;
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Centrex\LaravelAccounting\Enums\JvStatus;
+use Centrex\LaravelAccounting\Exceptions\{InvalidStatusTransitionException, UnbalancedJournalException};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -48,34 +48,32 @@ class JournalEntry extends Model
         return $this->hasMany(JournalEntryLine::class);
     }
 
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    // Validate double-entry (debits = credits)
+    /** Check whether debits equal credits within the configured rounding tolerance. */
     public function isBalanced(): bool
     {
-        $debits = $this->lines()->where('type', 'debit')->sum('amount');
-        $credits = $this->lines()->where('type', 'credit')->sum('amount');
+        $tolerance = (float) config('accounting.rounding_tolerance', 0.005);
 
-        return abs($debits - $credits) < 0.01; // Allow for rounding
-    }
-
-    // Post journal entry
-    public function post(): bool
-    {
-        if (!$this->isBalanced()) {
-            throw new \Exception('Journal entry is not balanced');
+        // Use already-loaded lines collection when available to avoid extra queries
+        if ($this->relationLoaded('lines')) {
+            $debits  = $this->lines->where('type', 'debit')->sum('amount');
+            $credits = $this->lines->where('type', 'credit')->sum('amount');
+        } else {
+            $debits  = $this->lines()->where('type', 'debit')->sum('amount');
+            $credits = $this->lines()->where('type', 'credit')->sum('amount');
         }
 
-        if ($this->status === 'posted') {
-            throw new \Exception('Journal entry is already posted');
+        return abs((float) $debits - (float) $credits) < $tolerance;
+    }
+
+    /** Post the entry: validates balance, sets status → posted. */
+    public function post(): bool
+    {
+        if (! $this->isBalanced()) {
+            throw UnbalancedJournalException::make($this);
+        }
+
+        if ($this->status === JvStatus::POSTED || $this->status?->value === 'posted') {
+            throw InvalidStatusTransitionException::make('JournalEntry', 'posted', 'posted');
         }
 
         $this->update([
@@ -87,15 +85,32 @@ class JournalEntry extends Model
         return true;
     }
 
-    // Void journal entry
+    /** Void a posted entry. */
     public function void(): bool
     {
-        if ($this->status !== 'posted') {
-            throw new \Exception('Only posted entries can be voided');
+        $statusValue = $this->status instanceof \BackedEnum ? $this->status->value : (string) $this->status;
+
+        if ($statusValue !== 'posted') {
+            throw InvalidStatusTransitionException::make('JournalEntry', $statusValue, 'void');
         }
 
         $this->update(['status' => 'void']);
 
         return true;
+    }
+
+    /** Relationships — kept after moving away from App\Models\User to avoid coupling */
+    public function creator(): BelongsTo
+    {
+        $userModel = config('auth.providers.users.model', \Illuminate\Foundation\Auth\User::class);
+
+        return $this->belongsTo($userModel, 'created_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        $userModel = config('auth.providers.users.model', \Illuminate\Foundation\Auth\User::class);
+
+        return $this->belongsTo($userModel, 'approved_by');
     }
 }

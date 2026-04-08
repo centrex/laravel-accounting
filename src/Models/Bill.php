@@ -9,7 +9,6 @@ use Centrex\LaravelAccounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class Bill extends Model
 {
@@ -34,9 +33,9 @@ class Bill extends Model
     ];
 
     protected $casts = [
-        'bill_date'   => 'date',
-        'due_date'    => 'date',
-        'status'      => EntryStatus::class,
+        'bill_date'     => 'date',
+        'due_date'      => 'date',
+        'status'        => EntryStatus::class,
         'subtotal'      => 'decimal:2',
         'tax_amount'    => 'decimal:2',
         'total'         => 'decimal:2',
@@ -50,10 +49,11 @@ class Bill extends Model
         parent::boot();
 
         static::creating(function (self $bill): void {
-            if ($bill->bill_number) return;
+            if ($bill->bill_number) {
+                return;
+            }
 
             DB::connection($bill->getConnectionName())->transaction(function () use ($bill) {
-
                 $date = now()->format('Ymd');
 
                 $lastBill = self::query()
@@ -71,7 +71,7 @@ class Bill extends Model
                 $bill->bill_number = sprintf(
                     'BILL-%s-%05d',
                     $date,
-                    $sequence
+                    $sequence,
                 );
             });
         });

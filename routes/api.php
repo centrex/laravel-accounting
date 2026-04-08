@@ -5,7 +5,9 @@ declare(strict_types = 1);
 use Centrex\LaravelAccounting\Http\Controllers\Api\{
     AccountController,
     BillController,
+    BudgetController,
     CustomerController,
+    ExpenseController,
     InvoiceController,
     JournalEntryController,
     ReportController,
@@ -48,6 +50,14 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::post('bills/{bill}/payments', [BillController::class, 'recordPayment'])->name('bills.payments');
         Route::delete('bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
 
+        // Expenses
+        Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
+        Route::post('expenses/{expense}/post', [ExpenseController::class, 'post'])->name('expenses.post');
+        Route::post('expenses/{expense}/payments', [ExpenseController::class, 'recordPayment'])->name('expenses.payments');
+        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
         // Customers
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
@@ -67,4 +77,13 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+
+        // Budgets
+        Route::get('budgets', [BudgetController::class, 'index'])->name('budgets.index');
+        Route::post('budgets', [BudgetController::class, 'store'])->name('budgets.store');
+        Route::get('budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
+        Route::put('budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+        Route::post('budgets/{budget}/approve', [BudgetController::class, 'approve'])->name('budgets.approve');
+        Route::get('budgets/{budget}/vs-actual', [BudgetController::class, 'vsActual'])->name('budgets.vs-actual');
+        Route::delete('budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
     });

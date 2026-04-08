@@ -7,7 +7,6 @@ namespace Centrex\LaravelAccounting\Models;
 use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo};
-use Illuminate\Support\Facades\DB;
 
 class Vendor extends Model
 {
@@ -67,6 +66,7 @@ class Vendor extends Model
     {
         return (float) $this->bills()
             ->whereIn('status', ['issued', 'partially_settled', 'overdue'])
-            ->sum(DB::raw('total - paid_amount'));
+            ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as outstanding')
+            ->value('outstanding');
     }
 }

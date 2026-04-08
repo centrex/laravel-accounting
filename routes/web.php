@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, Budgets, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
@@ -15,6 +15,8 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/reports', FinancialReports::class)->name('reports');
         Route::get('/invoices', Invoices::class)->name('invoices');
         Route::get('/bills', Bills::class)->name('bills');
+        Route::get('/expenses', Expenses::class)->name('expenses');
+        Route::get('/budgets', Budgets::class)->name('budgets');
         Route::get('/customers', Customers::class)->name('customers');
         Route::get('/vendors', Vendors::class)->name('vendors');
     });

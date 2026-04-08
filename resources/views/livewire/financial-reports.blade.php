@@ -83,10 +83,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item['account']->code }}</td>
                                 <td class="px-6 py-4 text-sm">{{ $item['account']->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                    @if($item['debit'] > 0) {{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['debit'], 2) }} @endif
+                                    @if($item['debit'] > 0) {{ $currency }} {{ number_format($item['debit'], 2) }} @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                    @if($item['credit'] > 0) {{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['credit'], 2) }} @endif
+                                    @if($item['credit'] > 0) {{ $currency }} {{ number_format($item['credit'], 2) }} @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -94,8 +94,8 @@
                     <tfoot class="bg-gray-50 font-bold">
                         <tr>
                             <td colspan="2" class="px-6 py-4 text-sm">TOTAL</td>
-                            <td class="px-6 py-4 text-sm text-right">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['total_debits'], 2) }}</td>
-                            <td class="px-6 py-4 text-sm text-right">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['total_credits'], 2) }}</td>
+                            <td class="px-6 py-4 text-sm text-right">{{ $currency }} {{ number_format($reportData['total_debits'], 2) }}</td>
+                            <td class="px-6 py-4 text-sm text-right">{{ $currency }} {{ number_format($reportData['total_credits'], 2) }}</td>
                         </tr>
                         <tr class="{{ $reportData['is_balanced'] ? 'text-green-600' : 'text-red-600' }}">
                             <td colspan="4" class="px-6 py-2 text-sm text-center">
@@ -115,12 +115,12 @@
                         @foreach($reportData['assets']['accounts'] as $item)
                             <div class="flex justify-between py-2 px-4">
                                 <span class="text-sm">{{ $item['account']->code }} - {{ $item['account']->name }}</span>
-                                <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['balance'], 2) }}</span>
+                                <span class="text-sm font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2 px-4 bg-gray-50 font-bold mt-2">
                             <span>Total Assets</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['assets']['total'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['assets']['total'], 2) }}</span>
                         </div>
                     </div>
 
@@ -130,12 +130,12 @@
                         @foreach($reportData['liabilities']['accounts'] as $item)
                             <div class="flex justify-between py-2 px-4">
                                 <span class="text-sm">{{ $item['account']->code }} - {{ $item['account']->name }}</span>
-                                <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['balance'], 2) }}</span>
+                                <span class="text-sm font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2 px-4 bg-gray-50 font-bold mt-2">
                             <span>Total Liabilities</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['liabilities']['total'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['liabilities']['total'], 2) }}</span>
                         </div>
                     </div>
 
@@ -145,16 +145,16 @@
                         @foreach($reportData['equity']['accounts'] as $item)
                             <div class="flex justify-between py-2 px-4">
                                 <span class="text-sm">{{ $item['account']->code }} - {{ $item['account']->name }}</span>
-                                <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['balance'], 2) }}</span>
+                                <span class="text-sm font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2 px-4">
                             <span class="text-sm">Net Income (Current Period)</span>
-                            <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['equity']['net_income'], 2) }}</span>
+                            <span class="text-sm font-medium">{{ $currency }} {{ number_format($reportData['equity']['net_income'], 2) }}</span>
                         </div>
                         <div class="flex justify-between py-2 px-4 bg-gray-50 font-bold mt-2">
                             <span>Total Equity</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['equity']['total_with_income'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['equity']['total_with_income'], 2) }}</span>
                         </div>
                     </div>
 
@@ -162,7 +162,7 @@
                     <div class="border-t-2 border-gray-800 pt-4">
                         <div class="flex justify-between py-2 px-4 bg-blue-50 font-bold text-lg">
                             <span>Total Liabilities & Equity</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['liabilities']['total'] + $reportData['equity']['total_with_income'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['liabilities']['total'] + $reportData['equity']['total_with_income'], 2) }}</span>
                         </div>
                         <div class="text-center mt-2 {{ $reportData['is_balanced'] ? 'text-green-600' : 'text-red-600' }}">
                             {{ $reportData['is_balanced'] ? '✓ Balance Sheet is Balanced' : '✗ Balance Sheet is Not Balanced' }}
@@ -180,12 +180,12 @@
                         @foreach($reportData['revenue']['accounts'] as $item)
                             <div class="flex justify-between py-2 px-4">
                                 <span class="text-sm">{{ $item['account']->code }} - {{ $item['account']->name }}</span>
-                                <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['balance'], 2) }}</span>
+                                <span class="text-sm font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2 px-4 bg-gray-50 font-bold mt-2">
                             <span>Total Revenue</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['revenue']['total'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['revenue']['total'], 2) }}</span>
                         </div>
                     </div>
 
@@ -195,12 +195,12 @@
                         @foreach($reportData['expenses']['accounts'] as $item)
                             <div class="flex justify-between py-2 px-4">
                                 <span class="text-sm">{{ $item['account']->code }} - {{ $item['account']->name }}</span>
-                                <span class="text-sm font-medium">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($item['balance'], 2) }}</span>
+                                <span class="text-sm font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2 px-4 bg-gray-50 font-bold mt-2">
                             <span>Total Expenses</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['expenses']['total'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['expenses']['total'], 2) }}</span>
                         </div>
                     </div>
 
@@ -208,7 +208,7 @@
                     <div class="border-t-2 border-gray-800 pt-4">
                         <div class="flex justify-between py-3 px-4 bg-{{ $reportData['net_income'] >= 0 ? 'green' : 'red' }}-50 font-bold text-lg">
                             <span>NET {{ $reportData['net_income'] >= 0 ? 'INCOME' : 'LOSS' }}</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format(abs($reportData['net_income']), 2) }}</span>
+                            <span>{{ $currency }} {{ number_format(abs($reportData['net_income']), 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -219,23 +219,23 @@
                 <div class="space-y-6">
                     <div class="flex justify-between py-3 px-4 bg-gray-100">
                         <span class="font-bold">Operating Activities</span>
-                        <span class="font-bold">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['operating_activities'], 2) }}</span>
+                        <span class="font-bold">{{ $currency }} {{ number_format($reportData['operating_activities'], 2) }}</span>
                     </div>
                     
                     <div class="flex justify-between py-3 px-4 bg-gray-100">
                         <span class="font-bold">Investing Activities</span>
-                        <span class="font-bold">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['investing_activities'], 2) }}</span>
+                        <span class="font-bold">{{ $currency }} {{ number_format($reportData['investing_activities'], 2) }}</span>
                     </div>
                     
                     <div class="flex justify-between py-3 px-4 bg-gray-100">
                         <span class="font-bold">Financing Activities</span>
-                        <span class="font-bold">{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['financing_activities'], 2) }}</span>
+                        <span class="font-bold">{{ $currency }} {{ number_format($reportData['financing_activities'], 2) }}</span>
                     </div>
 
                     <div class="border-t-2 border-gray-800 pt-4">
                         <div class="flex justify-between py-3 px-4 bg-blue-50 font-bold text-lg">
                             <span>Net Change in Cash</span>
-                            <span>{{ config('accounting.base_currency', 'BDT') }} {{ number_format($reportData['net_change'], 2) }}</span>
+                            <span>{{ $currency }} {{ number_format($reportData['net_change'], 2) }}</span>
                         </div>
                     </div>
                 </div>

@@ -5,12 +5,13 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Http\Controllers\Api;
 
 use Centrex\LaravelAccounting\Accounting;
+use Centrex\LaravelAccounting\Exceptions\AccountingException;
 use Centrex\LaravelAccounting\Http\Requests\{RecordPaymentRequest, StoreInvoiceRequest};
 use Centrex\LaravelAccounting\Http\Resources\{InvoiceResource, PaymentResource};
 use Centrex\LaravelAccounting\Models\{Invoice, InvoiceItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log};
 
 class InvoiceController extends Controller
 {
@@ -111,8 +112,12 @@ class InvoiceController extends Controller
                 'data'             => new InvoiceResource($invoice->fresh(['customer', 'items'])),
                 'journal_entry_id' => $entry->id,
             ]);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            Log::error('Invoice post error', ['invoice_id' => $invoice->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }
     }
 
@@ -122,8 +127,12 @@ class InvoiceController extends Controller
             $payment = $this->accounting->recordInvoicePayment($invoice, $request->validated());
 
             return response()->json(['data' => new PaymentResource($payment)], 201);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            Log::error('Invoice payment error', ['invoice_id' => $invoice->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }
     }
 

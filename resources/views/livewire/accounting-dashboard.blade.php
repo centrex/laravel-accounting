@@ -24,42 +24,42 @@
 <div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full mb-6 bg-base-100 border border-base-200 rounded-2xl overflow-hidden">
     <x-tallui-stat
         title="Total Revenue"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['revenue'], 2)"
+        :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
         icon="heroicon-o-arrow-trending-up"
         icon-color="text-success"
         desc="Income for period"
     />
     <x-tallui-stat
         title="Total Expenses"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['expenses'], 2)"
+        :value="$currency . ' ' . number_format($metrics['expenses'], 2)"
         icon="heroicon-o-arrow-trending-down"
         icon-color="text-error"
         desc="Expenses for period"
     />
     <x-tallui-stat
         :title="$metrics['net_income'] >= 0 ? 'Net Profit' : 'Net Loss'"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format(abs($metrics['net_income']), 2)"
+        :value="$currency . ' ' . number_format(abs($metrics['net_income']), 2)"
         :icon="$metrics['net_income'] >= 0 ? 'heroicon-o-face-smile' : 'heroicon-o-face-frown'"
         :icon-color="$metrics['net_income'] >= 0 ? 'text-primary' : 'text-error'"
         :desc="$metrics['net_income'] >= 0 ? 'Profitable' : 'Loss-making'"
     />
     <x-tallui-stat
         title="Total Assets"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_assets'], 2)"
+        :value="$currency . ' ' . number_format($metrics['total_assets'], 2)"
         icon="heroicon-o-building-library"
         icon-color="text-info"
         desc="Current assets"
     />
     <x-tallui-stat
         title="Liabilities"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_liabilities'], 2)"
+        :value="$currency . ' ' . number_format($metrics['total_liabilities'], 2)"
         icon="heroicon-o-banknotes"
         icon-color="text-warning"
         desc="Current liabilities"
     />
     <x-tallui-stat
         title="Equity"
-        :value="config('accounting.base_currency', 'BDT') . ' ' . number_format($metrics['total_equity'], 2)"
+        :value="$currency . ' ' . number_format($metrics['total_equity'], 2)"
         icon="heroicon-o-scale"
         icon-color="text-secondary"
         desc="Owner's equity"

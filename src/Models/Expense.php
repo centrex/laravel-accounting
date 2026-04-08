@@ -10,20 +10,16 @@ use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Support\Facades\DB;
 
-class Invoice extends Model
+class Expense extends Model
 {
     use AddTablePrefix;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
-        return 'invoices';
+        return 'expenses';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -31,21 +27,21 @@ class Invoice extends Model
     }
 
     protected $fillable = [
-        'invoice_number', 'customer_id', 'invoice_date', 'due_date',
-        'subtotal', 'tax_amount', 'discount_amount', 'total',
-        'paid_amount', 'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
+        'expense_number', 'account_id', 'expense_date', 'due_date',
+        'subtotal', 'tax_amount', 'total', 'paid_amount',
+        'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
+        'payment_method', 'reference', 'vendor_name',
     ];
 
     protected $casts = [
-        'invoice_date'    => 'date',
-        'status'          => EntryStatus::class,
-        'due_date'        => 'date',
-        'subtotal'        => 'decimal:2',
-        'tax_amount'      => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'total'           => 'decimal:2',
-        'paid_amount'     => 'decimal:2',
-        'exchange_rate'   => 'decimal:6',
+        'expense_date'  => 'date',
+        'due_date'      => 'date',
+        'status'        => EntryStatus::class,
+        'subtotal'      => 'decimal:2',
+        'tax_amount'    => 'decimal:2',
+        'total'         => 'decimal:2',
+        'paid_amount'   => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
     ];
 
     #[\Override]
@@ -53,28 +49,28 @@ class Invoice extends Model
     {
         parent::boot();
 
-        static::creating(function (self $invoice): void {
-            if ($invoice->invoice_number) {
+        static::creating(function (self $expense): void {
+            if ($expense->expense_number) {
                 return;
             }
 
-            DB::connection($invoice->getConnectionName())->transaction(function () use ($invoice) {
+            DB::connection($expense->getConnectionName())->transaction(function () use ($expense) {
                 $date = now()->format('Ymd');
 
-                $lastInvoice = self::query()
+                $lastExpense = self::query()
                     ->whereDate('created_at', now()->toDateString())
-                    ->orderByDesc('id') // safer than invoice_number
+                    ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();
 
                 $sequence = 1;
 
-                if ($lastInvoice && preg_match('/(\d+)$/', $lastInvoice->invoice_number, $m)) {
+                if ($lastExpense && preg_match('/(\d+)$/', $lastExpense->expense_number, $m)) {
                     $sequence = ((int) $m[1]) + 1;
                 }
 
-                $invoice->invoice_number = sprintf(
-                    'INV-%s-%05d',
+                $expense->expense_number = sprintf(
+                    'EXP-%s-%05d',
                     $date,
                     $sequence,
                 );
@@ -82,14 +78,14 @@ class Invoice extends Model
         });
     }
 
-    public function customer(): BelongsTo
+    public function account(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Account::class);
     }
 
     public function items(): HasMany
     {
-        return $this->hasMany(InvoiceItem::class);
+        return $this->hasMany(ExpenseItem::class);
     }
 
     public function payments(): HasMany
@@ -105,6 +101,11 @@ class Invoice extends Model
 
     public function getBalanceAttribute(): float
     {
-        return $this->total - $this->paid_amount;
+        return (float) $this->total - (float) $this->paid_amount;
+    }
+
+    public function getIsPaidAttribute(): bool
+    {
+        return (float) $this->paid_amount >= (float) $this->total;
     }
 }

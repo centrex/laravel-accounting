@@ -54,7 +54,7 @@ class DemoWorkflowCommand extends Command
         $this->step6Payroll();
         $this->step7FinancialReports();
 
-        if (! $this->option('skip-close')) {
+        if (!$this->option('skip-close')) {
             $this->step8CloseFiscalYear();
         }
 
@@ -219,7 +219,7 @@ class DemoWorkflowCommand extends Command
         $this->sectionHeader('Step 5 — Manual Journal Entry (rent expense)');
 
         $rentExpense = Account::where('code', '6100')->firstOrFail();
-        $cash        = Account::where('code', '1000')->firstOrFail();
+        $cash = Account::where('code', '1000')->firstOrFail();
 
         $entry = Accounting::createJournalEntry([
             'date'        => today(),
@@ -263,8 +263,8 @@ class DemoWorkflowCommand extends Command
         }
 
         $grossTotal = array_sum(array_column($salaries, 'gross'));
-        $taxTotal   = array_sum(array_column($salaries, 'tax'));
-        $netTotal   = $grossTotal - $taxTotal;
+        $taxTotal = array_sum(array_column($salaries, 'tax'));
+        $netTotal = $grossTotal - $taxTotal;
 
         $this->line(sprintf(
             '  Employees: %d  Gross: %s  Tax withheld: %s  Net payable: %s',
@@ -276,14 +276,14 @@ class DemoWorkflowCommand extends Command
 
         // Create payroll entry record
         $payroll = PayrollEntry::create([
-            'entry_number' => 'PAY-' . now()->format('Ym') . '-001',
-            'date'         => today()->endOfMonth(),
-            'reference'    => 'SALARY-' . now()->format('Ym'),
-            'description'  => 'Monthly salary run — ' . now()->format('F Y'),
-            'currency'     => 'BDT',
-            'type'         => 'salary',
-            'exchange_rate'=> 1.000000,
-            'status'       => 'draft',
+            'entry_number'  => 'PAY-' . now()->format('Ym') . '-001',
+            'date'          => today()->endOfMonth(),
+            'reference'     => 'SALARY-' . now()->format('Ym'),
+            'description'   => 'Monthly salary run — ' . now()->format('F Y'),
+            'currency'      => 'BDT',
+            'type'          => 'salary',
+            'exchange_rate' => 1.000000,
+            'status'        => 'draft',
         ]);
         $this->line("  PayrollEntry : {$payroll->entry_number}  status = {$payroll->status->value}");
 
@@ -293,7 +293,7 @@ class DemoWorkflowCommand extends Command
         //   CR Income Tax Payable (2400)       tax withheld
         $salaryExpense = Account::where('code', '6000')->firstOrFail();
         $salaryPayable = Account::where('code', '2250')->firstOrFail();
-        $taxPayable    = Account::where('code', '2400')->firstOrFail();
+        $taxPayable = Account::where('code', '2400')->firstOrFail();
 
         $expenseEntry = Accounting::createJournalEntry([
             'date'        => today()->endOfMonth(),
@@ -344,7 +344,7 @@ class DemoWorkflowCommand extends Command
         $this->sectionHeader('Step 7 — Financial Reports');
 
         $start = today()->startOfYear()->toDateString();
-        $end   = today()->toDateString();
+        $end = today()->toDateString();
 
         // Trial Balance
         $tb = Accounting::getTrialBalance($start, $end);
@@ -353,7 +353,7 @@ class DemoWorkflowCommand extends Command
             ['Account', 'Debit', 'Credit'],
             collect($tb['accounts'])->map(fn ($row) => [
                 $row['account']->code . ' ' . $row['account']->name,
-                number_format((float) $row['debit'],  2),
+                number_format((float) $row['debit'], 2),
                 number_format((float) $row['credit'], 2),
             ]),
         );
@@ -399,7 +399,7 @@ class DemoWorkflowCommand extends Command
         $fy = FiscalYear::where('name', 'FY ' . now()->year)->first()
             ?? FiscalYear::where('is_current', true)->first();
 
-        if (! $fy) {
+        if (!$fy) {
             $this->warn('  No fiscal year found — run AccountingSeeder first or create one manually.');
             $this->line('  Example: FiscalYear::create([\'name\' => \'FY ' . now()->year . '\', ...])');
 

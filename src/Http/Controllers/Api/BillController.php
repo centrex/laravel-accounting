@@ -5,12 +5,13 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Http\Controllers\Api;
 
 use Centrex\LaravelAccounting\Accounting;
+use Centrex\LaravelAccounting\Exceptions\AccountingException;
 use Centrex\LaravelAccounting\Http\Requests\{RecordPaymentRequest, StoreBillRequest};
 use Centrex\LaravelAccounting\Http\Resources\{BillResource, PaymentResource};
-use Centrex\LaravelAccounting\Models\{Bill, BillItem, Payment};
+use Centrex\LaravelAccounting\Models\{Bill, BillItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log};
 
 class BillController extends Controller
 {
@@ -99,37 +100,27 @@ class BillController extends Controller
                 'data'             => new BillResource($bill->fresh(['vendor', 'items'])),
                 'journal_entry_id' => $entry->id,
             ]);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            Log::error('Bill post error', ['bill_id' => $bill->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }
     }
 
     public function recordPayment(RecordPaymentRequest $request, Bill $bill): JsonResponse
     {
         try {
-            $payment = DB::transaction(function () use ($request, $bill): Payment {
-                $payment = Payment::create([
-                    'payable_type'   => Bill::class,
-                    'payable_id'     => $bill->id,
-                    'payment_date'   => $request->date,
-                    'amount'         => $request->amount,
-                    'payment_method' => $request->method,
-                    'reference'      => $request->reference,
-                    'notes'          => $request->notes,
-                ]);
-
-                $bill->increment('paid_amount', $request->amount);
-                $bill->refresh();
-
-                $status = (float) $bill->paid_amount >= (float) $bill->total ? 'settled' : 'partially_settled';
-                $bill->update(['status' => $status]);
-
-                return $payment;
-            });
+            $payment = $this->accounting->recordBillPayment($bill, $request->validated());
 
             return response()->json(['data' => new PaymentResource($payment)], 201);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            Log::error('Bill payment error', ['bill_id' => $bill->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }
     }
 

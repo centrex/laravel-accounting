@@ -6,11 +6,11 @@ namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Accounting;
 use Centrex\LaravelAccounting\Concerns\WithCurrency;
-use Centrex\LaravelAccounting\Models\{Customer, Invoice, InvoiceItem};
+use Centrex\LaravelAccounting\Models\{Account, Expense, ExpenseItem};
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 
-class Invoices extends Component
+class Expenses extends Component
 {
     use WithCurrency;
     use WithPagination;
@@ -27,25 +27,31 @@ class Invoices extends Component
 
     public bool $showPayModal = false;
 
-    public ?int $invoiceId = null;
+    public ?int $expenseId = null;
 
-    public ?int $customer_id = null;
+    public ?int $account_id = null;
 
-    public string $invoice_date = '';
+    public string $expense_date = '';
 
     public string $due_date = '';
 
     public string $notes = '';
 
+    public string $payment_method = 'cash';
+
+    public string $reference = '';
+
+    public string $vendor_name = '';
+
     public array $items = [];
 
-    public ?int $payingInvoiceId = null;
+    public ?int $payingExpenseId = null;
 
     public string $pay_date = '';
 
     public string $pay_amount = '';
 
-    public string $pay_method = 'bank_transfer';
+    public string $pay_method = 'cash';
 
     public string $pay_reference = '';
 
@@ -55,7 +61,7 @@ class Invoices extends Component
 
     public function mount(): void
     {
-        $this->invoice_date = now()->format('Y-m-d');
+        $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
     }
@@ -78,8 +84,8 @@ class Invoices extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['invoiceId', 'customer_id', 'notes', 'items']);
-        $this->invoice_date = now()->format('Y-m-d');
+        $this->reset(['expenseId', 'account_id', 'notes', 'reference', 'vendor_name', 'items']);
+        $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
         $this->showModal = true;
@@ -88,9 +94,8 @@ class Invoices extends Component
     public function save(): void
     {
         $this->validate([
-            'customer_id'         => 'required|integer',
-            'invoice_date'        => 'required|date',
-            'due_date'            => 'required|date|after_or_equal:invoice_date',
+            'account_id'          => 'nullable|integer',
+            'expense_date'        => 'required|date',
             'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.01',
@@ -108,25 +113,27 @@ class Invoices extends Component
                 $taxAmount += $itemTax;
             }
 
-            $invoice = Invoice::create([
-                'customer_id'     => $this->customer_id,
-                'invoice_date'    => $this->invoice_date,
-                'due_date'        => $this->due_date,
-                'subtotal'        => $subtotal,
-                'tax_amount'      => $taxAmount,
-                'discount_amount' => 0,
-                'total'           => $subtotal + $taxAmount,
-                'currency'        => self::getCurrency(),
-                'status'          => 'draft',
-                'notes'           => $this->notes ?: null,
+            $expense = Expense::create([
+                'account_id'     => $this->account_id,
+                'expense_date'   => $this->expense_date,
+                'due_date'       => $this->due_date ?: null,
+                'subtotal'       => $subtotal,
+                'tax_amount'     => $taxAmount,
+                'total'          => $subtotal + $taxAmount,
+                'currency'       => self::getCurrency(),
+                'status'         => 'draft',
+                'payment_method' => $this->payment_method,
+                'reference'      => $this->reference ?: null,
+                'vendor_name'    => $this->vendor_name ?: null,
+                'notes'          => $this->notes ?: null,
             ]);
 
             foreach ($this->items as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
                 $tax = $amount * (($item['tax_rate'] ?? 0) / 100);
 
-                InvoiceItem::create([
-                    'invoice_id'  => $invoice->id,
+                ExpenseItem::create([
+                    'expense_id'  => $expense->id,
                     'description' => $item['description'],
                     'quantity'    => $item['quantity'],
                     'unit_price'  => $item['unit_price'],
@@ -137,18 +144,18 @@ class Invoices extends Component
             }
         });
 
-        $this->dispatch('notify', type: 'success', message: 'Invoice created successfully!');
+        $this->dispatch('notify', type: 'success', message: 'Expense recorded successfully!');
         $this->showModal = false;
-        $this->reset(['invoiceId', 'customer_id', 'items']);
+        $this->reset(['expenseId', 'account_id', 'items']);
     }
 
-    public function postInvoice(int $id): void
+    public function postExpense(int $id): void
     {
-        $invoice = Invoice::findOrFail($id);
+        $expense = Expense::findOrFail($id);
 
         try {
-            app(Accounting::class)->postInvoice($invoice);
-            $this->dispatch('notify', type: 'success', message: "Invoice {$invoice->invoice_number} posted.");
+            app(Accounting::class)->postExpense($expense);
+            $this->dispatch('notify', type: 'success', message: "Expense {$expense->expense_number} posted.");
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
@@ -156,11 +163,11 @@ class Invoices extends Component
 
     public function openPayModal(int $id): void
     {
-        $invoice = Invoice::findOrFail($id);
-        $this->payingInvoiceId = $id;
+        $expense = Expense::findOrFail($id);
+        $this->payingExpenseId = $id;
         $this->pay_date = now()->format('Y-m-d');
-        $this->pay_amount = number_format($invoice->balance, 2, '.', '');
-        $this->pay_method = 'bank_transfer';
+        $this->pay_amount = number_format($expense->balance, 2, '.', '');
+        $this->pay_method = 'cash';
         $this->pay_reference = '';
         $this->pay_notes = '';
         $this->showPayModal = true;
@@ -174,10 +181,10 @@ class Invoices extends Component
             'pay_method' => 'required|string',
         ]);
 
-        $invoice = Invoice::findOrFail($this->payingInvoiceId);
+        $expense = Expense::findOrFail($this->payingExpenseId);
 
         try {
-            app(Accounting::class)->recordInvoicePayment($invoice, [
+            app(Accounting::class)->recordExpensePayment($expense, [
                 'date'      => $this->pay_date,
                 'amount'    => $this->pay_amount,
                 'method'    => $this->pay_method,
@@ -213,24 +220,28 @@ class Invoices extends Component
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        $invoices = Invoice::query()
-            ->with(['customer'])
+        $expenses = Expense::query()
+            ->with(['account'])
             ->when($this->search, fn ($q) => $q->where(function ($q): void {
-                $q->where('invoice_number', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'));
+                $q->where('expense_number', 'like', '%' . $this->search . '%')
+                    ->orWhere('vendor_name', 'like', '%' . $this->search . '%')
+                    ->orWhere('reference', 'like', '%' . $this->search . '%');
             }))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('invoice_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('invoice_date', '<=', $this->dateTo))
-            ->latest('invoice_date')
-            ->paginate(config('accounting.per_page.invoices', 15));
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('expense_date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('expense_date', '<=', $this->dateTo))
+            ->latest('expense_date')
+            ->paginate(config('accounting.per_page.expenses', 15));
 
-        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        $accounts = Account::where('type', 'expense')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
 
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'
         : 'components.layouts.app';
 
-        return view('accounting::livewire.invoices', ['invoices' => $invoices, 'customers' => $customers])->layout($layout, ['title' => __('Invoices')]);
+        return view('accounting::livewire.expenses', ['expenses' => $expenses, 'accounts' => $accounts])->layout($layout, ['title' => __('Expenses')]);
     }
 }

@@ -37,7 +37,7 @@ class DemoTransactionSeeder extends Seeder
     public function __construct()
     {
         $this->periodStart = now()->startOfMonth();
-        $this->periodEnd   = now()->endOfMonth();
+        $this->periodEnd = now()->endOfMonth();
     }
 
     public function run(): void
@@ -112,7 +112,7 @@ class DemoTransactionSeeder extends Seeder
         ]);
         $inv1->items()->createMany([
             ['description' => 'ERP Implementation Phase 1', 'quantity' => 1, 'unit_price' => 35_000.00, 'total' => 35_000.00],
-            ['description' => 'Training Sessions (5 days)',  'quantity' => 5, 'unit_price' =>  3_000.00, 'total' => 15_000.00],
+            ['description' => 'Training Sessions (5 days)',  'quantity' => 5, 'unit_price' => 3_000.00, 'total' => 15_000.00],
         ]);
         Accounting::postInvoice($inv1);
         Accounting::recordInvoicePayment($inv1, [
@@ -206,8 +206,8 @@ class DemoTransactionSeeder extends Seeder
             'total'         => 13_800.00,
         ]);
         $bill1->items()->createMany([
-            ['description' => 'A4 Paper (20 reams)',  'quantity' => 20, 'unit_price' =>  400.00, 'total' =>  8_000.00],
-            ['description' => 'Printer Ink (6-pack)', 'quantity' => 4,  'unit_price' => 1_000.00, 'total' =>  4_000.00],
+            ['description' => 'A4 Paper (20 reams)',  'quantity' => 20, 'unit_price' => 400.00, 'total' => 8_000.00],
+            ['description' => 'Printer Ink (6-pack)', 'quantity' => 4,  'unit_price' => 1_000.00, 'total' => 4_000.00],
         ]);
         Accounting::postBill($bill1);
         Accounting::recordBillPayment($bill1, [
@@ -242,10 +242,10 @@ class DemoTransactionSeeder extends Seeder
     // -------------------------------------------------------------------------
     private function seedManualJournalEntries(): void
     {
-        $cash        = Account::where('code', '1000')->firstOrFail();
-        $rent        = Account::where('code', '6100')->firstOrFail();
-        $depreciation= Account::where('code', '6600')->firstOrFail();
-        $accDepr     = Account::where('code', '1800')->firstOrFail();
+        $cash = Account::where('code', '1000')->firstOrFail();
+        $rent = Account::where('code', '6100')->firstOrFail();
+        $depreciation = Account::where('code', '6600')->firstOrFail();
+        $accDepr = Account::where('code', '1800')->firstOrFail();
 
         // Rent expense for the month
         $rentEntry = Accounting::createJournalEntry([

@@ -5,20 +5,26 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Accounting;
+use Centrex\LaravelAccounting\Concerns\WithCurrency;
 use Livewire\Component;
 
 class FinancialReports extends Component
 {
-    public $reportType = 'trial_balance';
+    use WithCurrency;
 
-    public $startDate;
+    public string $reportType = 'trial_balance';
 
-    public $endDate;
+    public string $startDate;
 
-    public $reportData;
+    public string $endDate;
+
+    public ?array $reportData = null;
+
+    public string $currency;
 
     public function mount(): void
     {
+        $this->currency = self::getCurrency();
         $this->startDate = now()->startOfMonth()->format('Y-m-d');
         $this->endDate = now()->format('Y-m-d');
     }
@@ -28,27 +34,13 @@ class FinancialReports extends Component
         $service = app(Accounting::class);
 
         try {
-            switch ($this->reportType) {
-                case 'trial_balance':
-                    $this->reportData = $service->getTrialBalance($this->startDate, $this->endDate);
-
-                    break;
-
-                case 'balance_sheet':
-                    $this->reportData = $service->getBalanceSheet($this->endDate);
-
-                    break;
-
-                case 'income_statement':
-                    $this->reportData = $service->getIncomeStatement($this->startDate, $this->endDate);
-
-                    break;
-
-                case 'cash_flow':
-                    $this->reportData = $service->getCashFlowStatement($this->startDate, $this->endDate);
-
-                    break;
-            }
+            $this->reportData = match ($this->reportType) {
+                'trial_balance'    => $service->getTrialBalance($this->startDate, $this->endDate),
+                'balance_sheet'    => $service->getBalanceSheet($this->endDate),
+                'income_statement' => $service->getIncomeStatement($this->startDate, $this->endDate),
+                'cash_flow'        => $service->getCashFlowStatement($this->startDate, $this->endDate),
+                default            => null,
+            };
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
@@ -56,11 +48,10 @@ class FinancialReports extends Component
 
     public function exportPdf(): void
     {
-        // Implement PDF export logic
         session()->flash('message', 'Export feature coming soon!');
     }
 
-    public function render()
+    public function render(): \Illuminate\Contracts\View\View
     {
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'

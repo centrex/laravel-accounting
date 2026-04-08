@@ -10,4 +10,20 @@ class UnbalancedJournalException extends AccountingException
     {
         return new self('Journal entry is not balanced. Debits must equal credits.');
     }
+
+    /** @param \Centrex\LaravelAccounting\Models\JournalEntry $entry */
+    public static function make(object $entry): self
+    {
+        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $credits = $entry->lines->where('type', 'credit')->sum('amount');
+
+        return new self(
+            sprintf(
+                'Journal entry is not balanced. Debits: %.2f, Credits: %.2f, Difference: %.2f.',
+                $debits,
+                $credits,
+                abs($debits - $credits),
+            ),
+        );
+    }
 }

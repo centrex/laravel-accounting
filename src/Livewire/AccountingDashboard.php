@@ -5,19 +5,25 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Accounting;
+use Centrex\LaravelAccounting\Concerns\WithCurrency;
 use Centrex\LaravelAccounting\Models\JournalEntry;
 use Livewire\Component;
 
 class AccountingDashboard extends Component
 {
+    use WithCurrency;
+
     public $dateRange = 'this_month';
 
     public $startDate;
 
     public $endDate;
 
+    public string $currency;
+
     public function mount(): void
     {
+        $this->currency = self::getCurrency();
         $this->updateDateRange();
     }
 
@@ -26,42 +32,37 @@ class AccountingDashboard extends Component
         $this->updateDateRange();
     }
 
-    protected function updateDateRange()
+    protected function updateDateRange(): void
     {
-        switch ($this->dateRange) {
-            case 'today':
-                $this->startDate = now()->startOfDay();
-                $this->endDate = now()->endOfDay();
-
-                break;
-            case 'this_week':
-                $this->startDate = now()->startOfWeek();
-                $this->endDate = now()->endOfWeek();
-
-                break;
-            case 'this_month':
-                $this->startDate = now()->startOfMonth();
-                $this->endDate = now()->endOfMonth();
-
-                break;
-            case 'this_quarter':
-                $this->startDate = now()->startOfQuarter();
-                $this->endDate = now()->endOfQuarter();
-
-                break;
-            case 'this_year':
-                $this->startDate = now()->startOfYear();
-                $this->endDate = now()->endOfYear();
-
-                break;
-        }
+        match ($this->dateRange) {
+            'today' => [
+                $this->startDate = now()->startOfDay(),
+                $this->endDate = now()->endOfDay(),
+            ],
+            'this_week' => [
+                $this->startDate = now()->startOfWeek(),
+                $this->endDate = now()->endOfWeek(),
+            ],
+            'this_month' => [
+                $this->startDate = now()->startOfMonth(),
+                $this->endDate = now()->endOfMonth(),
+            ],
+            'this_quarter' => [
+                $this->startDate = now()->startOfQuarter(),
+                $this->endDate = now()->endOfQuarter(),
+            ],
+            'this_year' => [
+                $this->startDate = now()->startOfYear(),
+                $this->endDate = now()->endOfYear(),
+            ],
+            default => null,
+        };
     }
 
-    public function render()
+    public function render(): \Illuminate\Contracts\View\View
     {
         $service = app(Accounting::class);
 
-        // Get key metrics
         $incomeStatement = $service->getIncomeStatement($this->startDate, $this->endDate);
         $balanceSheet = $service->getBalanceSheet($this->endDate);
 
@@ -74,7 +75,6 @@ class AccountingDashboard extends Component
             'total_equity'      => $balanceSheet['equity']['total_with_income'] ?? 0,
         ];
 
-        // Recent journal entries
         $recentEntries = JournalEntry::with(['lines.account'])
             ->latest('date')
             ->limit(10)
