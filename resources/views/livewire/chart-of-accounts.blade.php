@@ -86,7 +86,7 @@
                             </button>
                         </td>
                         <td class="pr-5 text-right">
-                            <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
+                            <x-tallui-button wire:click="openModal({{ $account->id }})" label="view" icon="heroicon-o-pencil" class="btn-ghost btn-sm" />
                         </td>
                     </tr>
                 @empty
