@@ -180,7 +180,7 @@
 
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showModal', false)" class="btn-ghost">Cancel</x-tallui-button>
-        <x-tallui-button wire:click="create" spinner="save" class="btn-primary">Create Entry</x-tallui-button>
+        <x-tallui-button wire:click="create" spinner="create" class="btn-primary">Create Entry</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 </div>
