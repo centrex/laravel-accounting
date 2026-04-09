@@ -121,6 +121,9 @@ final class AccountingDemoCommand extends Command
             ['code' => '1820', 'name' => 'Accum. Depr. – Furniture',        'type' => 'asset',     'subtype' => 'contra_account'],
             ['code' => '1830', 'name' => 'Accum. Depr. – Vehicles',         'type' => 'asset',     'subtype' => 'contra_account'],
             /* ── Liabilities ─────────────────────────────────────────────── */
+            // 2250 & 2400 exist in AccountingSeeder but NOT in initializeChartOfAccounts() — must be declared here
+            ['code' => '2250', 'name' => 'Salaries Payable',                 'type' => 'liability', 'subtype' => 'salaries_payable'],
+            ['code' => '2400', 'name' => 'Income Tax Payable',               'type' => 'liability', 'subtype' => 'withholding_tax_payable'],
             ['code' => '2260', 'name' => 'Provident Fund Payable',           'type' => 'liability', 'subtype' => 'salaries_payable'],
             ['code' => '2410', 'name' => 'Intercompany Payable',             'type' => 'liability', 'subtype' => 'current_liability'],
             /* ── Revenue ─────────────────────────────────────────────────── */
