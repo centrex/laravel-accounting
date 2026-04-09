@@ -66,6 +66,7 @@ enum AccountSubtype: string
     /* -----------------------------------------------------------------
      | EQUITY
      |------------------------------------------------------------------*/
+    case EQUITY = 'equity';                      // Generic / internal use  
     case CAPITAL_ACCOUNT = 'capital_account';
     case RETAINED_EARNINGS_ACCOUNT = 'retained_earnings_account';
     case RESERVE_ACCOUNT = 'reserve_account';
@@ -75,6 +76,7 @@ enum AccountSubtype: string
     /* -----------------------------------------------------------------
      | REVENUE (IFRS 15)
      |------------------------------------------------------------------*/
+    case INCOME = 'income';                    // Generic / internal use
     case OPERATING_REVENUE = 'operating_revenue';
     case NON_OPERATING_REVENUE = 'non_operating_revenue';
 
@@ -86,6 +88,9 @@ enum AccountSubtype: string
     /* -----------------------------------------------------------------
      | OPERATING EXPENSES (IAS 1)
      |------------------------------------------------------------------*/
+    case EXPENSE = 'expense';                  // Generic / internal use
+    case OPERATING_EXPENSE = 'operating_expense';
+    case NON_OPERATING_EXPENSE = 'non_operating_expense';
     case SELLING_EXPENSE = 'selling_expense';
     case GENERAL_AND_ADMINISTRATIVE_EXPENSE = 'general_and_administrative_expense';
 

@@ -31,9 +31,9 @@ final class AccountTypeMapper
             AccountSubtype::EQUITY => AccountType::EQUITY,
 
             // INCOME / REVENUE
-            AccountSubtype::REVENUE,
+            AccountSubtype::INCOME,
             AccountSubtype::OPERATING_REVENUE,
-            AccountSubtype::NON_OPERATING_REVENUE => AccountType::INCOME,
+            AccountSubtype::NON_OPERATING_REVENUE => AccountType::REVENUE,
 
             // EXPENSES
             AccountSubtype::EXPENSE,
@@ -73,8 +73,8 @@ final class AccountTypeMapper
                 AccountSubtype::EQUITY,
             ],
 
-            AccountType::INCOME => [
-                AccountSubtype::REVENUE,
+            AccountType::REVENUE => [
+                AccountSubtype::INCOME,
                 AccountSubtype::OPERATING_REVENUE,
                 AccountSubtype::NON_OPERATING_REVENUE,
             ],
