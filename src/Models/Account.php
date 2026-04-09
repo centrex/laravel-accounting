@@ -80,17 +80,16 @@ class Account extends Model
             ->where('type', 'credit')
             ->sum('amount');
 
-        // Normal balance depends on account type
-        if (in_array($this->type, ['asset', 'expense'])) {
-            return $debits - $credits; // Debit normal balance
-        }
-
-        return $credits - $debits; // Credit normal balance
+        return $this->isDebitAccount() ? ($debits - $credits) : ($credits - $debits);
     }
 
     // Check if account has normal debit balance
     public function isDebitAccount(): bool
     {
-        return in_array($this->type, ['asset', 'expense']);
+        // $this->type is cast to AccountType enum; in PHP 8.1+ backed enums never equal
+        // plain strings via ==, so we compare the backing value explicitly.
+        $type = $this->type instanceof \BackedEnum ? $this->type->value : (string) $this->type;
+
+        return in_array($type, ['asset', 'expense'], true);
     }
 }
