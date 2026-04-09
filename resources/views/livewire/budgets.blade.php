@@ -69,7 +69,7 @@
                                 @if($budget->status === 'draft')
                                     <x-tallui-button wire:click="approveBudget({{ $budget->id }})"
                                         wire:confirm="Approve budget {{ $budget->budget_number }}?"
-                                        class="btn-info btn-xs" spinner>Approve</x-tallui-button>
+                                        class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
                                     <x-tallui-button wire:click="deleteBudget({{ $budget->id }})"
                                         wire:confirm="Delete this budget?"
                                         class="btn-error btn-xs" icon="heroicon-o-trash">Delete</x-tallui-button>

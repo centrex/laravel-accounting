@@ -86,10 +86,10 @@
                                 @if($status === 'draft')
                                     <x-tallui-button wire:click="postBill({{ $bill->id }})"
                                         wire:confirm="Approve bill {{ $bill->bill_number }}?"
-                                        class="btn-info btn-xs" spinner>Approve</x-tallui-button>
+                                        class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
                                 @endif
                                 @if(in_array($status, ['approved', 'partial']) && $bill->balance > 0)
-                                    <x-tallui-button wire:click="openPayModal({{ $bill->id }})" class="btn-success btn-xs">Pay</x-tallui-button>
+                                    <x-tallui-button wire:click="openPayModal({{ $bill->id }})" class="btn-success btn-xs" spinner="pay">Pay</x-tallui-button>
                                 @endif
                             </div>
                         </td>
