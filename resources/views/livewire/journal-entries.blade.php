@@ -89,12 +89,12 @@
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 @if(($entry->status->value ?? $entry->status) === 'draft')
-                                    <x-tallui-button wire:click="postEntry({{ $entry->id }})" wire:confirm="Post this journal entry?" class="btn-success btn-xs" spinner>
+                                    <x-tallui-button wire:click="postEntry({{ $entry->id }})" wire:confirm="Post this journal entry?" class="btn-success btn-xs" spinner="save">
                                         Post
                                     </x-tallui-button>
                                 @endif
                                 @if(($entry->status->value ?? $entry->status) === 'posted')
-                                    <x-tallui-button wire:click="voidEntry({{ $entry->id }})" wire:confirm="Void this entry? This cannot be undone." class="btn-error btn-xs btn-outline" spinner>
+                                    <x-tallui-button wire:click="voidEntry({{ $entry->id }})" wire:confirm="Void this entry? This cannot be undone." class="btn-error btn-xs btn-outline" spinner="void">
                                         Void
                                     </x-tallui-button>
                                 @endif
