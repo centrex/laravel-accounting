@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\LaravelAccounting;
 
-use Centrex\LaravelAccounting\Commands\AccountingReportCommand;
+use Centrex\LaravelAccounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\LaravelAccounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\LaravelAccounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
 use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
@@ -80,6 +80,7 @@ class LaravelAccountingServiceProvider extends ServiceProvider
             // Registering package commands.
             $this->commands([
                 AccountingReportCommand::class,
+                AccountingDemoCommand::class,
             ]);
         }
     }
