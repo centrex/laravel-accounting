@@ -285,6 +285,209 @@
     </x-tallui-card>
 </div>
 
+{{-- ── Cash Flow ─────────────────────────────────────────────────────────── --}}
+<x-tallui-card
+    title="Cash Flow"
+    subtitle="{{ now()->year }} monthly cash movements"
+    icon="o-arrow-path"
+>
+    <x-slot:actions>
+        <x-tallui-button
+            label="Full Report"
+            icon="o-arrow-top-right-on-square"
+            :link="route('accounting.reports')"
+            class="btn-ghost btn-xs"
+        />
+    </x-slot:actions>
+
+    {{-- Summary mini-stats --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        @foreach([
+            ['label' => 'Operating',  'value' => $cashFlow['operating_activities'] ?? 0, 'icon' => 'o-cog-6-tooth',       'color' => 'info'],
+            ['label' => 'Investing',  'value' => $cashFlow['investing_activities'] ?? 0, 'icon' => 'o-building-office',    'color' => 'secondary'],
+            ['label' => 'Financing',  'value' => $cashFlow['financing_activities'] ?? 0, 'icon' => 'o-banknotes',          'color' => 'accent'],
+            ['label' => 'Net Change', 'value' => $cashFlow['net_change']           ?? 0, 'icon' => 'o-arrow-trending-up',  'color' => ($cashFlow['net_change'] ?? 0) >= 0 ? 'success' : 'error'],
+        ] as $cf)
+            <div class="rounded-xl border border-base-200 bg-base-100 p-3 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-{{ $cf['color'] }}/10 flex items-center justify-center shrink-0">
+                    <x-tallui-icon :name="$cf['icon']" class="w-4 h-4 text-{{ $cf['color'] }}" />
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-base-content/50">{{ $cf['label'] }}</div>
+                    <div @class([
+                        'text-sm font-bold truncate',
+                        'text-success' => $cf['value'] >= 0,
+                        'text-error'   => $cf['value'] < 0,
+                    ])>
+                        {{ $cf['value'] >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($cf['value']), 2) }}
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Monthly area chart --}}
+    @if(count($cashFlowChartData['categories']) > 0)
+        <div
+            wire:ignore
+            x-data="{
+                chart: null,
+                init() {
+                    this.chart = new ApexCharts(this.$el.querySelector('[data-chart]'), {
+                        chart: { type: 'area', height: 220, toolbar: { show: false }, fontFamily: 'inherit', background: 'transparent' },
+                        series: [
+                            { name: 'Inflow',  data: {{ json_encode($cashFlowChartData['inflow']) }} },
+                            { name: 'Outflow', data: {{ json_encode($cashFlowChartData['outflow']) }} },
+                            { name: 'Net',     data: {{ json_encode($cashFlowChartData['net']) }} }
+                        ],
+                        xaxis: { categories: {{ json_encode($cashFlowChartData['categories']) }}, axisBorder: { show: false }, axisTicks: { show: false } },
+                        yaxis: { labels: { formatter: v => '{{ $currency }} ' + (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)) } },
+                        colors: ['#38bdf8', '#fb923c', '#36d399'],
+                        fill: { type: 'gradient', gradient: { opacityFrom: 0.4, opacityTo: 0.05, shadeIntensity: 1 } },
+                        stroke: { curve: 'smooth', width: 2 },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'top', horizontalAlign: 'right' },
+                        grid: { borderColor: 'oklch(var(--b3))', strokeDashArray: 4 },
+                        tooltip: { y: { formatter: v => '{{ $currency }} ' + v.toLocaleString(undefined, { minimumFractionDigits: 2 }) } },
+                        theme: { mode: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light' }
+                    });
+                    this.chart.render();
+                }
+            }"
+        >
+            <div data-chart class="min-h-[220px]"></div>
+        </div>
+    @else
+        <x-tallui-empty-state
+            title="No cash movements yet"
+            description="Post journal entries involving cash (account 1000) to see the chart."
+            icon="o-arrow-path"
+            size="sm"
+        />
+    @endif
+</x-tallui-card>
+
+{{-- ── Forecasted Cash Flow ─────────────────────────────────────────────── --}}
+<x-tallui-card
+    title="Cash Flow Forecast"
+    subtitle="{{ now()->year }} · linear trend projection for remaining months"
+    icon="o-arrow-trending-up"
+>
+    <x-slot:actions>
+        <x-tallui-badge type="info" size="sm">Linear Regression</x-tallui-badge>
+    </x-slot:actions>
+
+    @if(count(array_filter($forecastData['actual'], fn($v) => $v !== null)) >= 2)
+        {{-- Forecast KPI row --}}
+        <div class="flex flex-wrap gap-4 mb-4 text-sm">
+            @php
+                $yearForecast = array_sum(array_filter($forecastData['forecast'], fn($v) => $v !== null));
+                $actualSum    = array_sum(array_filter($forecastData['actual'],   fn($v) => $v !== null));
+                $remaining    = $yearForecast;
+                $yearTotal    = $actualSum + $remaining;
+            @endphp
+            <div class="flex-1 min-w-32 rounded-xl border border-base-200 bg-base-100 p-3">
+                <div class="text-xs text-base-content/50 mb-0.5">Actual YTD</div>
+                <div @class(['font-bold', 'text-success' => $actualSum >= 0, 'text-error' => $actualSum < 0])>
+                    {{ $actualSum >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($actualSum), 2) }}
+                </div>
+            </div>
+            <div class="flex-1 min-w-32 rounded-xl border border-base-200 bg-base-100 p-3">
+                <div class="text-xs text-base-content/50 mb-0.5">Forecasted Remaining</div>
+                <div @class(['font-bold', 'text-info' => $remaining >= 0, 'text-error' => $remaining < 0])>
+                    {{ $remaining >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($remaining), 2) }}
+                </div>
+            </div>
+            <div class="flex-1 min-w-32 rounded-xl border border-base-200 bg-base-100 p-3">
+                <div class="text-xs text-base-content/50 mb-0.5">Projected Year-End</div>
+                <div @class(['font-bold', 'text-primary' => $yearTotal >= 0, 'text-error' => $yearTotal < 0])>
+                    {{ $yearTotal >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($yearTotal), 2) }}
+                </div>
+            </div>
+        </div>
+
+        <div
+            wire:ignore
+            x-data="{
+                chart: null,
+                init() {
+                    this.chart = new ApexCharts(this.$el.querySelector('[data-chart]'), {
+                        chart: {
+                            type: 'line',
+                            height: 240,
+                            toolbar: { show: false },
+                            fontFamily: 'inherit',
+                            background: 'transparent'
+                        },
+                        series: [
+                            {
+                                name: 'Actual Net',
+                                type: 'area',
+                                data: {{ json_encode($forecastData['actual']) }}
+                            },
+                            {
+                                name: 'Forecast',
+                                type: 'line',
+                                data: {{ json_encode($forecastData['forecast']) }}
+                            }
+                        ],
+                        xaxis: {
+                            categories: {{ json_encode($forecastData['categories']) }},
+                            axisBorder: { show: false },
+                            axisTicks: { show: false }
+                        },
+                        yaxis: {
+                            labels: {
+                                formatter: v => v === null ? '' : '{{ $currency }} ' + (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0))
+                            }
+                        },
+                        colors: ['#36d399', '#818cf8'],
+                        fill: {
+                            type: ['gradient', 'solid'],
+                            gradient: { opacityFrom: 0.35, opacityTo: 0.02, shadeIntensity: 1 }
+                        },
+                        stroke: {
+                            curve: 'smooth',
+                            width: [2, 2],
+                            dashArray: [0, 6]
+                        },
+                        markers: { size: [0, 4], strokeWidth: 0 },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'top', horizontalAlign: 'right' },
+                        grid: { borderColor: 'oklch(var(--b3))', strokeDashArray: 4 },
+                        annotations: {
+                            xaxis: [{
+                                x: {{ json_encode(now()->format('M')) }},
+                                borderColor: 'oklch(var(--p))',
+                                borderWidth: 1,
+                                strokeDashArray: 4,
+                                label: {
+                                    text: 'Today',
+                                    style: { background: 'oklch(var(--p))', color: 'oklch(var(--pc))', fontSize: '11px' }
+                                }
+                            }]
+                        },
+                        tooltip: {
+                            y: { formatter: v => v === null ? 'N/A' : '{{ $currency }} ' + v.toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                        },
+                        theme: { mode: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light' }
+                    });
+                    this.chart.render();
+                }
+            }"
+        >
+            <div data-chart class="min-h-[240px]"></div>
+        </div>
+    @else
+        <x-tallui-empty-state
+            title="Not enough data to forecast"
+            description="At least 2 months of cash transactions are needed to project a trend."
+            icon="o-arrow-trending-up"
+            size="sm"
+        />
+    @endif
+</x-tallui-card>
+
 {{-- ── Quick Actions ────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
     @foreach([

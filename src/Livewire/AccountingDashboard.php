@@ -49,6 +49,97 @@ class AccountingDashboard extends Component
     // Private helpers
     // -------------------------------------------------------------------------
 
+    /** Linear-regression forecast of monthly net cash flow for the full year. */
+    private function forecastCashFlowData(array $monthlyData): array
+    {
+        $actual    = $monthlyData['net'];
+        $n         = count($actual);
+        $allMonths = 12;
+
+        $allCategories = [];
+        for ($m = 1; $m <= $allMonths; $m++) {
+            $allCategories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
+        }
+
+        if ($n < 2) {
+            $actualPad   = array_pad($actual, $allMonths, null);
+            $forecastArr = array_fill(0, $allMonths, null);
+
+            return ['categories' => $allCategories, 'actual' => $actualPad, 'forecast' => $forecastArr];
+        }
+
+        // Simple linear regression: x = month index (1-based), y = net value
+        $xSum = 0.0; $ySum = 0.0; $xySum = 0.0; $xxSum = 0.0;
+        for ($i = 0; $i < $n; $i++) {
+            $x     = $i + 1;
+            $xSum += $x;  $ySum += $actual[$i];
+            $xySum += $x * $actual[$i]; $xxSum += $x * $x;
+        }
+        $slope     = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
+        $intercept = ($ySum - $slope * $xSum) / $n;
+
+        $actualSeries   = [];
+        $forecastSeries = [];
+
+        for ($m = 1; $m <= $allMonths; $m++) {
+            if ($m <= $n) {
+                $actualSeries[]   = round((float) $actual[$m - 1], 2);
+                // Bridge the last actual point into the forecast series
+                $forecastSeries[] = ($m === $n) ? round((float) $actual[$m - 1], 2) : null;
+            } else {
+                $actualSeries[]   = null;
+                $forecastSeries[] = round($slope * $m + $intercept, 2);
+            }
+        }
+
+        return ['categories' => $allCategories, 'actual' => $actualSeries, 'forecast' => $forecastSeries];
+    }
+
+    private function monthlyCashFlowData(): array
+    {
+        $prefix     = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $year       = now()->year;
+
+        $cashAccount = \Centrex\LaravelAccounting\Models\Account::where('code', '1000')
+            ->where('is_active', true)->first();
+
+        if (! $cashAccount) {
+            return ['categories' => [], 'inflow' => [], 'outflow' => [], 'net' => []];
+        }
+
+        $rows = DB::connection($connection)
+            ->table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereNull('je.deleted_at')
+            ->whereYear('je.date', $year)
+            ->where('l.account_id', $cashAccount->id)
+            ->selectRaw("MONTH(je.date) as month,
+                SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as inflow,
+                SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as outflow")
+            ->groupByRaw('MONTH(je.date)')
+            ->orderByRaw('MONTH(je.date)')
+            ->get()
+            ->keyBy('month');
+
+        $categories = [];
+        $inflow     = [];
+        $outflow    = [];
+        $net        = [];
+
+        for ($m = 1; $m <= now()->month; $m++) {
+            $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
+            $in           = round((float) ($rows->get($m)?->inflow  ?? 0), 2);
+            $out          = round((float) ($rows->get($m)?->outflow ?? 0), 2);
+            $inflow[]     = $in;
+            $outflow[]    = $out;
+            $net[]        = round($in - $out, 2);
+        }
+
+        return compact('categories', 'inflow', 'outflow', 'net');
+    }
+
     private function monthlyChartData(): array
     {
         $prefix     = config('accounting.table_prefix', 'acct_');
@@ -156,7 +247,9 @@ class AccountingDashboard extends Component
             ->latest('date')->limit(8)->get();
 
         // Chart data (monthly — current year)
-        $chartData = $this->monthlyChartData();
+        $chartData         = $this->monthlyChartData();
+        $cashFlowChartData = $this->monthlyCashFlowData();
+        $forecastData      = $this->forecastCashFlowData($cashFlowChartData);
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'
@@ -164,6 +257,7 @@ class AccountingDashboard extends Component
 
         return view('accounting::livewire.accounting-dashboard', compact(
             'metrics',
+            'cashFlow',
             'invoiceStats',
             'billStats',
             'customerCount',
@@ -172,6 +266,8 @@ class AccountingDashboard extends Component
             'recentBills',
             'recentEntries',
             'chartData',
+            'cashFlowChartData',
+            'forecastData',
         ))->layout($layout, ['title' => __('Accounting Dashboard')]);
     }
 }
