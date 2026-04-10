@@ -60,12 +60,12 @@ class AccountingServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/config.php' => config_path('accounting.php'),
-            ], 'accounting-config');
+            ], 'laravel-accounting-config');
 
             // Publishing the views.
-            /*$this->publishes([
+            $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/accounting'),
-            ], 'accounting-views');*/
+            ], 'laravel-accounting-views');
 
             // Publishing assets.
             /*$this->publishes([

@@ -11,7 +11,7 @@ Full double-entry accounting system for Laravel. Includes a chart of accounts, j
 
 ```bash
 composer require centrex/laravel-accounting
-php artisan vendor:publish --tag="accounting-config"
+php artisan vendor:publish --tag="laravel-accounting-config"
 php artisan migrate
 ```
 
@@ -21,6 +21,12 @@ Seed the standard chart of accounts (idempotent):
 use Centrex\Accounting\Facades\Accounting;
 
 Accounting::initializeChartOfAccounts();
+```
+
+Optionally, you can publish the views using
+
+```bash
+php artisan vendor:publish --tag="laravel-accounting-views"
 ```
 
 ## Environment variables
