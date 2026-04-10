@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\{Bill, Customer, Invoice, JournalEntry, Vendor};
+use Centrex\Accounting\Models\{Account, Bill, Customer, Invoice, JournalEntry, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -45,90 +45,75 @@ class AccountingDashboard extends Component
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    /** Linear-regression forecast of monthly net cash flow for the full year. */
-    private function forecastCashFlowData(array $monthlyData): array
+    private function monthlyRevenueExpenses(): array
     {
-        $actual = $monthlyData['net'];
-        $n = count($actual);
-        $allMonths = 12;
-
-        $allCategories = [];
-
-        for ($m = 1; $m <= $allMonths; $m++) {
-            $allCategories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-        }
-
-        if ($n < 2) {
-            $actualPad = array_pad($actual, $allMonths, null);
-            $forecastArr = array_fill(0, $allMonths, null);
-
-            return ['categories' => $allCategories, 'actual' => $actualPad, 'forecast' => $forecastArr];
-        }
-
-        // Simple linear regression: x = month index (1-based), y = net value
-        $xSum = 0.0;
-        $ySum = 0.0;
-        $xySum = 0.0;
-        $xxSum = 0.0;
-
-        for ($i = 0; $i < $n; $i++) {
-            $x = $i + 1;
-            $xSum += $x;
-            $ySum += $actual[$i];
-            $xySum += $x * $actual[$i];
-            $xxSum += $x * $x;
-        }
-        $slope = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
-        $intercept = ($ySum - $slope * $xSum) / $n;
-
-        $actualSeries = [];
-        $forecastSeries = [];
-
-        for ($m = 1; $m <= $allMonths; $m++) {
-            if ($m <= $n) {
-                $actualSeries[] = round((float) $actual[$m - 1], 2);
-                // Bridge the last actual point into the forecast series
-                $forecastSeries[] = ($m === $n) ? round((float) $actual[$m - 1], 2) : null;
-            } else {
-                $actualSeries[] = null;
-                $forecastSeries[] = round($slope * $m + $intercept, 2);
-            }
-        }
-
-        return ['categories' => $allCategories, 'actual' => $actualSeries, 'forecast' => $forecastSeries];
-    }
-
-    private function monthlyCashFlowData(): array
-    {
-        $prefix = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix') ?: 'acct_';
         $connection = config('accounting.drivers.database.connection', config('database.default'));
         $year = now()->year;
 
-        $cashAccount = \Centrex\Accounting\Models\Account::where('code', '1000')
-            ->where('is_active', true)->first();
+        $revenueIds = Account::where('type', 'revenue')->where('is_active', true)->pluck('id');
+        $expenseIds = Account::where('type', 'expense')->where('is_active', true)->pluck('id');
+
+        if ($revenueIds->isEmpty() && $expenseIds->isEmpty()) {
+            return ['series' => [], 'categories' => []];
+        }
+
+        $allIds = $revenueIds->merge($expenseIds)->unique()->values();
+
+        $rows = DB::connection($connection)
+            ->table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')->whereNull('je.deleted_at')->whereYear('je.date', $year)
+            ->whereIn('l.account_id', $allIds)
+            ->selectRaw('MONTH(je.date) as month,
+                SUM(CASE WHEN l.account_id IN (' . $revenueIds->implode(',') . ") AND l.type = 'credit' THEN l.amount
+                         WHEN l.account_id IN (" . $revenueIds->implode(',') . ") AND l.type = 'debit'  THEN -l.amount ELSE 0 END) as revenue,
+                SUM(CASE WHEN l.account_id IN (" . $expenseIds->implode(',') . ") AND l.type = 'debit'  THEN l.amount
+                         WHEN l.account_id IN (" . $expenseIds->implode(',') . ") AND l.type = 'credit' THEN -l.amount ELSE 0 END) as expenses")
+            ->groupByRaw('MONTH(je.date)')->orderByRaw('MONTH(je.date)')
+            ->get()->keyBy('month');
+
+        $categories = [];
+        $revenue = [];
+        $expenses = [];
+
+        for ($m = 1; $m <= now()->month; $m++) {
+            $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
+            $revenue[] = round((float) ($rows->get($m)?->revenue ?? 0), 2);
+            $expenses[] = round((float) ($rows->get($m)?->expenses ?? 0), 2);
+        }
+
+        return [
+            'series'     => [
+                ['name' => 'Revenue', 'data' => $revenue],
+                ['name' => 'Expenses', 'data' => $expenses],
+            ],
+            'categories' => $categories,
+        ];
+    }
+
+    private function monthlyCashFlow(): array
+    {
+        $prefix = config('accounting.table_prefix') ?: 'acct_';
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $year = now()->year;
+
+        $cashAccount = Account::where('code', '1000')->where('is_active', true)->first();
 
         if (!$cashAccount) {
-            return ['categories' => [], 'inflow' => [], 'outflow' => [], 'net' => []];
+            return ['series' => [], 'categories' => []];
         }
 
         $rows = DB::connection($connection)
             ->table("{$prefix}journal_entry_lines as l")
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
-            ->where('je.status', 'posted')
-            ->whereNull('je.deleted_at')
-            ->whereYear('je.date', $year)
+            ->where('je.status', 'posted')->whereNull('je.deleted_at')->whereYear('je.date', $year)
             ->where('l.account_id', $cashAccount->id)
             ->selectRaw("MONTH(je.date) as month,
                 SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as inflow,
                 SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as outflow")
-            ->groupByRaw('MONTH(je.date)')
-            ->orderByRaw('MONTH(je.date)')
-            ->get()
-            ->keyBy('month');
+            ->groupByRaw('MONTH(je.date)')->orderByRaw('MONTH(je.date)')
+            ->get()->keyBy('month');
 
         $categories = [];
         $inflow = [];
@@ -144,56 +129,72 @@ class AccountingDashboard extends Component
             $net[] = round($in - $out, 2);
         }
 
-        return compact('categories', 'inflow', 'outflow', 'net');
+        return [
+            'series'     => [
+                ['name' => 'Inflow', 'data' => $inflow],
+                ['name' => 'Outflow', 'data' => $outflow],
+                ['name' => 'Net', 'data' => $net],
+            ],
+            'categories' => $categories,
+        ];
     }
 
-    private function monthlyChartData(): array
+    private function cashFlowForecast(array $cashFlowData): array
     {
-        $prefix = config('accounting.table_prefix', 'acct_');
-        $connection = config('accounting.drivers.database.connection', config('database.default'));
-        $year = now()->year;
+        $netSeries = collect($cashFlowData['series'])->firstWhere('name', 'Net');
+        $actual = $netSeries['data'] ?? [];
+        $n = count($actual);
+        $allMonths = 12;
 
-        $revenueIds = \Centrex\Accounting\Models\Account::where('type', 'revenue')
-            ->where('is_active', true)->pluck('id');
-        $expenseIds = \Centrex\Accounting\Models\Account::where('type', 'expense')
-            ->where('is_active', true)->pluck('id');
+        $allCategories = [];
 
-        if ($revenueIds->isEmpty() && $expenseIds->isEmpty()) {
-            return ['categories' => [], 'revenue' => [], 'expenses' => []];
+        for ($m = 1; $m <= $allMonths; $m++) {
+            $allCategories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
         }
 
-        $allIds = $revenueIds->merge($expenseIds)->unique()->values();
-
-        $rows = DB::connection($connection)
-            ->table("{$prefix}journal_entry_lines as l")
-            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
-            ->where('je.status', 'posted')
-            ->whereNull('je.deleted_at')
-            ->whereYear('je.date', $year)
-            ->whereIn('l.account_id', $allIds)
-            ->selectRaw('MONTH(je.date) as month,
-                SUM(CASE WHEN l.account_id IN (' . $revenueIds->implode(',') . ") AND l.type = 'credit' THEN l.amount
-                         WHEN l.account_id IN (" . $revenueIds->implode(',') . ") AND l.type = 'debit'  THEN -l.amount
-                         ELSE 0 END) as revenue,
-                SUM(CASE WHEN l.account_id IN (" . $expenseIds->implode(',') . ") AND l.type = 'debit'  THEN l.amount
-                         WHEN l.account_id IN (" . $expenseIds->implode(',') . ") AND l.type = 'credit' THEN -l.amount
-                         ELSE 0 END) as expenses")
-            ->groupByRaw('MONTH(je.date)')
-            ->orderByRaw('MONTH(je.date)')
-            ->get()
-            ->keyBy('month');
-
-        $categories = [];
-        $revenue = [];
-        $expenses = [];
-
-        for ($m = 1; $m <= now()->month; $m++) {
-            $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-            $revenue[] = round((float) ($rows->get($m)?->revenue ?? 0), 2);
-            $expenses[] = round((float) ($rows->get($m)?->expenses ?? 0), 2);
+        if ($n < 2) {
+            return [
+                'series'     => [
+                    ['name' => 'Actual Net', 'type' => 'area', 'data' => array_pad($actual, $allMonths, null)],
+                    ['name' => 'Forecast',   'type' => 'line', 'data' => array_fill(0, $allMonths, null)],
+                ],
+                'categories' => $allCategories,
+            ];
         }
 
-        return compact('categories', 'revenue', 'expenses');
+        $xSum = $ySum = $xySum = $xxSum = 0.0;
+
+        for ($i = 0; $i < $n; $i++) {
+            $x = $i + 1;
+            $xSum += $x;
+            $ySum += $actual[$i];
+            $xySum += $x * $actual[$i];
+            $xxSum += $x * $x;
+        }
+
+        $slope = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
+        $intercept = ($ySum - $slope * $xSum) / $n;
+
+        $actualSeries = [];
+        $forecastSeries = [];
+
+        for ($m = 1; $m <= $allMonths; $m++) {
+            if ($m <= $n) {
+                $actualSeries[] = round((float) $actual[$m - 1], 2);
+                $forecastSeries[] = ($m === $n) ? round((float) $actual[$m - 1], 2) : null;
+            } else {
+                $actualSeries[] = null;
+                $forecastSeries[] = round($slope * $m + $intercept, 2);
+            }
+        }
+
+        return [
+            'series'     => [
+                ['name' => 'Actual Net', 'type' => 'area', 'data' => $actualSeries],
+                ['name' => 'Forecast',   'type' => 'line', 'data' => $forecastSeries],
+            ],
+            'categories' => $allCategories,
+        ];
     }
 
     public function render(): \Illuminate\Contracts\View\View
@@ -253,10 +254,17 @@ class AccountingDashboard extends Component
         $recentEntries = JournalEntry::with(['lines.account'])
             ->latest('date')->limit(8)->get();
 
-        // Chart data (monthly — current year)
-        $chartData = $this->monthlyChartData();
-        $cashFlowChartData = $this->monthlyCashFlowData();
-        $forecastData = $this->forecastCashFlowData($cashFlowChartData);
+        $revenueExpensesChart = $this->monthlyRevenueExpenses();
+        $cashFlowChart = $this->monthlyCashFlow();
+        $forecastChart = $this->cashFlowForecast($cashFlowChart);
+        $balanceChart = [
+            'series'     => [
+                max(0, (float) $metrics['total_assets']),
+                max(0, (float) $metrics['total_liabilities']),
+                max(0, (float) $metrics['total_equity']),
+            ],
+            'categories' => ['Assets', 'Liabilities', 'Equity'],
+        ];
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'
@@ -272,9 +280,10 @@ class AccountingDashboard extends Component
             'recentInvoices',
             'recentBills',
             'recentEntries',
-            'chartData',
-            'cashFlowChartData',
-            'forecastData',
+            'revenueExpensesChart',
+            'cashFlowChart',
+            'forecastChart',
+            'balanceChart',
         ))->layout($layout, ['title' => __('Accounting Dashboard')]);
     }
 }
