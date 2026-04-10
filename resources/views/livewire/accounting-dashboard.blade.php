@@ -31,7 +31,7 @@
 </x-tallui-page-header>
 
 {{-- ── Primary KPI Stats ────────────────────────────────────────────────── --}}
-<div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full bg-base-100 border border-base-200 rounded-2xl overflow-hidden">
+<div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full bg-base-100 border border-base-200 rounded-2xl overflow-x-auto">
     <x-tallui-stat
         title="Revenue"
         :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
