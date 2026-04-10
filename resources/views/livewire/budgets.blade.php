@@ -1,9 +1,9 @@
 <div>
 <x-tallui-notification />
 
-<x-tallui-page-header title="Budgets" subtitle="Plan and track expenses against budgets" icon="heroicon-o-chart-pie">
+<x-tallui-page-header title="Budgets" subtitle="Plan and track expenses against budgets" icon="o-chart-pie">
     <x-slot:actions>
-        <x-tallui-button wire:click="openCreate" icon="heroicon-o-plus" class="btn-primary btn-sm">New Budget</x-tallui-button>
+        <x-tallui-button wire:click="openCreate" icon="o-plus" class="btn-primary btn-sm">New Budget</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -65,14 +65,14 @@
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="openDetail({{ $budget->id }})"
-                                    class="btn-ghost btn-xs" icon="heroicon-o-eye">View</x-tallui-button>
+                                    class="btn-ghost btn-xs" icon="o-eye">View</x-tallui-button>
                                 @if($budget->status === 'draft')
                                     <x-tallui-button wire:click="approveBudget({{ $budget->id }})"
                                         wire:confirm="Approve budget {{ $budget->budget_number }}?"
                                         class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
                                     <x-tallui-button wire:click="deleteBudget({{ $budget->id }})"
                                         wire:confirm="Delete this budget?"
-                                        class="btn-error btn-xs" icon="heroicon-o-trash">Delete</x-tallui-button>
+                                        class="btn-error btn-xs" icon="o-trash">Delete</x-tallui-button>
                                 @endif
                             </div>
                         </td>
@@ -91,7 +91,7 @@
 </x-tallui-card>
 
 {{-- Create Budget Modal --}}
-<x-tallui-modal id="budget-modal" title="New Budget" icon="heroicon-o-chart-pie" size="xl">
+<x-tallui-modal id="budget-modal" title="New Budget" icon="o-chart-pie" size="xl">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'budget-modal'); else $dispatch('close-modal', 'budget-modal')"></span>
     </x-slot:trigger>
@@ -127,7 +127,7 @@
         <div>
             <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-semibold text-base-content/70">Budget Line Items</label>
-                <x-tallui-button wire:click="addItem" icon="heroicon-o-plus" class="btn-ghost btn-xs">Add Line</x-tallui-button>
+                <x-tallui-button wire:click="addItem" icon="o-plus" class="btn-ghost btn-xs">Add Line</x-tallui-button>
             </div>
             <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
                 @foreach($items as $i => $item)
@@ -144,7 +144,7 @@
                             <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.amount" placeholder="Amount"
                                 class="input input-sm w-full border-base-300 text-right {{ $errors->has('items.' . $i . '.amount') ? 'input-error' : '' }}" />
                         </div>
-                        <x-tallui-button wire:click="removeItem({{ $i }})" icon="heroicon-o-trash" class="btn-ghost btn-sm text-error" />
+                        <x-tallui-button wire:click="removeItem({{ $i }})" icon="o-trash" class="btn-ghost btn-sm text-error" />
                     </div>
                 @endforeach
             </div>
@@ -180,7 +180,7 @@
 @if($viewingBudgetId)
     @php $viewingBudget = \Centrex\LaravelAccounting\Models\Budget::with(['items.account'])->find($viewingBudgetId); @endphp
     @if($viewingBudget)
-        <x-tallui-modal id="budget-detail-modal" title="Budget: {{ $viewingBudget->name }}" icon="heroicon-o-chart-pie" size="lg">
+        <x-tallui-modal id="budget-detail-modal" title="Budget: {{ $viewingBudget->name }}" icon="o-chart-pie" size="lg">
             <x-slot:trigger>
                 <span x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'budget-detail-modal'); else $dispatch('close-modal', 'budget-detail-modal')"></span>
             </x-slot:trigger>

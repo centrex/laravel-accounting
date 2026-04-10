@@ -1,9 +1,9 @@
 <div>
 <x-tallui-notification />
 
-<x-tallui-page-header title="Chart of Accounts" subtitle="Manage your general ledger accounts" icon="heroicon-o-rectangle-stack">
+<x-tallui-page-header title="Chart of Accounts" subtitle="Manage your general ledger accounts" icon="o-rectangle-stack">
     <x-slot:actions>
-        <x-tallui-button wire:click="openModal()" icon="heroicon-o-plus" class="btn-primary btn-sm">New Account</x-tallui-button>
+        <x-tallui-button wire:click="openModal()" icon="o-plus" class="btn-primary btn-sm">New Account</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -86,7 +86,7 @@
                             </button>
                         </td>
                         <td class="pr-5 text-right">
-                            <x-tallui-button wire:click="openModal({{ $account->id }})" label="view" icon="heroicon-o-pencil" class="btn-ghost btn-sm" />
+                            <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-sm" />
                         </td>
                     </tr>
                 @empty
@@ -103,7 +103,7 @@
 </x-tallui-card>
 
 {{-- Create/Edit Modal --}}
-<x-tallui-modal id="account-modal" :title="$accountId ? 'Edit Account' : 'New Account'" icon="heroicon-o-rectangle-stack" size="lg">
+<x-tallui-modal id="account-modal" :title="$accountId ? 'Edit Account' : 'New Account'" icon="o-rectangle-stack" size="lg">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'account-modal'); else $dispatch('close-modal', 'account-modal')"></span>
     </x-slot:trigger>
