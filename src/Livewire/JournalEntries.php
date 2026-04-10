@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Models\{Account, JournalEntry};
+use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
 
 class JournalEntries extends Component
@@ -61,7 +62,7 @@ class JournalEntries extends Component
             'date'               => 'required|date',
             'description'        => 'required|min:5',
             'lines'              => 'required|array|min:2',
-            'lines.*.account_id' => 'required|exists:accounts,id',
+            'lines.*.account_id' => ['required', Rule::exists((new Account())->getTable(), 'id')],
             'lines.*.type'       => 'required|in:debit,credit',
             'lines.*.amount'     => 'required|numeric|min:0.01',
         ]);

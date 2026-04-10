@@ -8,6 +8,7 @@ use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
 use Centrex\Accounting\Models\{Account, Budget, BudgetItem, FiscalYear};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
 
 class Budgets extends Component
@@ -88,7 +89,7 @@ class Budgets extends Component
             'period_end'         => 'required|date|after_or_equal:period_start',
             'total_amount'       => 'required|numeric|min:0',
             'items'              => 'required|array|min:1',
-            'items.*.account_id' => 'required|integer',
+            'items.*.account_id' => ['required', Rule::exists((new Account())->getTable(), 'id')],
             'items.*.amount'     => 'required|numeric|min:0',
         ]);
 
