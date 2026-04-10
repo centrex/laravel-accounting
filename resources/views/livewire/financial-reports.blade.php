@@ -71,7 +71,7 @@
         </div>
 
         {{-- ── Trial Balance ─────────────────────────────────────────────── --}}
-        @if($reportType === 'trial_balance')
+        @if($reportType === 'trial_balance' && isset($reportData['accounts']))
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
@@ -125,7 +125,7 @@
         @endif
 
         {{-- ── Balance Sheet ──────────────────────────────────────────────── --}}
-        @if($reportType === 'balance_sheet')
+        @if($reportType === 'balance_sheet' && isset($reportData['assets']))
             <div class="space-y-6">
                 @foreach([
                     ['key' => 'assets',      'label' => 'ASSETS',      'color' => 'text-success',   'total_key' => 'total'],
@@ -179,7 +179,7 @@
         @endif
 
         {{-- ── Income Statement ───────────────────────────────────────────── --}}
-        @if($reportType === 'income_statement')
+        @if($reportType === 'income_statement' && isset($reportData['revenue']))
             <div class="space-y-6">
                 {{-- Revenue --}}
                 <div>
@@ -246,7 +246,7 @@
         @endif
 
         {{-- ── Cash Flow Statement ────────────────────────────────────────── --}}
-        @if($reportType === 'cash_flow')
+        @if($reportType === 'cash_flow' && isset($reportData['net_change']))
             <div class="space-y-3">
                 @foreach([
                     ['key' => 'operating_activities', 'label' => 'Operating Activities',  'icon' => 'o-cog-6-tooth',    'color' => 'info'],

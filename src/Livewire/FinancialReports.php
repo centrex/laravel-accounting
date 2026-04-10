@@ -29,6 +29,11 @@ class FinancialReports extends Component
         $this->endDate = now()->format('Y-m-d');
     }
 
+    public function updatedReportType(): void
+    {
+        $this->reportData = null;
+    }
+
     public function generateReport(): void
     {
         $service = app(Accounting::class);
