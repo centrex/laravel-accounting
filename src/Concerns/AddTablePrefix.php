@@ -11,7 +11,7 @@ trait AddTablePrefix
 {
     public function getTable(): string
     {
-        $prefix = config('accounting.table_prefix') ?: 'acct_';
+        $prefix = config('accounting.table_prefix', 'acct_');
 
         return $prefix . $this->getTableSuffix();
     }
