@@ -476,14 +476,20 @@ class Accounting
                 : ($credits - $debits);
 
             if (abs($balance) > $tolerance) {
+                // Debit-normal (asset/expense): positive balance → debit column.
+                // Credit-normal (liability/equity/revenue): positive balance → credit column.
+                $isDebit  = $account->isDebitAccount();
+                $debitAmt  = $isDebit  ? ($balance > 0 ? $balance : 0) : ($balance < 0 ? -$balance : 0);
+                $creditAmt = $isDebit  ? ($balance < 0 ? -$balance : 0) : ($balance > 0 ? $balance : 0);
+
                 $trialBalance[] = [
                     'account' => $account,
-                    'debit'   => $balance > 0 ? abs($balance) : 0,
-                    'credit'  => $balance < 0 ? abs($balance) : 0,
+                    'debit'   => $debitAmt,
+                    'credit'  => $creditAmt,
                 ];
 
-                $totalDebits  += $balance > 0 ? abs($balance) : 0;
-                $totalCredits += $balance < 0 ? abs($balance) : 0;
+                $totalDebits  += $debitAmt;
+                $totalCredits += $creditAmt;
             }
         }
 
