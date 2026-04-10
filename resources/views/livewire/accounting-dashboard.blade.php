@@ -112,7 +112,7 @@
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Payables</span>
                     <div class="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                        <x-tallui-icon name="o-outbox-arrow-down" class="w-4 h-4 text-warning" />
+                        <x-tallui-icon name="o-archive-box-arrow-down" class="w-4 h-4 text-warning" />
                     </div>
                 </div>
                 <div class="text-xl font-bold mt-1">{{ $currency }} {{ number_format($billStats['outstanding_ap'], 2) }}</div>
