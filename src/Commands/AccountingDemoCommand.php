@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Commands;
+namespace Centrex\Accounting\Commands;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Models\{Account, Customer, Employee, JournalEntry, Vendor};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Models\{Account, Customer, Employee, JournalEntry, Vendor};
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Commands;
+namespace Centrex\Accounting\Commands;
 
-use Centrex\LaravelAccounting\Accounting;
+use Centrex\Accounting\Accounting;
 use Illuminate\Console\Command;
 
 final class AccountingReportCommand extends Command

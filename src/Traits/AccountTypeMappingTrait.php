@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Traits;
+namespace Centrex\Accounting\Traits;
 
-use Centrex\LaravelAccounting\Enums\{AccountSubtype, AccountType};
-use Centrex\LaravelAccounting\Mappers\AccountTypeMapper;
+use Centrex\Accounting\Enums\{AccountSubtype, AccountType};
+use Centrex\Accounting\Mappers\AccountTypeMapper;
 
 trait AccountTypeMappingTrait
 {

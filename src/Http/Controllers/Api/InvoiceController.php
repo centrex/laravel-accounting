@@ -2,13 +2,13 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Exceptions\AccountingException;
-use Centrex\LaravelAccounting\Http\Requests\{RecordPaymentRequest, StoreInvoiceRequest};
-use Centrex\LaravelAccounting\Http\Resources\{InvoiceResource, PaymentResource};
-use Centrex\LaravelAccounting\Models\{Invoice, InvoiceItem};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Exceptions\AccountingException;
+use Centrex\Accounting\Http\Requests\{RecordPaymentRequest, StoreInvoiceRequest};
+use Centrex\Accounting\Http\Resources\{InvoiceResource, PaymentResource};
+use Centrex\Accounting\Models\{Invoice, InvoiceItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\{DB, Log};

@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Tests\Unit;
 
-use Centrex\LaravelAccounting\Enums\{AccountSubtype, AccountType};
-use Centrex\LaravelAccounting\Mappers\AccountTypeMapper;
+use Centrex\Accounting\Enums\{AccountSubtype, AccountType};
+use Centrex\Accounting\Mappers\AccountTypeMapper;
 use PHPUnit\Framework\TestCase;
 
 class AccountTypeMapperTest extends TestCase

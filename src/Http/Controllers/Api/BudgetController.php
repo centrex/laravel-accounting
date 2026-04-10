@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Http\Resources\{BudgetResource};
-use Centrex\LaravelAccounting\Models\{Budget, BudgetItem};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Http\Resources\{BudgetResource};
+use Centrex\Accounting\Models\{Budget, BudgetItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;

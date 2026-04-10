@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Exceptions;
+namespace Centrex\Accounting\Exceptions;
 
 use RuntimeException;
 

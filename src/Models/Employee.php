@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Models;
+namespace Centrex\Accounting\Models;
 
-use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class Employee extends Model

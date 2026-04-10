@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Concerns\WithCurrency;
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Concerns\WithCurrency;
 use Livewire\Component;
 
 class FinancialReports extends Component

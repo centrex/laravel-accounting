@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Enums;
+namespace Centrex\Accounting\Enums;
 
-use Centrex\LaravelAccounting\Concerns\EnumHelpers;
+use Centrex\Accounting\Concerns\EnumHelpers;
 
 /**
  * Accounting Entry Lifecycle Status.

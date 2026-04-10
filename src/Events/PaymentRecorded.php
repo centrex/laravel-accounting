@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Events;
+namespace Centrex\Accounting\Events;
 
-use Centrex\LaravelAccounting\Models\Payment;
+use Centrex\Accounting\Models\Payment;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

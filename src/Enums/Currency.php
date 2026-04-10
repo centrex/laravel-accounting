@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Enums;
+namespace Centrex\Accounting\Enums;
 
-use Centrex\LaravelAccounting\Concerns\EnumHelpers;
+use Centrex\Accounting\Concerns\EnumHelpers;
 
 /**
  * ISO 4217 Currency codes.
@@ -282,6 +282,7 @@ enum Currency: string
     public static function options(): array
     {
         $options = [];
+
         foreach (self::cases() as $case) {
             $options[$case->value] = $case->label();
         }

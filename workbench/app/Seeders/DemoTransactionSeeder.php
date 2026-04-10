@@ -5,9 +5,9 @@ declare(strict_types = 1);
 namespace Workbench\App\Seeders;
 
 use Carbon\Carbon;
-use Centrex\LaravelAccounting\Database\Seeders\AccountingSeeder;
-use Centrex\LaravelAccounting\Facades\Accounting;
-use Centrex\LaravelAccounting\Models\{
+use Centrex\Accounting\Database\Seeders\AccountingSeeder;
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\{
     Account,
     Bill,
     Customer,

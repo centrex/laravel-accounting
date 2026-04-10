@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Http\Resources\AccountResource;
-use Centrex\LaravelAccounting\Models\Account;
+use Centrex\Accounting\Http\Resources\AccountResource;
+use Centrex\Accounting\Models\Account;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;

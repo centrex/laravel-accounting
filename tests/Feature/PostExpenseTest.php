@@ -4,10 +4,10 @@ declare(strict_types = 1);
 
 namespace Tests\Feature;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\LaravelAccounting\Models\{Account, Expense};
-use Centrex\LaravelAccounting\Tests\TestCase;
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
+use Centrex\Accounting\Models\{Account, Expense};
+use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PostExpenseTest extends TestCase
@@ -44,7 +44,7 @@ class PostExpenseTest extends TestCase
 
         $entry = $this->accounting->postExpense($expense);
 
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);
@@ -54,7 +54,7 @@ class PostExpenseTest extends TestCase
     public function test_post_expense_links_journal_entry_id(): void
     {
         $expense = $this->createExpense();
-        $entry   = $this->accounting->postExpense($expense);
+        $entry = $this->accounting->postExpense($expense);
 
         $this->assertEquals($entry->id, $expense->fresh()->journal_entry_id);
     }
@@ -134,8 +134,8 @@ class PostExpenseTest extends TestCase
 
         $payment = $this->accounting->recordExpensePayment($expense->fresh(), $this->paymentData(100));
 
-        $entry   = $payment->journalEntry;
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $entry = $payment->journalEntry;
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);

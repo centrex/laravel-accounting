@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Observers;
+namespace Centrex\Accounting\Observers;
 
-use Centrex\LaravelAccounting\Models\BillItem;
+use Centrex\Accounting\Models\BillItem;
 
 class BillItemObserver
 {

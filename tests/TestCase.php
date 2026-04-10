@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Tests;
+namespace Centrex\Accounting\Tests;
 
-use Centrex\LaravelAccounting\LaravelAccountingServiceProvider;
+use Centrex\Accounting\AccountingServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -15,14 +15,14 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName): string => 'Centrex\\LaravelAccounting\\Database\\Factories\\' . class_basename($modelName) . 'Factory',
+            fn (string $modelName): string => 'Centrex\\Accounting\\Database\\Factories\\' . class_basename($modelName) . 'Factory',
         );
     }
 
     protected function getPackageProviders($app)
     {
         return [
-            LaravelAccountingServiceProvider::class,
+            AccountingServiceProvider::class,
         ];
     }
 

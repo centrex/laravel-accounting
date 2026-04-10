@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Models\Vendor;
+use Centrex\Accounting\Models\Vendor;
 use Livewire\{Component, WithPagination};
 
 class Vendors extends Component

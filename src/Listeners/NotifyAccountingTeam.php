@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Listeners;
+namespace Centrex\Accounting\Listeners;
 
-use Centrex\LaravelAccounting\Events\PaymentRecorded;
+use Centrex\Accounting\Events\PaymentRecorded;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 

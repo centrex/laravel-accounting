@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Accounting;
+use Centrex\Accounting\Accounting;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 

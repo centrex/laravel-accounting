@@ -2,13 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Listeners;
+namespace Centrex\Accounting\Listeners;
 
-use Centrex\LaravelAccounting\Events\InvoicePosted;
-use Centrex\LaravelAccounting\Models\Invoice;
+use Centrex\Accounting\Events\InvoicePosted;
+use Centrex\Accounting\Models\Invoice;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\{Log};
 
 class SyncCustomerOutstanding implements ShouldQueue
 {
@@ -16,7 +15,7 @@ class SyncCustomerOutstanding implements ShouldQueue
     {
         $invoice = $event->invoice;
 
-        if (! $customer = $invoice->customer) {
+        if (!$customer = $invoice->customer) {
             return;
         }
 

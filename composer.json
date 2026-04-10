@@ -38,14 +38,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Centrex\\LaravelAccounting\\": "src/",
-            "Centrex\\LaravelAccounting\\Database\\Factories\\": "database/factories/",
-            "Centrex\\LaravelAccounting\\Database\\Seeders\\": "database/seeders/"
+            "Centrex\\Accounting\\": "src/",
+            "Centrex\\Accounting\\Database\\Factories\\": "database/factories/",
+            "Centrex\\Accounting\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Centrex\\LaravelAccounting\\Tests\\": "tests/",
+            "Centrex\\Accounting\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -87,10 +87,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Centrex\\LaravelAccounting\\LaravelAccountingServiceProvider"
+                "Centrex\\Accounting\\AccountingServiceProvider"
             ],
             "aliases": {
-                "Accounting": "Centrex\\LaravelAccounting\\Facades\\Accounting"
+                "Accounting": "Centrex\\Accounting\\Facades\\Accounting"
             }
         }
     },

@@ -2,19 +2,19 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting;
+namespace Centrex\Accounting;
 
-use Centrex\LaravelAccounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
-use Centrex\LaravelAccounting\Events\{InvoicePosted, PaymentRecorded};
-use Centrex\LaravelAccounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
-use Centrex\LaravelAccounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
-use Centrex\LaravelAccounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
+use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
+use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
+use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
+use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
+use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
-class LaravelAccountingServiceProvider extends ServiceProvider
+class AccountingServiceProvider extends ServiceProvider
 {
     /** Bootstrap the application services. */
     public function boot(): void
@@ -141,7 +141,7 @@ class LaravelAccountingServiceProvider extends ServiceProvider
 
         foreach ($abilities as $ability) {
             // Only define the gate if the host app has not already registered it
-            if (! Gate::has($ability)) {
+            if (!Gate::has($ability)) {
                 Gate::define($ability, static function ($user): bool {
                     // Allow if the user passes the super-gate
                     if (Gate::has('accounting-admin') && Gate::forUser($user)->check('accounting-admin')) {
@@ -150,6 +150,7 @@ class LaravelAccountingServiceProvider extends ServiceProvider
 
                     // Fall back to a config-driven role attribute check
                     $roleAttribute = config('accounting.admin_role_attribute', null);
+
                     if ($roleAttribute && method_exists($user, 'hasRole')) {
                         return $user->hasRole(config('accounting.admin_roles', []));
                     }

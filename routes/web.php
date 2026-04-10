@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use Centrex\LaravelAccounting\Livewire\{AccountingDashboard, Bills, Budgets, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, Budgets, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(config('accounting.web_middleware', ['web', 'auth']))

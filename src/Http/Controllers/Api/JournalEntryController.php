@@ -2,12 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Http\Requests\StoreJournalEntryRequest;
-use Centrex\LaravelAccounting\Http\Resources\JournalEntryResource;
-use Centrex\LaravelAccounting\Models\JournalEntry;
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Http\Requests\StoreJournalEntryRequest;
+use Centrex\Accounting\Http\Resources\JournalEntryResource;
+use Centrex\Accounting\Models\JournalEntry;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 

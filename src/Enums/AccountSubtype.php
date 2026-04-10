@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Enums;
+namespace Centrex\Accounting\Enums;
 
-use Centrex\LaravelAccounting\Concerns\EnumHelpers;
+use Centrex\Accounting\Concerns\EnumHelpers;
 
 /**
  * Account Subtypes (IFRS-aligned, reporting-safe).
@@ -66,7 +66,7 @@ enum AccountSubtype: string
     /* -----------------------------------------------------------------
      | EQUITY
      |------------------------------------------------------------------*/
-    case EQUITY = 'equity';                      // Generic / internal use  
+    case EQUITY = 'equity';                      // Generic / internal use
     case CAPITAL_ACCOUNT = 'capital_account';
     case RETAINED_EARNINGS_ACCOUNT = 'retained_earnings_account';
     case RESERVE_ACCOUNT = 'reserve_account';

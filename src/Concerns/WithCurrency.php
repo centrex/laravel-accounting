@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Concerns;
+namespace Centrex\Accounting\Concerns;
 
-use Centrex\LaravelAccounting\Enums\Currency;
+use Centrex\Accounting\Enums\Currency;
 
 trait WithCurrency
 {

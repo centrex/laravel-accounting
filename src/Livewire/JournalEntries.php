@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Models\{Account, JournalEntry};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Models\{Account, JournalEntry};
 use Livewire\{Component, WithPagination};
 
 class JournalEntries extends Component

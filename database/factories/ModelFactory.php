@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Database\Factories;
+namespace Centrex\Accounting\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 

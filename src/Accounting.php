@@ -2,17 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting;
+namespace Centrex\Accounting;
 
-use Centrex\LaravelAccounting\Enums\AccountSubtype;
-use Centrex\LaravelAccounting\Exceptions\{
+use Centrex\Accounting\Enums\AccountSubtype;
+use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
     DuplicatePaymentException,
     InvalidStatusTransitionException,
     OverpaymentException,
     UnbalancedJournalException
 };
-use Centrex\LaravelAccounting\Models\{
+use Centrex\Accounting\Models\{
     Account,
     Bill,
     Budget,
@@ -24,8 +24,7 @@ use Centrex\LaravelAccounting\Models\{
     Payment
 };
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\{DB};
 
 class Accounting
 {
@@ -55,7 +54,7 @@ class Accounting
      */
     private function buildBalanceMap(mixed $startDate, mixed $endDate): Collection
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         return DB::connection($connection)
@@ -64,7 +63,7 @@ class Accounting
             ->where('je.status', 'posted')
             ->whereNull('je.deleted_at')
             ->when($startDate, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
-            ->when($endDate,   fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->when($endDate, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
             ->select([
                 'l.account_id',
                 DB::raw("SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as total_debit"),
@@ -114,7 +113,7 @@ class Accounting
                 ]);
             }
 
-            if (! $entry->isBalanced()) {
+            if (!$entry->isBalanced()) {
                 throw UnbalancedJournalException::make($entry);
             }
 
@@ -138,9 +137,9 @@ class Accounting
         }
 
         return DB::transaction(function () use ($invoice): JournalEntry {
-            $arAccount      = $this->requireAccount('1200');
+            $arAccount = $this->requireAccount('1200');
             $revenueAccount = $this->requireAccount('4000');
-            $taxAccount     = $this->requireAccount('2300');
+            $taxAccount = $this->requireAccount('2300');
 
             $entry = $this->createJournalEntry([
                 'date'          => $invoice->invoice_date,
@@ -176,7 +175,7 @@ class Accounting
             // Pessimistic lock — blocks concurrent payments for the same invoice
             $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
 
-            $amount      = (float) $paymentData['amount'];
+            $amount = (float) $paymentData['amount'];
             $outstanding = round((float) $invoice->total - (float) $invoice->paid_amount, 6);
 
             if ($amount > $outstanding + $this->tolerance()) {
@@ -207,9 +206,9 @@ class Accounting
             ]);
 
             // Resolve cash account — caller may specify a custom account code (e.g. bank vs cash)
-            $cashCode  = $paymentData['account_code'] ?? '1000';
+            $cashCode = $paymentData['account_code'] ?? '1000';
             $cashAccount = $this->requireAccount($cashCode);
-            $arAccount   = $this->requireAccount('1200');
+            $arAccount = $this->requireAccount('1200');
 
             $entry = $this->createJournalEntry([
                 'date'        => $paymentData['date'],
@@ -226,7 +225,7 @@ class Accounting
             $payment->update(['journal_entry_id' => $entry->id]);
 
             // Atomic status update — compute from known locked value, no refresh needed
-            $newPaid   = round((float) $invoice->paid_amount + $amount, 6);
+            $newPaid = round((float) $invoice->paid_amount + $amount, 6);
             $newStatus = $newPaid >= (float) $invoice->total - $this->tolerance() ? 'settled' : 'partially_settled';
 
             $invoice->update(['paid_amount' => $newPaid, 'status' => $newStatus]);
@@ -247,9 +246,9 @@ class Accounting
         }
 
         return DB::transaction(function () use ($bill): JournalEntry {
-            $apAccount      = $this->requireAccount('2000');
+            $apAccount = $this->requireAccount('2000');
             $expenseAccount = $this->requireAccount('5000');
-            $taxAccount     = $this->requireAccount('2300');
+            $taxAccount = $this->requireAccount('2300');
 
             $entry = $this->createJournalEntry([
                 'date'          => $bill->bill_date,
@@ -277,7 +276,7 @@ class Accounting
         return DB::transaction(function () use ($bill, $paymentData): Payment {
             $bill = Bill::lockForUpdate()->findOrFail($bill->id);
 
-            $amount      = (float) $paymentData['amount'];
+            $amount = (float) $paymentData['amount'];
             $outstanding = round((float) $bill->total - (float) $bill->paid_amount, 6);
 
             if ($amount > $outstanding + $this->tolerance()) {
@@ -306,7 +305,7 @@ class Accounting
                 'notes'          => $paymentData['notes'] ?? null,
             ]);
 
-            $apAccount   = $this->requireAccount('2000');
+            $apAccount = $this->requireAccount('2000');
             $cashAccount = $this->requireAccount($paymentData['account_code'] ?? '1000');
 
             $entry = $this->createJournalEntry([
@@ -323,7 +322,7 @@ class Accounting
             $entry->post();
             $payment->update(['journal_entry_id' => $entry->id]);
 
-            $newPaid   = round((float) $bill->paid_amount + $amount, 6);
+            $newPaid = round((float) $bill->paid_amount + $amount, 6);
             $newStatus = $newPaid >= (float) $bill->total - $this->tolerance() ? 'settled' : 'partially_settled';
 
             $bill->update(['paid_amount' => $newPaid, 'status' => $newStatus]);
@@ -353,7 +352,7 @@ class Accounting
                 : $this->requireAccount('5000');
 
             $cashAccount = $this->requireAccount('1000');
-            $taxAccount  = Account::where('code', '2300')->where('is_active', true)->first();
+            $taxAccount = Account::where('code', '2300')->where('is_active', true)->first();
 
             $lines = [
                 ['account_id' => $expenseAccount->id, 'type' => 'debit', 'amount' => (float) $expense->subtotal, 'description' => 'Expense'],
@@ -364,7 +363,7 @@ class Accounting
             }
 
             $totalCredit = round((float) $expense->subtotal + (float) $expense->tax_amount, 6);
-            $creditDesc  = ($expense->payment_method && $expense->payment_method !== 'credit')
+            $creditDesc = ($expense->payment_method && $expense->payment_method !== 'credit')
                 ? 'Cash paid'
                 : 'Accounts Payable';
 
@@ -393,7 +392,7 @@ class Accounting
         return DB::transaction(function () use ($expense, $paymentData): Payment {
             $expense = Expense::lockForUpdate()->findOrFail($expense->id);
 
-            $amount      = (float) $paymentData['amount'];
+            $amount = (float) $paymentData['amount'];
             $outstanding = round((float) $expense->total - (float) $expense->paid_amount, 6);
 
             if ($amount > $outstanding + $this->tolerance()) {
@@ -442,7 +441,7 @@ class Accounting
             $entry->post();
             $payment->update(['journal_entry_id' => $entry->id]);
 
-            $newPaid   = round((float) $expense->paid_amount + $amount, 6);
+            $newPaid = round((float) $expense->paid_amount + $amount, 6);
             $newStatus = $newPaid >= (float) $expense->total - $this->tolerance() ? 'settled' : 'partially_settled';
 
             $expense->update(['paid_amount' => $newPaid, 'status' => $newStatus]);
@@ -458,17 +457,17 @@ class Accounting
     /** Generate Trial Balance. Uses a single aggregated SQL query instead of N+1. */
     public function getTrialBalance(mixed $startDate = null, mixed $endDate = null): array
     {
-        $tolerance  = $this->tolerance();
-        $accounts   = Account::where('is_active', true)->orderBy('code')->get();
+        $tolerance = $this->tolerance();
+        $accounts = Account::where('is_active', true)->orderBy('code')->get();
         $balanceMap = $this->buildBalanceMap($startDate, $endDate);
 
         $trialBalance = [];
-        $totalDebits  = 0.0;
+        $totalDebits = 0.0;
         $totalCredits = 0.0;
 
         foreach ($accounts as $account) {
-            $row     = $balanceMap->get($account->id);
-            $debits  = (float) ($row?->total_debit  ?? 0);
+            $row = $balanceMap->get($account->id);
+            $debits = (float) ($row?->total_debit ?? 0);
             $credits = (float) ($row?->total_credit ?? 0);
 
             $balance = $account->isDebitAccount()
@@ -478,9 +477,9 @@ class Accounting
             if (abs($balance) > $tolerance) {
                 // Debit-normal (asset/expense): positive balance → debit column.
                 // Credit-normal (liability/equity/revenue): positive balance → credit column.
-                $isDebit  = $account->isDebitAccount();
-                $debitAmt  = $isDebit  ? ($balance > 0 ? $balance : 0) : ($balance < 0 ? -$balance : 0);
-                $creditAmt = $isDebit  ? ($balance < 0 ? -$balance : 0) : ($balance > 0 ? $balance : 0);
+                $isDebit = $account->isDebitAccount();
+                $debitAmt = $isDebit ? ($balance > 0 ? $balance : 0) : ($balance < 0 ? -$balance : 0);
+                $creditAmt = $isDebit ? ($balance < 0 ? -$balance : 0) : ($balance > 0 ? $balance : 0);
 
                 $trialBalance[] = [
                     'account' => $account,
@@ -488,7 +487,7 @@ class Accounting
                     'credit'  => $creditAmt,
                 ];
 
-                $totalDebits  += $debitAmt;
+                $totalDebits += $debitAmt;
                 $totalCredits += $creditAmt;
             }
         }
@@ -506,11 +505,11 @@ class Accounting
     {
         $date ??= now();
 
-        $assets      = $this->getAccountsByType('asset',     $date);
+        $assets = $this->getAccountsByType('asset', $date);
         $liabilities = $this->getAccountsByType('liability', $date);
-        $equity      = $this->getAccountsByType('equity',    $date);
+        $equity = $this->getAccountsByType('equity', $date);
 
-        $netIncome       = $this->getNetIncome(null, $date);
+        $netIncome = $this->getNetIncome(null, $date);
         $retainedEarnings = ($equity['total'] ?? 0) + $netIncome;
 
         return [
@@ -523,7 +522,7 @@ class Accounting
                 'total_with_income' => ($liabilities['total'] ?? 0) + $retainedEarnings,
             ]),
             'is_balanced' => abs(
-                ($assets['total'] ?? 0) - (($liabilities['total'] ?? 0) + $retainedEarnings)
+                ($assets['total'] ?? 0) - (($liabilities['total'] ?? 0) + $retainedEarnings),
             ) < ($this->tolerance() * 2),
         ];
     }
@@ -531,8 +530,8 @@ class Accounting
     /** Generate Income Statement (P&L). */
     public function getIncomeStatement(mixed $startDate, mixed $endDate): array
     {
-        $revenue  = $this->getAccountsByType('revenue',  $endDate, $startDate);
-        $expenses = $this->getAccountsByType('expense',  $endDate, $startDate);
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
 
         return [
             'period'       => ['start' => $startDate, 'end' => $endDate],
@@ -559,8 +558,8 @@ class Accounting
             ->get();
 
         $operating = 0.0;
-        $investing  = 0.0;
-        $financing  = 0.0;
+        $investing = 0.0;
+        $financing = 0.0;
 
         foreach ($transactions as $transaction) {
             $amount = $transaction->type === 'debit'
@@ -572,7 +571,7 @@ class Accounting
                     continue; // skip the cash line itself
                 }
 
-                $accountType    = $line->account?->type;
+                $accountType = $line->account?->type;
                 $accountSubtype = $line->account?->subtype;
 
                 // Enum or string comparison — handle both
@@ -612,7 +611,7 @@ class Accounting
             ['code' => '1300', 'name' => 'Inventory',               'type' => 'asset',     'subtype' => 'current_asset'],
             ['code' => '1500', 'name' => 'Prepaid Expenses',        'type' => 'asset',     'subtype' => 'current_asset'],
             ['code' => '1700', 'name' => 'Fixed Assets',            'type' => 'asset',     'subtype' => 'fixed_asset'],
-            ['code' => '1800', 'name' => 'Accumulated Depreciation','type' => 'asset',     'subtype' => 'fixed_asset'],
+            ['code' => '1800', 'name' => 'Accumulated Depreciation', 'type' => 'asset',     'subtype' => 'fixed_asset'],
             ['code' => '2000', 'name' => 'Accounts Payable',        'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2100', 'name' => 'Credit Card Payable',     'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2200', 'name' => 'Accrued Expenses',        'type' => 'liability', 'subtype' => 'current_liability'],
@@ -765,14 +764,14 @@ class Accounting
         // Pre-populate _spent_cache for all items in a single query — avoids N+1
         BudgetItem::loadSpentAmounts($items, $budget->period_start, $budget->period_end);
 
-        $comparison   = [];
+        $comparison = [];
         $totalBudgeted = 0.0;
-        $totalActual   = 0.0;
+        $totalActual = 0.0;
 
         foreach ($items as $item) {
-            $actual        = (float) $item->spent;
-            $budgeted      = (float) $item->amount;
-            $variance      = $budgeted - $actual;
+            $actual = (float) $item->spent;
+            $budgeted = (float) $item->amount;
+            $variance = $budgeted - $actual;
             $percentageUsed = $item->percentage_used;
 
             $comparison[] = [
@@ -786,7 +785,7 @@ class Accounting
             ];
 
             $totalBudgeted += $budgeted;
-            $totalActual   += $actual;
+            $totalActual += $actual;
         }
 
         return [
@@ -813,12 +812,12 @@ class Accounting
             foreach ($budget->items as $item) {
                 $key = $item->account_id;
 
-                if (! isset($summary[$key])) {
+                if (!isset($summary[$key])) {
                     $summary[$key] = ['account' => $item->account, 'budgeted' => 0.0, 'actual' => 0.0, 'variance' => 0.0];
                 }
 
                 $summary[$key]['budgeted'] += (float) $item->amount;
-                $summary[$key]['actual']   += (float) $item->spent;
+                $summary[$key]['actual'] += (float) $item->spent;
             }
         }
 
@@ -836,7 +835,7 @@ class Accounting
     /** Get net income by type using the shared balance map. */
     protected function getNetIncome(mixed $startDate, mixed $endDate): float
     {
-        $revenue  = $this->getAccountsByType('revenue', $endDate, $startDate);
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
         $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
 
         return (float) (($revenue['total'] ?? 0) - ($expenses['total'] ?? 0));
@@ -848,16 +847,16 @@ class Accounting
      */
     protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null): array
     {
-        $tolerance  = $this->tolerance();
-        $accounts   = Account::where('type', $type)->where('is_active', true)->orderBy('code')->get();
+        $tolerance = $this->tolerance();
+        $accounts = Account::where('type', $type)->where('is_active', true)->orderBy('code')->get();
         $balanceMap = $this->buildBalanceMap($startDate, $endDate);
 
         $accountsData = [];
-        $total        = 0.0;
+        $total = 0.0;
 
         foreach ($accounts as $account) {
-            $row     = $balanceMap->get($account->id);
-            $debits  = (float) ($row?->total_debit  ?? 0);
+            $row = $balanceMap->get($account->id);
+            $debits = (float) ($row?->total_debit ?? 0);
             $credits = (float) ($row?->total_credit ?? 0);
 
             $balance = $account->isDebitAccount()

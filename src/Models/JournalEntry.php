@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Models;
+namespace Centrex\Accounting\Models;
 
-use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
-use Centrex\LaravelAccounting\Enums\JvStatus;
-use Centrex\LaravelAccounting\Exceptions\{InvalidStatusTransitionException, UnbalancedJournalException};
+use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Enums\JvStatus;
+use Centrex\Accounting\Exceptions\{InvalidStatusTransitionException, UnbalancedJournalException};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -55,10 +55,10 @@ class JournalEntry extends Model
 
         // Use already-loaded lines collection when available to avoid extra queries
         if ($this->relationLoaded('lines')) {
-            $debits  = $this->lines->where('type', 'debit')->sum('amount');
+            $debits = $this->lines->where('type', 'debit')->sum('amount');
             $credits = $this->lines->where('type', 'credit')->sum('amount');
         } else {
-            $debits  = $this->lines()->where('type', 'debit')->sum('amount');
+            $debits = $this->lines()->where('type', 'debit')->sum('amount');
             $credits = $this->lines()->where('type', 'credit')->sum('amount');
         }
 
@@ -68,7 +68,7 @@ class JournalEntry extends Model
     /** Post the entry: validates balance, sets status → posted. */
     public function post(): bool
     {
-        if (! $this->isBalanced()) {
+        if (!$this->isBalanced()) {
             throw UnbalancedJournalException::make($this);
         }
 

@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Concerns\WithCurrency;
-use Centrex\LaravelAccounting\Models\{Bill, Customer, Invoice, JournalEntry, Vendor};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Models\{Bill, Customer, Invoice, JournalEntry, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -52,42 +52,49 @@ class AccountingDashboard extends Component
     /** Linear-regression forecast of monthly net cash flow for the full year. */
     private function forecastCashFlowData(array $monthlyData): array
     {
-        $actual    = $monthlyData['net'];
-        $n         = count($actual);
+        $actual = $monthlyData['net'];
+        $n = count($actual);
         $allMonths = 12;
 
         $allCategories = [];
+
         for ($m = 1; $m <= $allMonths; $m++) {
             $allCategories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
         }
 
         if ($n < 2) {
-            $actualPad   = array_pad($actual, $allMonths, null);
+            $actualPad = array_pad($actual, $allMonths, null);
             $forecastArr = array_fill(0, $allMonths, null);
 
             return ['categories' => $allCategories, 'actual' => $actualPad, 'forecast' => $forecastArr];
         }
 
         // Simple linear regression: x = month index (1-based), y = net value
-        $xSum = 0.0; $ySum = 0.0; $xySum = 0.0; $xxSum = 0.0;
+        $xSum = 0.0;
+        $ySum = 0.0;
+        $xySum = 0.0;
+        $xxSum = 0.0;
+
         for ($i = 0; $i < $n; $i++) {
-            $x     = $i + 1;
-            $xSum += $x;  $ySum += $actual[$i];
-            $xySum += $x * $actual[$i]; $xxSum += $x * $x;
+            $x = $i + 1;
+            $xSum += $x;
+            $ySum += $actual[$i];
+            $xySum += $x * $actual[$i];
+            $xxSum += $x * $x;
         }
-        $slope     = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
+        $slope = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
         $intercept = ($ySum - $slope * $xSum) / $n;
 
-        $actualSeries   = [];
+        $actualSeries = [];
         $forecastSeries = [];
 
         for ($m = 1; $m <= $allMonths; $m++) {
             if ($m <= $n) {
-                $actualSeries[]   = round((float) $actual[$m - 1], 2);
+                $actualSeries[] = round((float) $actual[$m - 1], 2);
                 // Bridge the last actual point into the forecast series
                 $forecastSeries[] = ($m === $n) ? round((float) $actual[$m - 1], 2) : null;
             } else {
-                $actualSeries[]   = null;
+                $actualSeries[] = null;
                 $forecastSeries[] = round($slope * $m + $intercept, 2);
             }
         }
@@ -97,14 +104,14 @@ class AccountingDashboard extends Component
 
     private function monthlyCashFlowData(): array
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
-        $year       = now()->year;
+        $year = now()->year;
 
-        $cashAccount = \Centrex\LaravelAccounting\Models\Account::where('code', '1000')
+        $cashAccount = \Centrex\Accounting\Models\Account::where('code', '1000')
             ->where('is_active', true)->first();
 
-        if (! $cashAccount) {
+        if (!$cashAccount) {
             return ['categories' => [], 'inflow' => [], 'outflow' => [], 'net' => []];
         }
 
@@ -124,17 +131,17 @@ class AccountingDashboard extends Component
             ->keyBy('month');
 
         $categories = [];
-        $inflow     = [];
-        $outflow    = [];
-        $net        = [];
+        $inflow = [];
+        $outflow = [];
+        $net = [];
 
         for ($m = 1; $m <= now()->month; $m++) {
             $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-            $in           = round((float) ($rows->get($m)?->inflow  ?? 0), 2);
-            $out          = round((float) ($rows->get($m)?->outflow ?? 0), 2);
-            $inflow[]     = $in;
-            $outflow[]    = $out;
-            $net[]        = round($in - $out, 2);
+            $in = round((float) ($rows->get($m)?->inflow ?? 0), 2);
+            $out = round((float) ($rows->get($m)?->outflow ?? 0), 2);
+            $inflow[] = $in;
+            $outflow[] = $out;
+            $net[] = round($in - $out, 2);
         }
 
         return compact('categories', 'inflow', 'outflow', 'net');
@@ -142,13 +149,13 @@ class AccountingDashboard extends Component
 
     private function monthlyChartData(): array
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
-        $year       = now()->year;
+        $year = now()->year;
 
-        $revenueIds = \Centrex\LaravelAccounting\Models\Account::where('type', 'revenue')
+        $revenueIds = \Centrex\Accounting\Models\Account::where('type', 'revenue')
             ->where('is_active', true)->pluck('id');
-        $expenseIds = \Centrex\LaravelAccounting\Models\Account::where('type', 'expense')
+        $expenseIds = \Centrex\Accounting\Models\Account::where('type', 'expense')
             ->where('is_active', true)->pluck('id');
 
         if ($revenueIds->isEmpty() && $expenseIds->isEmpty()) {
@@ -164,8 +171,8 @@ class AccountingDashboard extends Component
             ->whereNull('je.deleted_at')
             ->whereYear('je.date', $year)
             ->whereIn('l.account_id', $allIds)
-            ->selectRaw("MONTH(je.date) as month,
-                SUM(CASE WHEN l.account_id IN (" . $revenueIds->implode(',') . ") AND l.type = 'credit' THEN l.amount
+            ->selectRaw('MONTH(je.date) as month,
+                SUM(CASE WHEN l.account_id IN (' . $revenueIds->implode(',') . ") AND l.type = 'credit' THEN l.amount
                          WHEN l.account_id IN (" . $revenueIds->implode(',') . ") AND l.type = 'debit'  THEN -l.amount
                          ELSE 0 END) as revenue,
                 SUM(CASE WHEN l.account_id IN (" . $expenseIds->implode(',') . ") AND l.type = 'debit'  THEN l.amount
@@ -177,13 +184,13 @@ class AccountingDashboard extends Component
             ->keyBy('month');
 
         $categories = [];
-        $revenue    = [];
-        $expenses   = [];
+        $revenue = [];
+        $expenses = [];
 
         for ($m = 1; $m <= now()->month; $m++) {
             $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-            $revenue[]    = round((float) ($rows->get($m)?->revenue  ?? 0), 2);
-            $expenses[]   = round((float) ($rows->get($m)?->expenses ?? 0), 2);
+            $revenue[] = round((float) ($rows->get($m)?->revenue ?? 0), 2);
+            $expenses[] = round((float) ($rows->get($m)?->expenses ?? 0), 2);
         }
 
         return compact('categories', 'revenue', 'expenses');
@@ -195,26 +202,26 @@ class AccountingDashboard extends Component
 
         // Period P&L + balance sheet
         $incomeStatement = $service->getIncomeStatement($this->startDate, $this->endDate);
-        $balanceSheet    = $service->getBalanceSheet($this->endDate);
-        $cashFlow        = $service->getCashFlowStatement($this->startDate, $this->endDate);
+        $balanceSheet = $service->getBalanceSheet($this->endDate);
+        $cashFlow = $service->getCashFlowStatement($this->startDate, $this->endDate);
 
         $metrics = [
-            'revenue'           => $incomeStatement['revenue']['total']            ?? 0,
-            'expenses'          => $incomeStatement['expenses']['total']           ?? 0,
-            'net_income'        => $incomeStatement['net_income']                  ?? 0,
-            'total_assets'      => $balanceSheet['assets']['total']                ?? 0,
-            'total_liabilities' => $balanceSheet['liabilities']['total']           ?? 0,
-            'total_equity'      => $balanceSheet['equity']['total_with_income']    ?? 0,
-            'operating_cf'      => $cashFlow['operating_activities']               ?? 0,
+            'revenue'           => $incomeStatement['revenue']['total'] ?? 0,
+            'expenses'          => $incomeStatement['expenses']['total'] ?? 0,
+            'net_income'        => $incomeStatement['net_income'] ?? 0,
+            'total_assets'      => $balanceSheet['assets']['total'] ?? 0,
+            'total_liabilities' => $balanceSheet['liabilities']['total'] ?? 0,
+            'total_equity'      => $balanceSheet['equity']['total_with_income'] ?? 0,
+            'operating_cf'      => $cashFlow['operating_activities'] ?? 0,
         ];
 
         // Invoice stats
         $invoiceStats = [
-            'draft_count'    => Invoice::where('status', 'draft')->count(),
-            'sent_count'     => Invoice::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count'  => Invoice::where('status', 'partially_settled')->count(),
-            'overdue_count'  => Invoice::where('status', 'overdue')->count(),
-            'overdue_total'  => Invoice::where('status', 'overdue')
+            'draft_count'   => Invoice::where('status', 'draft')->count(),
+            'sent_count'    => Invoice::whereIn('status', ['sent', 'issued'])->count(),
+            'partial_count' => Invoice::where('status', 'partially_settled')->count(),
+            'overdue_count' => Invoice::where('status', 'overdue')->count(),
+            'overdue_total' => Invoice::where('status', 'overdue')
                 ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
             'outstanding_ar' => Invoice::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])
                 ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
@@ -222,11 +229,11 @@ class AccountingDashboard extends Component
 
         // Bill stats
         $billStats = [
-            'draft_count'    => Bill::where('status', 'draft')->count(),
-            'sent_count'     => Bill::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count'  => Bill::where('status', 'partially_settled')->count(),
-            'overdue_count'  => Bill::where('status', 'overdue')->count(),
-            'overdue_total'  => Bill::where('status', 'overdue')
+            'draft_count'   => Bill::where('status', 'draft')->count(),
+            'sent_count'    => Bill::whereIn('status', ['sent', 'issued'])->count(),
+            'partial_count' => Bill::where('status', 'partially_settled')->count(),
+            'overdue_count' => Bill::where('status', 'overdue')->count(),
+            'overdue_total' => Bill::where('status', 'overdue')
                 ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
             'outstanding_ap' => Bill::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])
                 ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
@@ -234,7 +241,7 @@ class AccountingDashboard extends Component
 
         // Counts
         $customerCount = Customer::where('is_active', true)->count();
-        $vendorCount   = Vendor::where('is_active', true)->count();
+        $vendorCount = Vendor::where('is_active', true)->count();
 
         // Recent entries
         $recentInvoices = Invoice::with('customer')
@@ -247,9 +254,9 @@ class AccountingDashboard extends Component
             ->latest('date')->limit(8)->get();
 
         // Chart data (monthly — current year)
-        $chartData         = $this->monthlyChartData();
+        $chartData = $this->monthlyChartData();
         $cashFlowChartData = $this->monthlyCashFlowData();
-        $forecastData      = $this->forecastCashFlowData($cashFlowChartData);
+        $forecastData = $this->forecastCashFlowData($cashFlowChartData);
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'

@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Requests;
+namespace Centrex\Accounting\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Models;
+namespace Centrex\Accounting\Models;
 
-use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
-use Centrex\LaravelAccounting\Enums\{AccountSubtype, AccountType};
+use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Enums\{AccountSubtype, AccountType};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 

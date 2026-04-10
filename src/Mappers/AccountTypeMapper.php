@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Mappers;
+namespace Centrex\Accounting\Mappers;
 
-use Centrex\LaravelAccounting\Enums\{AccountSubtype, AccountType};
+use Centrex\Accounting\Enums\{AccountSubtype, AccountType};
 
 final class AccountTypeMapper
 {

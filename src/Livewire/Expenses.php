@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Concerns\WithCurrency;
-use Centrex\LaravelAccounting\Models\{Account, Expense, ExpenseItem};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Models\{Account, Expense, ExpenseItem};
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 

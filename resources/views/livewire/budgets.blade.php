@@ -178,7 +178,7 @@
 
 {{-- Budget Detail Modal --}}
 @if($viewingBudgetId)
-    @php $viewingBudget = \Centrex\LaravelAccounting\Models\Budget::with(['items.account'])->find($viewingBudgetId); @endphp
+    @php $viewingBudget = \Centrex\Accounting\Models\Budget::with(['items.account'])->find($viewingBudgetId); @endphp
     @if($viewingBudget)
         <x-tallui-modal id="budget-detail-modal" title="Budget: {{ $viewingBudget->name }}" icon="o-chart-pie" size="lg">
             <x-slot:trigger>

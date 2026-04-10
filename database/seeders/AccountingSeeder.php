@@ -2,14 +2,14 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Database\Seeders;
+namespace Centrex\Accounting\Database\Seeders;
 
 use Carbon\Carbon;
-use Centrex\LaravelAccounting\Enums\{
+use Centrex\Accounting\Enums\{
     AccountSubtype,
     AccountType
 };
-use Centrex\LaravelAccounting\Models\{
+use Centrex\Accounting\Models\{
     Account,
     Customer,
     FiscalPeriod,

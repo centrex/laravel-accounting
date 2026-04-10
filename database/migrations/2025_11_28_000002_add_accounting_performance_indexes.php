@@ -29,7 +29,7 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         // journal_entry_lines: composite index for aggregation queries
@@ -60,13 +60,13 @@ return new class() extends Migration
 
     public function down(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         Schema::connection($connection)->table($prefix . 'journal_entry_lines', fn (Blueprint $t) => $t->dropIndex('jel_account_type_idx'));
-        Schema::connection($connection)->table($prefix . 'payments',            fn (Blueprint $t) => $t->dropIndex('payments_payable_idx'));
-        Schema::connection($connection)->table($prefix . 'invoices',            fn (Blueprint $t) => $t->dropIndex('invoices_customer_status_idx'));
-        Schema::connection($connection)->table($prefix . 'bills',               fn (Blueprint $t) => $t->dropIndex('bills_vendor_status_idx'));
-        Schema::connection($connection)->table($prefix . 'expenses',            fn (Blueprint $t) => $t->dropIndex('expenses_account_status_idx'));
+        Schema::connection($connection)->table($prefix . 'payments', fn (Blueprint $t) => $t->dropIndex('payments_payable_idx'));
+        Schema::connection($connection)->table($prefix . 'invoices', fn (Blueprint $t) => $t->dropIndex('invoices_customer_status_idx'));
+        Schema::connection($connection)->table($prefix . 'bills', fn (Blueprint $t) => $t->dropIndex('bills_vendor_status_idx'));
+        Schema::connection($connection)->table($prefix . 'expenses', fn (Blueprint $t) => $t->dropIndex('expenses_account_status_idx'));
     }
 };

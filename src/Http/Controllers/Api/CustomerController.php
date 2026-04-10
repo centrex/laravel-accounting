@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Http\Controllers\Api;
+namespace Centrex\Accounting\Http\Controllers\Api;
 
-use Centrex\LaravelAccounting\Http\Requests\StoreCustomerRequest;
-use Centrex\LaravelAccounting\Http\Resources\CustomerResource;
-use Centrex\LaravelAccounting\Models\Customer;
+use Centrex\Accounting\Http\Requests\StoreCustomerRequest;
+use Centrex\Accounting\Http\Resources\CustomerResource;
+use Centrex\Accounting\Models\Customer;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 

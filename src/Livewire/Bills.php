@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Livewire;
+namespace Centrex\Accounting\Livewire;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Models\{Bill, BillItem, Payment, Vendor};
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Models\{Bill, BillItem, Payment, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 

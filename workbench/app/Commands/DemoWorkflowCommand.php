@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Workbench\App\Commands;
 
-use Centrex\LaravelAccounting\Facades\Accounting;
-use Centrex\LaravelAccounting\Models\{
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\{
     Account,
     Bill,
     Customer,
@@ -437,7 +437,7 @@ class DemoWorkflowCommand extends Command
         );
     }
 
-    private function showJournalLines(\Centrex\LaravelAccounting\Models\JournalEntry $entry): void
+    private function showJournalLines(\Centrex\Accounting\Models\JournalEntry $entry): void
     {
         $this->table(
             ['Account', 'Type', 'Amount'],

@@ -4,10 +4,10 @@ declare(strict_types = 1);
 
 namespace Tests\Feature;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\LaravelAccounting\Models\{Account, Bill, Vendor};
-use Centrex\LaravelAccounting\Tests\TestCase;
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
+use Centrex\Accounting\Models\{Account, Bill, Vendor};
+use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PostBillTest extends TestCase
@@ -44,7 +44,7 @@ class PostBillTest extends TestCase
 
         $entry = $this->accounting->postBill($bill);
 
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);
@@ -53,7 +53,7 @@ class PostBillTest extends TestCase
 
     public function test_post_bill_links_journal_entry_id(): void
     {
-        $bill  = $this->createBill();
+        $bill = $this->createBill();
         $entry = $this->accounting->postBill($bill);
 
         $this->assertEquals($entry->id, $bill->fresh()->journal_entry_id);
@@ -83,7 +83,7 @@ class PostBillTest extends TestCase
         Account::where('code', '2000')->delete();
         $bill = $this->createBill();
 
-        $this->expectException(\Centrex\LaravelAccounting\Exceptions\AccountNotFoundException::class);
+        $this->expectException(\Centrex\Accounting\Exceptions\AccountNotFoundException::class);
         $this->accounting->postBill($bill);
     }
 
@@ -123,8 +123,8 @@ class PostBillTest extends TestCase
 
         $payment = $this->accounting->recordBillPayment($bill->fresh(), $this->paymentData(100));
 
-        $entry   = $payment->journalEntry;
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $entry = $payment->journalEntry;
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);

@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Observers;
+namespace Centrex\Accounting\Observers;
 
-use Centrex\LaravelAccounting\Models\JournalEntry;
+use Centrex\Accounting\Models\JournalEntry;
 use Illuminate\Support\Str;
 
 class JournalEntryObserver

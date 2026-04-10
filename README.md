@@ -18,7 +18,7 @@ php artisan migrate
 Seed the standard chart of accounts (idempotent):
 
 ```php
-use Centrex\LaravelAccounting\Facades\Accounting;
+use Centrex\Accounting\Facades\Accounting;
 
 Accounting::initializeChartOfAccounts();
 ```
@@ -45,7 +45,7 @@ ACCOUNTING_FISCAL_AUTO_CREATE=true
 ### Journal entries
 
 ```php
-use Centrex\LaravelAccounting\Facades\Accounting;
+use Centrex\Accounting\Facades\Accounting;
 
 $entry = Accounting::createJournalEntry([
     'date'        => today(),
@@ -67,7 +67,7 @@ $entry->isBalanced();    // bool
 ### Invoices
 
 ```php
-use Centrex\LaravelAccounting\Models\{Customer, Invoice};
+use Centrex\Accounting\Models\{Customer, Invoice};
 
 $customer = Customer::create(['name' => 'Acme Corp', 'email' => 'acme@example.com']);
 
@@ -98,7 +98,7 @@ Accounting::recordInvoicePayment($invoice, [
 ### Bills
 
 ```php
-use Centrex\LaravelAccounting\Models\{Vendor, Bill};
+use Centrex\Accounting\Models\{Vendor, Bill};
 
 $vendor = Vendor::create(['name' => 'Supplier Ltd', 'email' => 'supplier@example.com']);
 
@@ -140,7 +140,7 @@ $cf = Accounting::getCashFlowStatement('2025-01-01', '2025-12-31');
 ### Fiscal year closing
 
 ```php
-use Centrex\LaravelAccounting\Models\FiscalYear;
+use Centrex\Accounting\Models\FiscalYear;
 
 $fy = FiscalYear::where('name', '2025')->first();
 Accounting::closeFiscalYear($fy);

@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use Centrex\LaravelAccounting\Http\Controllers\Api\{
+use Centrex\Accounting\Http\Controllers\Api\{
     AccountController,
     BillController,
     BudgetController,

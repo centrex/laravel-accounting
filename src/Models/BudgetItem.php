@@ -2,11 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Models;
+namespace Centrex\Accounting\Models;
 
-use Centrex\LaravelAccounting\Concerns\AddTablePrefix;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Eloquent\Model;
+use Centrex\Accounting\Concerns\AddTablePrefix;
+use Illuminate\Database\Eloquent\{Collection as EloquentCollection, Model};
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BudgetItem extends Model
@@ -59,7 +58,7 @@ class BudgetItem extends Model
         }
 
         $periodStart = $this->period_start ?? $this->budget?->period_start;
-        $periodEnd   = $this->period_end   ?? $this->budget?->period_end;
+        $periodEnd = $this->period_end ?? $this->budget?->period_end;
 
         return (float) Expense::query()
             ->where('account_id', $this->account_id)
@@ -92,7 +91,7 @@ class BudgetItem extends Model
     public static function loadSpentAmounts(
         EloquentCollection $items,
         mixed $defaultStart = null,
-        mixed $defaultEnd   = null,
+        mixed $defaultEnd = null,
     ): void {
         if ($items->isEmpty()) {
             return;

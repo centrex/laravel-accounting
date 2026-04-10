@@ -2,17 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\LaravelAccounting\Facades;
+namespace Centrex\Accounting\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Centrex\LaravelAccounting\Accounting
+ * @see \Centrex\Accounting\Accounting
  */
 class Accounting extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Centrex\LaravelAccounting\Accounting::class;
+        return \Centrex\Accounting\Accounting::class;
     }
 }

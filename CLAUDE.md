@@ -4,8 +4,8 @@
 
 `centrex/laravel-accounting` — Full double-entry accounting system for Laravel with Livewire UI and REST API.
 
-Namespace: `Centrex\LaravelAccounting\`  
-Service Provider: `LaravelAccountingServiceProvider`  
+Namespace: `Centrex\Accounting\`  
+Service Provider: `AccountingServiceProvider`  
 Facade: `Facades/Accounting` → resolves `app('accounting')` → `Accounting` class
 
 > Full usage documentation (journal entries, invoices, bills, reports, API endpoints, Livewire routes) is in the **root `CLAUDE.md`** of the `laravel_plugins` monorepo.
@@ -39,7 +39,7 @@ vendor/bin/pest --filter "test name"
 ```
 src/
   Accounting.php                      # Main facade target — all public API methods
-  LaravelAccountingServiceProvider.php
+  AccountingServiceProvider.php
   Facades/Accounting.php
   Commands/
   Concerns/                           # Shared traits

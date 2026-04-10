@@ -4,10 +4,10 @@ declare(strict_types = 1);
 
 namespace Tests\Feature;
 
-use Centrex\LaravelAccounting\Accounting;
-use Centrex\LaravelAccounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\LaravelAccounting\Models\{Account, Customer, Invoice, Payment};
-use Centrex\LaravelAccounting\Tests\TestCase;
+use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
+use Centrex\Accounting\Models\{Account, Customer, Invoice};
+use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PostInvoiceTest extends TestCase
@@ -44,7 +44,7 @@ class PostInvoiceTest extends TestCase
 
         $entry = $this->accounting->postInvoice($invoice);
 
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);
@@ -84,7 +84,7 @@ class PostInvoiceTest extends TestCase
         Account::where('code', '1200')->delete();
         $invoice = $this->createInvoice();
 
-        $this->expectException(\Centrex\LaravelAccounting\Exceptions\AccountNotFoundException::class);
+        $this->expectException(\Centrex\Accounting\Exceptions\AccountNotFoundException::class);
         $this->accounting->postInvoice($invoice);
     }
 
@@ -123,8 +123,8 @@ class PostInvoiceTest extends TestCase
 
         $payment = $this->accounting->recordInvoicePayment($invoice->fresh(), $this->paymentData(100));
 
-        $entry   = $payment->journalEntry;
-        $debits  = $entry->lines->where('type', 'debit')->sum('amount');
+        $entry = $payment->journalEntry;
+        $debits = $entry->lines->where('type', 'debit')->sum('amount');
         $credits = $entry->lines->where('type', 'credit')->sum('amount');
 
         $this->assertEquals($debits, $credits);
@@ -217,14 +217,14 @@ class PostInvoiceTest extends TestCase
         $customer = Customer::factory()->create();
 
         return Invoice::factory()->create([
-            'customer_id'    => $customer->id,
-            'invoice_date'   => now()->toDateString(),
-            'subtotal'       => $subtotal,
-            'tax_amount'     => $tax,
-            'discount_amount'=> 0,
-            'total'          => $total,
-            'currency'       => 'BDT',
-            'status'         => 'draft',
+            'customer_id'     => $customer->id,
+            'invoice_date'    => now()->toDateString(),
+            'subtotal'        => $subtotal,
+            'tax_amount'      => $tax,
+            'discount_amount' => 0,
+            'total'           => $total,
+            'currency'        => 'BDT',
+            'status'          => 'draft',
         ]);
     }
 
