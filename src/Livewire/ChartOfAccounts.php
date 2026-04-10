@@ -63,8 +63,7 @@ class ChartOfAccounts extends Component
             'code' => [
                 'required',
                 Rule::unique((new Account())->getTable(), 'code')
-                    ->ignore($this->accountId)
-                    ->using(fn ($q) => $q->withTrashed()),
+                    ->ignore($this->accountId),
             ],
             'name'     => 'required|min:3',
             'type'     => 'required|in:asset,liability,equity,revenue,expense',
