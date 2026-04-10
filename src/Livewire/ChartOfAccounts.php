@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\LaravelAccounting\Livewire;
 
 use Centrex\LaravelAccounting\Models\Account;
+use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
 
 class ChartOfAccounts extends Component
@@ -59,7 +60,12 @@ class ChartOfAccounts extends Component
     public function save(): void
     {
         $this->validate([
-            'code'     => 'required|unique:accounts,code,' . $this->accountId,
+            'code' => [
+                'required',
+                Rule::unique((new Account)->getTable(), 'code')
+                    ->ignore($this->accountId)
+                    ->using(fn ($q) => $q->withTrashed()),
+            ],
             'name'     => 'required|min:3',
             'type'     => 'required|in:asset,liability,equity,revenue,expense',
             'currency' => 'required|size:3',
