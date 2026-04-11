@@ -34,6 +34,7 @@ class Invoice extends Model
         'invoice_number', 'customer_id', 'invoice_date', 'due_date',
         'subtotal', 'tax_amount', 'discount_amount', 'total',
         'paid_amount', 'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
+        'inventory_sale_order_id',
     ];
 
     protected $casts = [

@@ -14,6 +14,7 @@ return new class() extends Migration
     {
         $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $withUserForeignKeys = (bool) config('accounting.user_foreign_keys', false);
 
         // Chart of Accounts
         Schema::connection($connection)->create($prefix . 'accounts', function (Blueprint $table) use ($prefix) {
@@ -40,7 +41,7 @@ return new class() extends Migration
         });
 
         // Journal Entries
-        Schema::connection($connection)->create($prefix . 'journal_entries', function (Blueprint $table) {
+        Schema::connection($connection)->create($prefix . 'journal_entries', function (Blueprint $table) use ($withUserForeignKeys) {
             $table->id();
             $table->string('entry_number')->unique();
             $table->date('date');
@@ -50,17 +51,28 @@ return new class() extends Migration
             $table->string('currency', 3)->default('BDT');
             $table->decimal('exchange_rate', 10, 6)->default(1.000000);
 
-            // assuming users table is on the same connection; if not, replace with unsignedBigInteger + explicit foreign
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('approved_by')->nullable();
 
             $table->timestamp('approved_at')->nullable();
             $table->string('status')->default('draft');
+            $table->string('source_type', 150)->nullable();
+            $table->unsignedBigInteger('source_id')->nullable();
+            $table->string('source_action', 50)->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['date', 'status']);
             $table->index('entry_number');
+            $table->index('created_by');
+            $table->index('approved_by');
+            $table->index(['source_type', 'source_id'], $prefix . 'journal_entries_source_idx');
+            $table->index(['source_type', 'source_id', 'source_action'], $prefix . 'journal_entries_source_action_idx');
+
+            if ($withUserForeignKeys) {
+                $table->foreign('created_by')->references('id')->on('users')->nullOnDelete();
+                $table->foreign('approved_by')->references('id')->on('users')->nullOnDelete();
+            }
         });
 
         // Journal Entry Lines (Double-Entry)
@@ -199,6 +211,7 @@ return new class() extends Migration
             $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
+            $table->unsignedBigInteger('inventory_sale_order_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -206,6 +219,7 @@ return new class() extends Migration
             $table->index('customer_id');
             $table->index('invoice_date');
             $table->index('due_date');
+            $table->index('inventory_sale_order_id');
         });
 
         // Invoice Items
@@ -241,12 +255,14 @@ return new class() extends Migration
             $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
+            $table->unsignedBigInteger('inventory_purchase_order_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['status', 'due_date']);
             $table->index('vendor_id');
             $table->index('bill_date');
+            $table->index('inventory_purchase_order_id');
         });
 
         // Bill Items

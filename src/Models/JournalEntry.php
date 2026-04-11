@@ -33,7 +33,7 @@ class JournalEntry extends Model
     protected $fillable = [
         'entry_number', 'date', 'reference', 'type', 'description',
         'currency', 'exchange_rate', 'created_by', 'approved_by',
-        'approved_at', 'status',
+        'approved_at', 'status', 'source_type', 'source_id', 'source_action',
     ];
 
     protected $casts = [

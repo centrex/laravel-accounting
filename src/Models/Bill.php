@@ -30,6 +30,7 @@ class Bill extends Model
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
         'subtotal', 'tax_amount', 'total', 'paid_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
+        'inventory_purchase_order_id',
     ];
 
     protected $casts = [

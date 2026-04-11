@@ -107,5 +107,6 @@ return [
     */
     'admin_roles'          => env('ACCOUNTING_ADMIN_ROLES', 'accountant,admin'),
     'admin_role_attribute' => env('ACCOUNTING_ADMIN_ROLE_ATTRIBUTE', null),
+    'user_foreign_keys'    => env('ACCOUNTING_USER_FOREIGN_KEYS', false),
 
 ];
