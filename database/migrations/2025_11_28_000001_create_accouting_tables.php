@@ -41,7 +41,7 @@ return new class() extends Migration
         });
 
         // Journal Entries
-        Schema::connection($connection)->create($prefix . 'journal_entries', function (Blueprint $table) use ($withUserForeignKeys) {
+        Schema::connection($connection)->create($prefix . 'journal_entries', function (Blueprint $table) use ($withUserForeignKeys, $prefix) {
             $table->id();
             $table->string('entry_number')->unique();
             $table->date('date');
