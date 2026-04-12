@@ -172,28 +172,6 @@ return new class() extends Migration
             $table->index('is_active');
         });
 
-        // Employees
-        Schema::connection($connection)->create($prefix . 'employees', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->unique();
-            $table->string('name');
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->text('address')->nullable();
-            $table->string('city')->nullable();
-            $table->string('country')->nullable();
-            $table->string('tax_id')->nullable();
-            $table->string('currency', 3)->default('BDT');
-            $table->decimal('credit_limit', 18, 2)->default(0);
-            $table->integer('payment_terms')->default(30); // days
-            $table->boolean('is_active')->default(true);
-            $table->nullableMorphs('modelable');
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index('is_active');
-        });
-
         // Invoices
         Schema::connection($connection)->create($prefix . 'invoices', function (Blueprint $table) use ($prefix) {
             $table->id();
@@ -282,49 +260,6 @@ return new class() extends Migration
             $table->index('bill_id');
         });
 
-        // Expenses (General Expenses)
-        Schema::connection($connection)->create($prefix . 'expenses', function (Blueprint $table) use ($prefix) {
-            $table->id();
-            $table->string('expense_number')->unique();
-            $table->foreignId('account_id')->nullable()->constrained($prefix . 'accounts')->onDelete('restrict');
-            $table->date('expense_date');
-            $table->date('due_date')->nullable();
-            $table->decimal('subtotal', 18, 2);
-            $table->decimal('tax_amount', 18, 2)->default(0);
-            $table->decimal('total', 18, 2);
-            $table->decimal('paid_amount', 18, 2)->default(0);
-            $table->string('currency', 3)->default('BDT');
-            $table->decimal('exchange_rate', 10, 6)->default(1.000000);
-            $table->string('status')->default('draft');
-            $table->string('payment_method')->nullable(); // cash, check, bank_transfer, card
-            $table->string('reference')->nullable();
-            $table->string('vendor_name')->nullable();
-            $table->text('notes')->nullable();
-            $table->foreignId('journal_entry_id')->nullable()->constrained($prefix . 'journal_entries')->onDelete('set null');
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['status', 'expense_date']);
-            $table->index('account_id');
-            $table->index('expense_date');
-        });
-
-        // Expense Items
-        Schema::connection($connection)->create($prefix . 'expense_items', function (Blueprint $table) use ($prefix) {
-            $table->id();
-            $table->foreignId('expense_id')->constrained($prefix . 'expenses')->onDelete('cascade');
-            $table->string('description');
-            $table->integer('quantity')->default(1);
-            $table->decimal('unit_price', 18, 2);
-            $table->decimal('amount', 18, 2);
-            $table->decimal('tax_rate', 5, 2)->default(0);
-            $table->decimal('tax_amount', 18, 2)->default(0);
-            $table->string('reference')->nullable();
-            $table->timestamps();
-
-            $table->index('expense_id');
-        });
-
         // Payments
         Schema::connection($connection)->create($prefix . 'payments', function (Blueprint $table) use ($prefix) {
             $table->id();
@@ -353,57 +288,6 @@ return new class() extends Migration
             $table->timestamps();
 
             $table->index('is_active');
-        });
-
-        // Payroll Accounts
-        Schema::connection($connection)->create($prefix . 'payroll_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->unique();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('currency', 3)->default('BDT');
-            $table->boolean('is_active')->default(true);
-            $table->text('particulars')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['code', 'is_active']);
-            $table->index('code');
-        });
-
-        // Payroll Entries
-        Schema::connection($connection)->create($prefix . 'payroll_entries', function (Blueprint $table) {
-            $table->id();
-            $table->string('entry_number')->unique();
-            $table->date('date');
-            $table->string('reference')->nullable();
-            $table->text('description')->nullable();
-            $table->string('currency', 3)->default('BDT');
-            $table->string('type'); // e.g., salary, bonus, deduction, tax
-            $table->decimal('exchange_rate', 10, 6)->default(1.000000);
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->timestamp('approved_at')->nullable();
-            $table->string('status')->default('draft');
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['date', 'status']);
-            $table->index('entry_number');
-        });
-
-        // Payroll Entry Lines
-        Schema::connection($connection)->create($prefix . 'payroll_entry_lines', function (Blueprint $table) use ($prefix) {
-            $table->id();
-            $table->foreignId('payroll_entry_id')->constrained($prefix . 'payroll_entries')->onDelete('cascade');
-            $table->foreignId('payroll_account_id')->constrained($prefix . 'payroll_accounts')->onDelete('restrict');
-            $table->decimal('amount', 18, 2);
-            $table->text('description')->nullable();
-            $table->string('reference')->nullable();
-            $table->timestamps();
-
-            $table->index('payroll_account_id');
-            $table->index('payroll_entry_id');
         });
 
         // Budgets
@@ -451,13 +335,8 @@ return new class() extends Migration
         // drop in reverse order of creation to satisfy foreign keys
         Schema::connection($connection)->dropIfExists($prefix . 'budget_items');
         Schema::connection($connection)->dropIfExists($prefix . 'budgets');
-        Schema::connection($connection)->dropIfExists($prefix . 'payroll_entry_lines');
-        Schema::connection($connection)->dropIfExists($prefix . 'payroll_entries');
-        Schema::connection($connection)->dropIfExists($prefix . 'payroll_accounts');
         Schema::connection($connection)->dropIfExists($prefix . 'tax_rates');
         Schema::connection($connection)->dropIfExists($prefix . 'payments');
-        Schema::connection($connection)->dropIfExists($prefix . 'expense_items');
-        Schema::connection($connection)->dropIfExists($prefix . 'expenses');
         Schema::connection($connection)->dropIfExists($prefix . 'bill_items');
         Schema::connection($connection)->dropIfExists($prefix . 'bills');
         Schema::connection($connection)->dropIfExists($prefix . 'invoice_items');

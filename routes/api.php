@@ -7,7 +7,6 @@ use Centrex\Accounting\Http\Controllers\Api\{
     BillController,
     BudgetController,
     CustomerController,
-    ExpenseController,
     InvoiceController,
     JournalEntryController,
     ReportController,
@@ -49,14 +48,6 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::post('bills/{bill}/post', [BillController::class, 'post'])->name('bills.post');
         Route::post('bills/{bill}/payments', [BillController::class, 'recordPayment'])->name('bills.payments');
         Route::delete('bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
-
-        // Expenses
-        Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
-        Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
-        Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
-        Route::post('expenses/{expense}/post', [ExpenseController::class, 'post'])->name('expenses.post');
-        Route::post('expenses/{expense}/payments', [ExpenseController::class, 'recordPayment'])->name('expenses.payments');
-        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
         // Customers
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');

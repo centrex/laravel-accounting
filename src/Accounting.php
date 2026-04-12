@@ -17,12 +17,12 @@ use Centrex\Accounting\Models\{
     Bill,
     Budget,
     BudgetItem,
-    Expense,
     FiscalYear,
     Invoice,
     JournalEntry,
     Payment
 };
+use Centrex\Inventory\Models\Expense;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\{DB};
 
@@ -338,12 +338,12 @@ class Accounting
     /** Post an expense: DR Expense + Tax / CR Cash (or AP if on credit). */
     public function postExpense(Expense $expense): JournalEntry
     {
-        if ($expense->status === Enums\EntryStatus::SETTLED) {
-            throw InvalidStatusTransitionException::make('Expense', 'settled', 'posted');
+        if (in_array($expense->status, ['paid', 'settled'], true)) {
+            throw InvalidStatusTransitionException::make('Expense', $expense->status, 'posted');
         }
 
         if ($expense->journal_entry_id !== null) {
-            throw InvalidStatusTransitionException::make('Expense', $expense->status->value, 'posted');
+            throw InvalidStatusTransitionException::make('Expense', (string) $expense->status, 'posted');
         }
 
         return DB::transaction(function () use ($expense): JournalEntry {
@@ -442,7 +442,7 @@ class Accounting
             $payment->update(['journal_entry_id' => $entry->id]);
 
             $newPaid = round((float) $expense->paid_amount + $amount, 6);
-            $newStatus = $newPaid >= (float) $expense->total - $this->tolerance() ? 'settled' : 'partially_settled';
+            $newStatus = $newPaid >= (float) $expense->total - $this->tolerance() ? 'paid' : 'partial';
 
             $expense->update(['paid_amount' => $newPaid, 'status' => $newStatus]);
 
