@@ -10,6 +10,7 @@ use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding}
 use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, FinancialReports, Invoices, JournalEntries, Vendors};
 use Centrex\Accounting\Models\{Bill, BillItem, Invoice, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -19,6 +20,8 @@ class AccountingServiceProvider extends ServiceProvider
     /** Bootstrap the application services. */
     public function boot(): void
     {
+        $this->registerViteDirective();
+
         // Register Livewire Components
         Livewire::component('accounting-dashboard', AccountingDashboard::class);
         Livewire::component('chart-of-accounts', ChartOfAccounts::class);
@@ -60,7 +63,7 @@ class AccountingServiceProvider extends ServiceProvider
 
             // Publishing the views.
             $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/accounting'),
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/accounting'),
             ], 'laravel-accounting-views');
 
             // Publishing assets.
@@ -79,6 +82,16 @@ class AccountingServiceProvider extends ServiceProvider
                 AccountingDemoCommand::class,
             ]);
         }
+    }
+
+    private function registerViteDirective(): void
+    {
+        Blade::directive('accountingVite', fn (): string => sprintf(
+            '<?php echo \\Centrex\\TallUi\\Support\\PackageVite::render(%s, %s, %s); ?>',
+            var_export(dirname(__DIR__), true),
+            var_export('accounting.hot', true),
+            var_export(['resources/js/app.js'], true),
+        ));
     }
 
     /**
