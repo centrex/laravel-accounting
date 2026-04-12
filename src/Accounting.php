@@ -24,7 +24,7 @@ use Centrex\Accounting\Models\{
 };
 use Centrex\Inventory\Models\Expense;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\{DB};
+use Illuminate\Support\Facades\DB;
 
 class Accounting
 {
@@ -335,7 +335,7 @@ class Accounting
     // Expenses
     // -------------------------------------------------------------------------
 
-    /** Post an expense: DR Expense + Tax / CR Cash (or AP if on credit). */
+    /** Post an inventory-owned expense into the ledger. */
     public function postExpense(Expense $expense): JournalEntry
     {
         if (in_array($expense->status, ['paid', 'settled'], true)) {
@@ -352,7 +352,9 @@ class Accounting
                 : $this->requireAccount('5000');
 
             $cashAccount = $this->requireAccount('1000');
+            $payableAccount = $this->requireAccount('2000');
             $taxAccount = Account::where('code', '2300')->where('is_active', true)->first();
+            $isCreditExpense = $expense->payment_method === 'credit';
 
             $lines = [
                 ['account_id' => $expenseAccount->id, 'type' => 'debit', 'amount' => (float) $expense->subtotal, 'description' => 'Expense'],
@@ -363,11 +365,10 @@ class Accounting
             }
 
             $totalCredit = round((float) $expense->subtotal + (float) $expense->tax_amount, 6);
-            $creditDesc = ($expense->payment_method && $expense->payment_method !== 'credit')
-                ? 'Cash paid'
-                : 'Accounts Payable';
+            $creditAccount = $isCreditExpense ? $payableAccount : $cashAccount;
+            $creditDesc = $isCreditExpense ? 'Accounts Payable' : 'Cash paid';
 
-            $lines[] = ['account_id' => $cashAccount->id, 'type' => 'credit', 'amount' => $totalCredit, 'description' => $creditDesc];
+            $lines[] = ['account_id' => $creditAccount->id, 'type' => 'credit', 'amount' => $totalCredit, 'description' => $creditDesc];
 
             $entry = $this->createJournalEntry([
                 'date'          => $expense->expense_date,
@@ -380,13 +381,17 @@ class Accounting
             ]);
 
             $entry->post();
-            $expense->update(['journal_entry_id' => $entry->id, 'status' => 'issued']);
+            $expense->update([
+                'journal_entry_id' => $entry->id,
+                'paid_amount'      => $isCreditExpense ? (float) $expense->paid_amount : (float) $expense->total,
+                'status'           => $isCreditExpense ? 'approved' : 'paid',
+            ]);
 
             return $entry;
         });
     }
 
-    /** Record an expense payment: DR Expense / CR Cash. */
+    /** Record settlement of a credit expense: DR AP / CR Cash. */
     public function recordExpensePayment(Expense $expense, array $paymentData): Payment
     {
         return DB::transaction(function () use ($expense, $paymentData): Payment {
@@ -421,10 +426,7 @@ class Accounting
                 'notes'          => $paymentData['notes'] ?? null,
             ]);
 
-            $expenseAccount = $expense->account_id
-                ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
-                : $this->requireAccount('5000');
-
+            $payableAccount = $this->requireAccount('2000');
             $cashAccount = $this->requireAccount($paymentData['account_code'] ?? '1000');
 
             $entry = $this->createJournalEntry([
@@ -433,8 +435,8 @@ class Accounting
                 'description' => "Expense payment {$expense->expense_number}",
                 'currency'    => $expense->currency ?? config('accounting.base_currency', 'BDT'),
                 'lines'       => [
-                    ['account_id' => $expenseAccount->id, 'type' => 'credit', 'amount' => $amount, 'description' => 'Expense'],
-                    ['account_id' => $cashAccount->id,    'type' => 'debit',  'amount' => $amount, 'description' => 'Cash paid'],
+                    ['account_id' => $payableAccount->id, 'type' => 'debit',  'amount' => $amount, 'description' => 'Expense payable'],
+                    ['account_id' => $cashAccount->id,    'type' => 'credit', 'amount' => $amount, 'description' => 'Cash paid'],
                 ],
             ]);
 

@@ -303,7 +303,6 @@
         ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',      'color' => 'primary',   'route' => 'accounting.journal'],
         ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',       'color' => 'success',   'route' => 'accounting.invoices'],
         ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',       'color' => 'warning',   'route' => 'accounting.bills'],
-        ['label' => 'Expenses',   'sub' => 'Track costs',   'icon' => 'o-banknotes',           'color' => 'error',     'route' => 'accounting.expenses'],
         ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',               'color' => 'info',      'route' => 'accounting.customers'],
         ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront', 'color' => 'secondary', 'route' => 'accounting.vendors'],
         ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',         'color' => 'accent',    'route' => 'accounting.accounts'],

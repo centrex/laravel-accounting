@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\Schema;
  *
  * - (vendor_id, status) on bills: same pattern for AP queries.
  *
- * - (account_id, status) on expenses: expense-by-account lookups.
- *
  * - (status, date) on journal_entries: already in initial migration, verified.
  */
 return new class() extends Migration
@@ -51,11 +49,6 @@ return new class() extends Migration
         Schema::connection($connection)->table($prefix . 'bills', function (Blueprint $table): void {
             $table->index(['vendor_id', 'status'], 'bills_vendor_status_idx');
         });
-
-        // expenses: composite index for account + status queries
-        Schema::connection($connection)->table($prefix . 'expenses', function (Blueprint $table): void {
-            $table->index(['account_id', 'status'], 'expenses_account_status_idx');
-        });
     }
 
     public function down(): void
@@ -67,6 +60,5 @@ return new class() extends Migration
         Schema::connection($connection)->table($prefix . 'payments', fn (Blueprint $t) => $t->dropIndex('payments_payable_idx'));
         Schema::connection($connection)->table($prefix . 'invoices', fn (Blueprint $t) => $t->dropIndex('invoices_customer_status_idx'));
         Schema::connection($connection)->table($prefix . 'bills', fn (Blueprint $t) => $t->dropIndex('bills_vendor_status_idx'));
-        Schema::connection($connection)->table($prefix . 'expenses', fn (Blueprint $t) => $t->dropIndex('expenses_account_status_idx'));
     }
 };

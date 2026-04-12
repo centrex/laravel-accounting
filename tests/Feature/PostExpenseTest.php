@@ -6,8 +6,9 @@ namespace Tests\Feature;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\Accounting\Models\{Account, Expense};
+use Centrex\Accounting\Models\Account;
 use Centrex\Accounting\Tests\TestCase;
+use Centrex\Inventory\Models\Expense;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PostExpenseTest extends TestCase
@@ -27,15 +28,26 @@ class PostExpenseTest extends TestCase
     // Posting
     // -------------------------------------------------------------------------
 
-    public function test_post_expense_creates_journal_entry_and_sets_issued_status(): void
+    public function test_post_credit_expense_creates_journal_entry_and_sets_approved_status(): void
     {
-        $expense = $this->createExpense(subtotal: 100, tax: 10, total: 110);
+        $expense = $this->createExpense(subtotal: 100, tax: 10, total: 110, paymentMethod: 'credit');
 
         $entry = $this->accounting->postExpense($expense);
 
         $this->assertNotNull($entry);
-        $this->assertEquals('issued', $expense->fresh()->status->value);
+        $this->assertEquals('approved', $expense->fresh()->status);
         $this->assertDatabaseHas('acct_journal_entries', ['id' => $entry->id, 'status' => 'posted']);
+    }
+
+    public function test_post_cash_expense_marks_it_paid_immediately(): void
+    {
+        $expense = $this->createExpense(paymentMethod: 'cash');
+
+        $this->accounting->postExpense($expense);
+
+        $fresh = $expense->fresh();
+        $this->assertEquals('paid', $fresh->status);
+        $this->assertEquals('110.00', $fresh->paid_amount);
     }
 
     public function test_post_expense_creates_balanced_journal_entry(): void
@@ -110,7 +122,7 @@ class PostExpenseTest extends TestCase
         $payment = $this->accounting->recordExpensePayment($expense->fresh(), $this->paymentData(110));
 
         $fresh = $expense->fresh();
-        $this->assertEquals('settled', $fresh->status->value);
+        $this->assertEquals('paid', $fresh->status);
         $this->assertEquals('110.00', $fresh->paid_amount);
         $this->assertNotNull($payment->journal_entry_id);
     }
@@ -123,7 +135,7 @@ class PostExpenseTest extends TestCase
         $this->accounting->recordExpensePayment($expense->fresh(), $this->paymentData(50));
 
         $fresh = $expense->fresh();
-        $this->assertEquals('partially_settled', $fresh->status->value);
+        $this->assertEquals('partial', $fresh->status);
         $this->assertEquals('50.00', $fresh->paid_amount);
     }
 
@@ -172,11 +184,11 @@ class PostExpenseTest extends TestCase
         $this->accounting->recordExpensePayment($expense->fresh(), $this->paymentData(100, date: '2025-01-02'));
 
         $fresh = $expense->fresh();
-        $this->assertEquals('partially_settled', $fresh->status->value);
+        $this->assertEquals('partial', $fresh->status);
         $this->assertEquals('200.00', $fresh->paid_amount);
 
         $this->accounting->recordExpensePayment($expense->fresh(), $this->paymentData(100, date: '2025-01-03'));
-        $this->assertEquals('settled', $expense->fresh()->status->value);
+        $this->assertEquals('paid', $expense->fresh()->status);
     }
 
     // -------------------------------------------------------------------------
@@ -218,21 +230,20 @@ class PostExpenseTest extends TestCase
         ];
 
         foreach ($accounts as $data) {
-            Account::factory()->create($data);
+            Account::create($data);
         }
     }
 
-    private function createExpense(float $subtotal = 100, float $tax = 10, float $total = 110): Expense
+    private function createExpense(float $subtotal = 100, float $tax = 10, float $total = 110, string $paymentMethod = 'credit'): Expense
     {
-        return Expense::factory()->create([
-            'expense_date'    => now()->toDateString(),
-            'subtotal'        => $subtotal,
-            'tax_amount'      => $tax,
-            'discount_amount' => 0,
-            'total'           => $total,
-            'currency'        => 'BDT',
-            'status'          => 'draft',
-            'payment_method'  => 'cash',
+        return Expense::create([
+            'expense_date'   => now()->toDateString(),
+            'subtotal'       => $subtotal,
+            'tax_amount'     => $tax,
+            'total'          => $total,
+            'currency'       => 'BDT',
+            'status'         => 'draft',
+            'payment_method' => $paymentMethod,
         ]);
     }
 
