@@ -7,6 +7,7 @@ use Centrex\Accounting\Http\Controllers\Api\{
     BillController,
     BudgetController,
     CustomerController,
+    ExpenseController,
     InvoiceController,
     JournalEntryController,
     ReportController,
@@ -68,6 +69,14 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+
+        // Expenses
+        Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
+        Route::post('expenses/{expense}/post', [ExpenseController::class, 'post'])->name('expenses.post');
+        Route::post('expenses/{expense}/payments', [ExpenseController::class, 'recordPayment'])->name('expenses.payments');
+        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
         // Budgets
         Route::get('budgets', [BudgetController::class, 'index'])->name('budgets.index');

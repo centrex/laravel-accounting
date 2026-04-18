@@ -7,9 +7,9 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, FinancialReports, Invoices, JournalEntries, Vendors};
-use Centrex\Accounting\Models\{Bill, BillItem, Invoice, InvoiceItem, JournalEntry, Payment};
-use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
+use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
+use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +31,7 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('accounting-bills', Bills::class);
         Livewire::component('accounting-customers', Customers::class);
         Livewire::component('accounting-vendors', Vendors::class);
+        Livewire::component('accounting-expenses', Expenses::class);
 
         // Register model observers
         JournalEntry::observe(JournalEntryObserver::class);
@@ -39,6 +40,8 @@ class AccountingServiceProvider extends ServiceProvider
         Bill::observe(BillObserver::class);
         BillItem::observe(BillItemObserver::class);
         InvoiceItem::observe(InvoiceItemObserver::class);
+        Expense::observe(ExpenseObserver::class);
+        ExpenseItem::observe(ExpenseItemObserver::class);
         // Register event listeners
         Event::listen(InvoicePosted::class, [SyncCustomerOutstanding::class, 'handle']);
         Event::listen(PaymentRecorded::class, [NotifyAccountingTeam::class, 'handle']);

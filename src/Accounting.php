@@ -22,7 +22,7 @@ use Centrex\Accounting\Models\{
     JournalEntry,
     Payment
 };
-use Centrex\Inventory\Models\Expense;
+use Centrex\Accounting\Models\Expense;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

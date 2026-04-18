@@ -66,6 +66,7 @@ return [
         'journal_entries' => 15,
         'invoices'        => 15,
         'bills'           => 15,
+        'expenses'        => 15,
         'customers'       => 20,
         'vendors'         => 20,
     ],

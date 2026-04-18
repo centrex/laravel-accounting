@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Commands;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Models\{Account, Customer, Employee, JournalEntry, Vendor};
+use Centrex\Accounting\Models\{Account, Budget, Customer, FiscalYear, JournalEntry, Vendor};
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -62,7 +62,7 @@ final class AccountingDemoCommand extends Command
             $this->seedExtendedAccounts();
             $this->info('  Extended accounts created.');
 
-            $this->section('2. Entities (Customers · Vendors · Employees)');
+            $this->section('2. Entities (Customers · Vendors)');
             $this->seedEntities();
             $this->info('  Entities created.');
 
@@ -74,6 +74,9 @@ final class AccountingDemoCommand extends Command
 
             $this->section("5. Month 3 — {$m3->format('F Y')}");
             $this->seedMonth3($acct, $m3);
+
+            $this->section('6. Q1 Budget');
+            $this->seedBudget($acct, $m1, $m3);
         } else {
             $this->warn('Demo data already exists. Use --fresh to re-seed. Showing reports only.');
         }
@@ -93,6 +96,9 @@ final class AccountingDemoCommand extends Command
 
         $this->section('3-Month Head-wise Cash Flow Projection');
         $this->renderCashFlowProjection($acct, $m3->copy()->addMonth());
+
+        $this->section('Q1 Budget vs Actual');
+        $this->renderBudgetVsActual($acct);
 
         return self::SUCCESS;
     }
@@ -183,15 +189,6 @@ final class AccountingDemoCommand extends Command
             Vendor::firstOrCreate(['code' => $v['code']], $v);
         }
 
-        foreach ([
-            ['code' => 'EMP-001', 'name' => 'Rahul Ahmed',   'email' => 'rahul@centrex.com'],
-            ['code' => 'EMP-002', 'name' => 'Priya Sharma',  'email' => 'priya@centrex.com'],
-            ['code' => 'EMP-003', 'name' => 'Karim Hassan',  'email' => 'karim@centrex.com'],
-            ['code' => 'EMP-004', 'name' => 'Nadia Islam',   'email' => 'nadia@centrex.com'],
-            ['code' => 'EMP-005', 'name' => 'Tarek Hossain', 'email' => 'tarek@centrex.com'],
-        ] as $e) {
-            Employee::firstOrCreate(['code' => $e['code']], $e);
-        }
     }
 
     /* ═══════════════════════════════════════════════════════════════════════
@@ -831,6 +828,61 @@ final class AccountingDemoCommand extends Command
     }
 
     /* ═══════════════════════════════════════════════════════════════════════
+     * BUDGET — Q1 OPERATING EXPENSE BUDGET
+     *
+     * Creates a draft budget for the 3-month demo period covering the main
+     * expense heads, then approves it and links it to the current fiscal year
+     * if one exists. The budget vs actual report shows planned vs posted
+     * journal-entry amounts (actuals from Expense model — zero in this demo
+     * since no inventory expenses are seeded; the table still demonstrates
+     * the feature end-to-end).
+     * ═══════════════════════════════════════════════════════════════════════ */
+
+    private function seedBudget(Accounting $acct, Carbon $start, Carbon $end): void
+    {
+        $fiscalYear = FiscalYear::getCurrent();
+
+        $budget = $acct->createBudget([
+            'name'           => sprintf('Q1 Operating Budget — %s to %s', $start->format('M Y'), $end->format('M Y')),
+            'fiscal_year_id' => $fiscalYear?->id,
+            'period_start'   => $start->copy()->startOfMonth()->toDateString(),
+            'period_end'     => $end->copy()->endOfMonth()->toDateString(),
+            'total_amount'   => 22_000_000,
+            'notes'          => 'Q1 budget: payroll, marketing, rent/utilities, misc across 3 BUs',
+            'items' => [
+                ['account_id' => $this->acc('6000'), 'description' => 'Basic salaries — 25 staff × 3 months',        'amount' => 7_500_000],
+                ['account_id' => $this->acc('6010'), 'description' => 'Housing allowance × 3 months',                'amount' => 1_500_000],
+                ['account_id' => $this->acc('6020'), 'description' => 'Transport allowance × 3 months',              'amount' => 750_000],
+                ['account_id' => $this->acc('6030'), 'description' => 'Medical allowance × 3 months',                'amount' => 375_000],
+                ['account_id' => $this->acc('6040'), 'description' => 'Sales commission budget (variable)',           'amount' => 750_000],
+                ['account_id' => $this->acc('6050'), 'description' => 'Employer PF contribution × 3 months',         'amount' => 375_000],
+                ['account_id' => $this->acc('6060'), 'description' => 'Staff bonus — Q1 joining incentive',          'amount' => 100_000],
+                ['account_id' => $this->acc('6100'), 'description' => 'Rent — HO + 2 branches × 3 months',          'amount' => 900_000],
+                ['account_id' => $this->acc('6200'), 'description' => 'Utilities × 3 months',                        'amount' => 270_000],
+                ['account_id' => $this->acc('6300'), 'description' => 'Office supplies & stationery',                'amount' => 150_000],
+                ['account_id' => $this->acc('6400'), 'description' => 'Insurance expense (prepaid amortisation)',    'amount' => 200_000],
+                ['account_id' => $this->acc('6510'), 'description' => 'Digital marketing — PPC, SEO, social',        'amount' => 1_500_000],
+                ['account_id' => $this->acc('6520'), 'description' => 'Events & promotions',                         'amount' => 700_000],
+                ['account_id' => $this->acc('6530'), 'description' => 'Market research',                             'amount' => 400_000],
+                ['account_id' => $this->acc('6600'), 'description' => 'Depreciation — 3 asset classes × 2 months',  'amount' => 416_666],
+                ['account_id' => $this->acc('6700'), 'description' => 'Loan interest — Q1',                         'amount' => 150_000],
+                ['account_id' => $this->acc('6800'), 'description' => 'Bank charges & RTGS fees',                   'amount' => 25_000],
+                ['account_id' => $this->acc('6900'), 'description' => 'Miscellaneous expense reserve',              'amount' => 100_000],
+                ['account_id' => $this->acc('6910'), 'description' => 'Staff entertainment × 3 months',             'amount' => 175_000],
+                ['account_id' => $this->acc('6920'), 'description' => 'Travel & conveyance × 3 months',             'amount' => 250_000],
+                ['account_id' => $this->acc('6930'), 'description' => 'Printing & stationery × 3 months',           'amount' => 90_000],
+                ['account_id' => $this->acc('6940'), 'description' => 'Cleaning & maintenance × 3 months',          'amount' => 90_000],
+                ['account_id' => $this->acc('7000'), 'description' => 'Management fee expense (interco) × 3 months', 'amount' => 4_500_000],
+            ],
+        ]);
+
+        $acct->approveBudget($budget);
+
+        $this->line(sprintf('    Budget [%s] created & approved (total ৳%s).', $budget->budget_number, number_format($budget->total_amount)));
+        $this->info('  ✓ Q1 budget seeded and approved.');
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
      * REPORT RENDERERS
      * ═══════════════════════════════════════════════════════════════════════ */
 
@@ -1076,6 +1128,52 @@ final class AccountingDemoCommand extends Command
         $this->line('  • Depreciation excluded from cash flow (non-cash; shown in income statement).');
     }
 
+    private function renderBudgetVsActual(Accounting $acct): void
+    {
+        $budget = Budget::where('status', 'approved')->latest()->first();
+
+        if (!$budget) {
+            $this->warn('  No approved budget found — run without --fresh to see budget report.');
+
+            return;
+        }
+
+        $data = $acct->getBudgetVsActual($budget);
+        $rows = [];
+
+        foreach ($data['comparison'] as $row) {
+            $status = match ($row['status']) {
+                'over'    => '<fg=red>OVER</>',
+                'warning' => '<fg=yellow>WARN</>',
+                default   => '<fg=green> OK </>',
+            };
+            $rows[] = [
+                $row['account']->code,
+                mb_strimwidth($row['account']->name, 0, 35, '…'),
+                $this->f($row['budgeted']),
+                $this->f($row['actual']),
+                $row['actual'] <= $row['budgeted']
+                    ? '<fg=green>' . $this->f($row['variance']) . '</>'
+                    : '<fg=red>(' . $this->f(abs($row['variance'])) . ')</>',
+                sprintf('%5.1f%%', $row['percentage']),
+                $status,
+            ];
+        }
+
+        $this->table(
+            ['Code', 'Account', 'Budgeted', 'Actual', 'Variance', 'Used %', 'Status'],
+            $rows,
+        );
+
+        $this->line(sprintf('  Budget      : %s', $budget->budget_number));
+        $this->line(sprintf('  Period      : %s → %s', $budget->period_start->toDateString(), $budget->period_end->toDateString()));
+        $this->line(sprintf('  Total Budget: %s', $this->f((float) $data['total_budgeted'])));
+        $this->line(sprintf('  Total Actual: %s', $this->f((float) $data['total_actual'])));
+        $this->line(sprintf('  Variance    : %s', $this->f((float) $data['total_variance'])));
+        $this->line('  Note: Actual spend is sourced from Expense model (laravel-inventory).');
+        $this->line('        In this demo no Expense records are seeded, so actuals show zero.');
+    }
+
     /* ═══════════════════════════════════════════════════════════════════════
      * UI HELPERS
      * ═══════════════════════════════════════════════════════════════════════ */
@@ -1104,6 +1202,7 @@ final class AccountingDemoCommand extends Command
         $this->line('<fg=green>    ✓ Miscellaneous expense heads (8 sub-accounts)</>');
         $this->line('<fg=green>    ✓ 3 business units under one holding company</>');
         $this->line('<fg=green>    ✓ Balance sheet verified balanced at period-end</>');
+        $this->line('<fg=green>    ✓ Budget management (create · approve · vs-actual)</>');
         $this->line('<fg=green>    ✓ 3-month head-wise forward cash flow projection</>');
         $this->line('<fg=green>' . str_repeat('═', 65) . '</>');
         $this->newLine();

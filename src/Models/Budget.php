@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
-use Centrex\Inventory\Models\Expense;
+use Centrex\Accounting\Models\Expense;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Support\Facades\DB;
