@@ -6,9 +6,10 @@ namespace Tests\Feature;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\Accounting\Models\{Account, Bill, Vendor};
+use Centrex\Accounting\Models\{Account, Bill, JournalEntry, Vendor};
 use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 
 class PostBillTest extends TestCase
 {
@@ -129,6 +130,33 @@ class PostBillTest extends TestCase
 
         $this->assertEquals($debits, $credits);
         $this->assertEquals(100.0, $debits);
+    }
+
+    public function test_payment_retries_when_generated_journal_entry_number_collides(): void
+    {
+        $bill = $this->createBill(total: 100);
+        $this->accounting->postBill($bill);
+
+        JournalEntry::create([
+            'entry_number' => 'JE-collision',
+            'date' => '2025-06-01',
+            'type' => 'general',
+            'currency' => 'BDT',
+            'exchange_rate' => 1,
+            'status' => 'draft',
+        ]);
+
+        $accounting = Mockery::mock(Accounting::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $accounting->shouldReceive('generateJournalEntryNumber')
+            ->once()
+            ->andReturn('JE-collision');
+        $accounting->shouldReceive('generateJournalEntryNumber')
+            ->once()
+            ->andReturn('JE-unique');
+
+        $payment = $accounting->recordBillPayment($bill->fresh(), $this->paymentData(100));
+
+        $this->assertSame('JE-unique', $payment->journalEntry->entry_number);
     }
 
     public function test_overpayment_throws_exception(): void

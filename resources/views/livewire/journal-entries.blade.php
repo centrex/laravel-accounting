@@ -3,7 +3,7 @@
 
 <x-tallui-page-header title="Journal Entries" subtitle="Double-entry bookkeeping transactions" icon="o-pencil-square">
     <x-slot:actions>
-        <x-tallui-button wire:click="$set('showModal', true)" icon="o-plus" class="btn-primary btn-sm">New Entry</x-tallui-button>
+        <x-tallui-button wire:click="openCreateModal" icon="o-plus" class="btn-primary btn-sm">New Entry</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -88,6 +88,10 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
+                                <x-tallui-button wire:click="viewEntry({{ $entry->id }})" icon="o-eye" class="btn-ghost btn-xs" />
+                                @if(($entry->status->value ?? $entry->status) === 'draft')
+                                    <x-tallui-button wire:click="openEditModal({{ $entry->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
+                                @endif
                                 @if(($entry->status->value ?? $entry->status) === 'draft')
                                     <x-tallui-button wire:click="postEntry({{ $entry->id }})" wire:confirm="Post this journal entry?" class="btn-success btn-xs" spinner="save">
                                         Post
@@ -115,12 +119,12 @@
 </x-tallui-card>
 
 {{-- Create Modal --}}
-<x-tallui-modal id="journal-modal" title="New Journal Entry" icon="o-pencil-square" size="xl">
+<x-tallui-modal id="journal-modal" :title="$journalEntryId ? 'Edit Journal Entry' : 'New Journal Entry'" icon="o-pencil-square" size="xl">
     <x-slot:trigger>
         <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'journal-modal'); else $dispatch('close-modal', 'journal-modal')"></span>
     </x-slot:trigger>
 
-    <form wire:submit.prevent="create" class="space-y-4">
+    <form wire:submit.prevent="save" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Date *" :error="$errors->first('date')">
                 <x-tallui-input type="date" wire:model="date" />
@@ -163,6 +167,7 @@
                     </div>
                 @endforeach
             </div>
+            @error('lines') <p class="text-error text-xs mt-2">{{ $message }}</p> @enderror
 
             {{-- Balance indicator --}}
             @php $diff = abs($this->getTotalDebits() - $this->getTotalCredits()); @endphp
@@ -180,7 +185,91 @@
 
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showModal', false)" class="btn-ghost">Cancel</x-tallui-button>
-        <x-tallui-button wire:click="create" spinner="create" class="btn-primary">Create Entry</x-tallui-button>
+        <x-tallui-button wire:click="save" spinner="save" class="btn-primary">{{ $journalEntryId ? 'Update Entry' : 'Create Entry' }}</x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+
+{{-- Detail Modal --}}
+<x-tallui-modal id="journal-detail-modal" :title="$viewingEntry ? 'Journal Entry ' . $viewingEntry->entry_number : 'Journal Entry Details'" icon="o-eye" size="xl">
+    <x-slot:trigger>
+        <span x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'journal-detail-modal'); else $dispatch('close-modal', 'journal-detail-modal')"></span>
+    </x-slot:trigger>
+
+    @if($viewingEntry)
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div class="rounded-xl border border-base-200 bg-base-50 p-3">
+                    <div class="text-xs uppercase text-base-content/50">Date</div>
+                    <div class="mt-1 text-sm font-medium">{{ $viewingEntry->date->format('M d, Y') }}</div>
+                </div>
+                <div class="rounded-xl border border-base-200 bg-base-50 p-3">
+                    <div class="text-xs uppercase text-base-content/50">Reference</div>
+                    <div class="mt-1 text-sm font-medium">{{ $viewingEntry->reference ?: '—' }}</div>
+                </div>
+                <div class="rounded-xl border border-base-200 bg-base-50 p-3">
+                    <div class="text-xs uppercase text-base-content/50">Status</div>
+                    <div class="mt-1 text-sm font-medium">{{ ucfirst($viewingEntry->status->value ?? $viewingEntry->status) }}</div>
+                </div>
+                <div class="rounded-xl border border-base-200 bg-base-50 p-3">
+                    <div class="text-xs uppercase text-base-content/50">Currency</div>
+                    <div class="mt-1 text-sm font-medium">{{ $viewingEntry->currency }}</div>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-base-200 p-4">
+                <div class="text-xs uppercase text-base-content/50">Description</div>
+                <div class="mt-1 text-sm">{{ $viewingEntry->description ?: '—' }}</div>
+            </div>
+
+            <div class="rounded-xl border border-base-200">
+                <div class="border-b border-base-200 px-4 py-3 text-sm font-semibold">Entry Lines</div>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm w-full">
+                        <thead>
+                            <tr class="text-xs uppercase text-base-content/50">
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th class="text-right">Amount</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($viewingEntry->lines as $line)
+                                <tr>
+                                    <td class="font-mono text-sm">{{ $line->account?->code }} {{ $line->account?->name ? '— ' . $line->account->name : '' }}</td>
+                                    <td>
+                                        <x-tallui-badge :type="$line->type === 'debit' ? 'success' : 'error'">
+                                            {{ ucfirst($line->type) }}
+                                        </x-tallui-badge>
+                                    </td>
+                                    <td class="text-right font-medium">{{ number_format((float) $line->amount, 2) }}</td>
+                                    <td class="text-sm text-base-content/70">{{ $line->description ?: '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-semibold">
+                                <td colspan="2" class="text-right">Total Debits</td>
+                                <td class="text-right">{{ number_format((float) $viewingEntry->lines->where('type', 'debit')->sum('amount'), 2) }}</td>
+                                <td></td>
+                            </tr>
+                            <tr class="font-semibold">
+                                <td colspan="2" class="text-right">Total Credits</td>
+                                <td class="text-right">{{ number_format((float) $viewingEntry->lines->where('type', 'credit')->sum('amount'), 2) }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <x-slot:footer>
+        @if($viewingEntry && ($viewingEntry->status->value ?? $viewingEntry->status) === 'draft')
+            <x-tallui-button wire:click="editViewingEntry" class="btn-primary btn-outline">Edit Draft</x-tallui-button>
+        @endif
+        <x-tallui-button wire:click="closeDetailModal" class="btn-ghost">Close</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 </div>

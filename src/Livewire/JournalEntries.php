@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Models\{Account, JournalEntry};
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
 
@@ -23,6 +24,12 @@ class JournalEntries extends Component
 
     public $showModal = false;
 
+    public $showDetailModal = false;
+
+    public $journalEntryId = null;
+
+    public $viewingEntry = null;
+
     // Form fields
     public $date;
 
@@ -36,8 +43,7 @@ class JournalEntries extends Component
 
     public function mount(): void
     {
-        $this->date = now()->format('Y-m-d');
-        $this->addLine();
+        $this->resetForm();
     }
 
     public function addLine(): void
@@ -50,13 +56,88 @@ class JournalEntries extends Component
         ];
     }
 
+    public function resetForm(): void
+    {
+        $this->resetValidation();
+        $this->journalEntryId = null;
+        $this->date = now()->format('Y-m-d');
+        $this->reference = null;
+        $this->description = null;
+        $this->lines = [];
+        $this->addLine();
+    }
+
+    public function openCreateModal(): void
+    {
+        $this->resetForm();
+        $this->showModal = true;
+    }
+
+    public function openEditModal(int $id): void
+    {
+        $entry = JournalEntry::query()->with('lines')->findOrFail($id);
+
+        if (($entry->status->value ?? $entry->status) !== 'draft') {
+            session()->flash('error', 'Only draft journal entries can be edited.');
+
+            return;
+        }
+
+        $this->resetValidation();
+        $this->journalEntryId = $entry->id;
+        $this->date = $entry->date?->format('Y-m-d');
+        $this->reference = $entry->reference;
+        $this->description = $entry->description;
+        $this->lines = $entry->lines
+            ->map(fn (mixed $line): array => [
+                'account_id' => $line->account_id,
+                'type' => $line->type,
+                'amount' => (float) $line->amount,
+                'description' => $line->description,
+            ])
+            ->values()
+            ->all();
+
+        if ($this->lines === []) {
+            $this->addLine();
+        }
+
+        $this->showModal = true;
+    }
+
+    public function viewEntry(int $id): void
+    {
+        $this->viewingEntry = JournalEntry::query()
+            ->with(['lines.account', 'creator', 'approver'])
+            ->findOrFail($id);
+
+        $this->showDetailModal = true;
+    }
+
+    public function closeDetailModal(): void
+    {
+        $this->showDetailModal = false;
+        $this->viewingEntry = null;
+    }
+
+    public function editViewingEntry(): void
+    {
+        if (! $this->viewingEntry) {
+            return;
+        }
+
+        $id = $this->viewingEntry->id;
+        $this->closeDetailModal();
+        $this->openEditModal($id);
+    }
+
     public function removeLine($index): void
     {
         unset($this->lines[$index]);
         $this->lines = array_values($this->lines);
     }
 
-    public function create(): void
+    public function save(): void
     {
         $this->validate([
             'date'               => 'required|date',
@@ -67,19 +148,53 @@ class JournalEntries extends Component
             'lines.*.amount'     => 'required|numeric|min:0.01',
         ]);
 
-        $service = app(Accounting::class);
+        if (abs($this->getTotalDebits() - $this->getTotalCredits()) >= 0.01) {
+            $this->addError('lines', 'Journal entry must be balanced before saving.');
+
+            return;
+        }
 
         try {
-            $entry = $service->createJournalEntry([
-                'date'        => $this->date,
-                'reference'   => $this->reference,
-                'description' => $this->description,
-                'lines'       => $this->lines,
-            ]);
+            if ($this->journalEntryId) {
+                DB::transaction(function (): void {
+                    $entry = JournalEntry::query()->with('lines')->findOrFail($this->journalEntryId);
 
-            session()->flash('message', 'Journal entry created successfully!');
-            $this->reset(['reference', 'description', 'lines']);
-            $this->addLine();
+                    if (($entry->status->value ?? $entry->status) !== 'draft') {
+                        throw new \RuntimeException('Only draft journal entries can be edited.');
+                    }
+
+                    $entry->update([
+                        'date' => $this->date,
+                        'reference' => $this->reference,
+                        'description' => $this->description,
+                    ]);
+
+                    $entry->lines()->delete();
+
+                    foreach ($this->lines as $line) {
+                        $entry->lines()->create([
+                            'account_id' => $line['account_id'],
+                            'type' => strtolower((string) $line['type']),
+                            'amount' => $line['amount'],
+                            'description' => $line['description'] ?? null,
+                        ]);
+                    }
+                });
+
+                session()->flash('message', 'Journal entry updated successfully!');
+            } else {
+                $service = app(Accounting::class);
+                $service->createJournalEntry([
+                    'date'        => $this->date,
+                    'reference'   => $this->reference,
+                    'description' => $this->description,
+                    'lines'       => $this->lines,
+                ]);
+
+                session()->flash('message', 'Journal entry created successfully!');
+            }
+
+            $this->resetForm();
             $this->showModal = false;
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());

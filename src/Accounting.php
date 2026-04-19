@@ -24,7 +24,9 @@ use Centrex\Accounting\Models\{
 };
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Support\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Accounting
 {
@@ -87,38 +89,66 @@ class Accounting
      */
     public function createJournalEntry(array $data): JournalEntry
     {
-        return DB::transaction(function () use ($data): JournalEntry {
-            $entryNumber = $data['entry_number']
-                ?? ('JE-' . now()->format('YmdHis') . '-' . random_int(1000, 9999));
+        $usesGeneratedEntryNumber = empty($data['entry_number']);
 
-            $entry = JournalEntry::create([
-                'entry_number'  => $entryNumber,
-                'date'          => $data['date'],
-                'reference'     => $data['reference'] ?? null,
-                'type'          => $data['type'] ?? 'general',
-                'description'   => $data['description'] ?? null,
-                'currency'      => $data['currency'] ?? config('accounting.base_currency', 'BDT'),
-                'exchange_rate' => $data['exchange_rate'] ?? 1.0,
-                'created_by'    => $data['created_by'] ?? auth()->id(),
-                'status'        => $data['status'] ?? 'draft',
-            ]);
+        return DB::transaction(function () use ($data, $usesGeneratedEntryNumber): JournalEntry {
+            $attempts = $usesGeneratedEntryNumber ? 5 : 1;
+            $lastException = null;
 
-            foreach ($data['lines'] as $line) {
-                $entry->lines()->create([
-                    'account_id'  => $line['account_id'],
-                    'type'        => strtolower((string) $line['type']),
-                    'amount'      => $line['amount'],
-                    'description' => $line['description'] ?? null,
-                    'reference'   => $line['reference'] ?? null,
-                ]);
+            for ($attempt = 0; $attempt < $attempts; $attempt++) {
+                try {
+                    $entry = JournalEntry::create([
+                        'entry_number'  => $data['entry_number'] ?? $this->generateJournalEntryNumber(),
+                        'date'          => $data['date'],
+                        'reference'     => $data['reference'] ?? null,
+                        'type'          => $data['type'] ?? 'general',
+                        'description'   => $data['description'] ?? null,
+                        'currency'      => $data['currency'] ?? config('accounting.base_currency', 'BDT'),
+                        'exchange_rate' => $data['exchange_rate'] ?? 1.0,
+                        'created_by'    => $data['created_by'] ?? auth()->id(),
+                        'status'        => $data['status'] ?? 'draft',
+                    ]);
+
+                    foreach ($data['lines'] as $line) {
+                        $entry->lines()->create([
+                            'account_id'  => $line['account_id'],
+                            'type'        => strtolower((string) $line['type']),
+                            'amount'      => $line['amount'],
+                            'description' => $line['description'] ?? null,
+                            'reference'   => $line['reference'] ?? null,
+                        ]);
+                    }
+
+                    if (!$entry->isBalanced()) {
+                        throw UnbalancedJournalException::make($entry);
+                    }
+
+                    return $entry;
+                } catch (QueryException $exception) {
+                    if (! $usesGeneratedEntryNumber || ! $this->isDuplicateJournalEntryNumberException($exception)) {
+                        throw $exception;
+                    }
+
+                    $lastException = $exception;
+                }
             }
 
-            if (!$entry->isBalanced()) {
-                throw UnbalancedJournalException::make($entry);
-            }
-
-            return $entry;
+            throw $lastException ?? new \RuntimeException('Unable to generate a unique journal entry number.');
         });
+    }
+
+    protected function generateJournalEntryNumber(): string
+    {
+        return 'JE-' . now()->format('YmdHis') . '-' . Str::lower(Str::random(8));
+    }
+
+    protected function isDuplicateJournalEntryNumberException(QueryException $exception): bool
+    {
+        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+        $message = (string) ($exception->errorInfo[2] ?? $exception->getMessage());
+
+        return $driverCode === 1062
+            && str_contains($message, 'acct_journal_entries_entry_number_unique');
     }
 
     // -------------------------------------------------------------------------

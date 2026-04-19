@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Models\Account;
+use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
 
@@ -116,9 +117,34 @@ class ChartOfAccounts extends Component
         session()->flash('message', 'Account status updated!');
     }
 
-    public function render()
+    public function exportPdf()
     {
-        $accounts = Account::query()
+        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            session()->flash('error', 'PDF export is not available in this environment.');
+
+            return null;
+        }
+
+        $accounts = $this->filteredAccountsQuery()
+            ->with('parent')
+            ->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.chart-of-accounts', [
+            'accounts' => $accounts,
+            'search' => $this->search,
+            'typeFilter' => $this->typeFilter,
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            static fn () => print($pdf->output()),
+            'chart-of-accounts-' . now()->format('Ymd_His') . '.pdf',
+        );
+    }
+
+    protected function filteredAccountsQuery()
+    {
+        return Account::query()
             ->when($this->search, function ($q): void {
                 $q->where(function ($query): void {
                     $query->where('code', 'like', '%' . $this->search . '%')
@@ -126,7 +152,12 @@ class ChartOfAccounts extends Component
                 });
             })
             ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter))
-            ->orderBy('code')
+            ->orderBy('code');
+    }
+
+    public function render(): View
+    {
+        $accounts = $this->filteredAccountsQuery()
             ->paginate(20);
 
         $parentAccounts = Account::whereNull('parent_id')

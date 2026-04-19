@@ -3,6 +3,7 @@
 
 <x-tallui-page-header title="Chart of Accounts" subtitle="Manage your general ledger accounts" icon="o-rectangle-stack">
     <x-slot:actions>
+        <x-tallui-button wire:click="exportPdf" spinner="exportPdf" icon="o-arrow-down-tray" class="btn-ghost btn-sm">Export PDF</x-tallui-button>
         <x-tallui-button wire:click="openModal()" icon="o-plus" class="btn-primary btn-sm">New Account</x-tallui-button>
     </x-slot:actions>
 </x-tallui-page-header>
