@@ -8,6 +8,7 @@ use Centrex\Accounting\AccountingServiceProvider;
 use Centrex\TallUi\TallUiServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\Attributes\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -36,6 +37,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         $providers = [
+            LivewireServiceProvider::class,
             AccountingServiceProvider::class,
         ];
 

@@ -40,6 +40,54 @@ class Accounting
         return (float) config('accounting.rounding_tolerance', 0.005);
     }
 
+    private function baseCurrency(): string
+    {
+        return strtoupper((string) config('accounting.base_currency', 'BDT'));
+    }
+
+    private function normalizeExchangeRate(float|int|string|null $exchangeRate): float
+    {
+        $rate = (float) ($exchangeRate ?? 1);
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    private function convertToBaseAmount(float|int|string|null $amount, ?string $currency = null, float|int|string|null $exchangeRate = null): float
+    {
+        $value = (float) ($amount ?? 0);
+        $sourceCurrency = strtoupper((string) ($currency ?: $this->baseCurrency()));
+
+        if ($sourceCurrency === $this->baseCurrency()) {
+            return round($value, 2);
+        }
+
+        return round($value * $this->normalizeExchangeRate($exchangeRate), 2);
+    }
+
+    /**
+     * Normalize a journal payload into base currency before persistence.
+     *
+     * @param  array{currency?: string, exchange_rate?: float, lines?: array<int, array{amount?: float|int|string}>} $data
+     * @return array<string, mixed>
+     */
+    private function normalizeJournalPayload(array $data): array
+    {
+        $currency = strtoupper((string) ($data['currency'] ?? $this->baseCurrency()));
+        $exchangeRate = $this->normalizeExchangeRate($data['exchange_rate'] ?? 1);
+
+        $data['currency'] = $this->baseCurrency();
+        $data['exchange_rate'] = 1.0;
+        $data['lines'] = collect($data['lines'] ?? [])
+            ->map(function (array $line) use ($currency, $exchangeRate): array {
+                $line['amount'] = $this->convertToBaseAmount($line['amount'] ?? 0, $currency, $exchangeRate);
+
+                return $line;
+            })
+            ->all();
+
+        return $data;
+    }
+
     /** Resolve a required account by code or throw a typed exception. */
     private function requireAccount(string $code): Account
     {
@@ -89,6 +137,7 @@ class Accounting
      */
     public function createJournalEntry(array $data): JournalEntry
     {
+        $data = $this->normalizeJournalPayload($data);
         $usesGeneratedEntryNumber = empty($data['entry_number']);
 
         return DB::transaction(function () use ($data, $usesGeneratedEntryNumber): JournalEntry {
@@ -107,6 +156,9 @@ class Accounting
                         'exchange_rate' => $data['exchange_rate'] ?? 1.0,
                         'created_by'    => $data['created_by'] ?? auth()->id(),
                         'status'        => $data['status'] ?? 'draft',
+                        'source_type'   => $data['source_type'] ?? null,
+                        'source_id'     => $data['source_id'] ?? null,
+                        'source_action' => $data['source_action'] ?? null,
                     ]);
 
                     foreach ($data['lines'] as $line) {
@@ -170,6 +222,8 @@ class Accounting
             $arAccount = $this->requireAccount('1200');
             $revenueAccount = $this->requireAccount('4000');
             $taxAccount = $this->requireAccount('2300');
+            $discountAmount = round((float) ($invoice->discount_amount ?? 0), 2);
+            $netRevenueAmount = round((float) $invoice->subtotal - $discountAmount, 2);
 
             $entry = $this->createJournalEntry([
                 'date'          => $invoice->invoice_date,
@@ -180,7 +234,7 @@ class Accounting
                 'exchange_rate' => $invoice->exchange_rate ?? 1.0,
                 'lines'         => [
                     ['account_id' => $arAccount->id,      'type' => 'debit',  'amount' => $invoice->total,      'description' => 'Accounts Receivable'],
-                    ['account_id' => $revenueAccount->id, 'type' => 'credit', 'amount' => $invoice->subtotal,   'description' => 'Sales Revenue'],
+                    ['account_id' => $revenueAccount->id, 'type' => 'credit', 'amount' => $netRevenueAmount, 'description' => $discountAmount > 0 ? 'Sales Revenue (net of discount)' : 'Sales Revenue'],
                     ['account_id' => $taxAccount->id,     'type' => 'credit', 'amount' => $invoice->tax_amount, 'description' => 'Sales Tax'],
                 ],
             ]);

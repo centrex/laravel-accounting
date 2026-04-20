@@ -352,7 +352,7 @@
                                 <td class="font-mono text-xs text-primary font-medium">{{ $invoice->invoice_number }}</td>
                                 <td class="text-sm max-w-[120px] truncate">{{ $invoice->customer?->name ?? '—' }}</td>
                                 <td class="text-right text-sm font-medium whitespace-nowrap">
-                                    {{ $invoice->currency }} {{ number_format($invoice->total, 2) }}
+                                    {{ $invoice->base_currency }} {{ number_format($invoice->base_total, 2) }}
                                 </td>
                                 <td>
                                     <x-tallui-badge size="sm" :type="match($invoice->status->value ?? '') {
@@ -409,7 +409,7 @@
                                 <td class="font-mono text-xs text-primary font-medium">{{ $bill->bill_number }}</td>
                                 <td class="text-sm max-w-[120px] truncate">{{ $bill->vendor?->name ?? '—' }}</td>
                                 <td class="text-right text-sm font-medium whitespace-nowrap">
-                                    {{ $bill->currency }} {{ number_format($bill->total, 2) }}
+                                    {{ $bill->base_currency }} {{ number_format($bill->base_total, 2) }}
                                 </td>
                                 <td>
                                     <x-tallui-badge size="sm" :type="match($bill->status->value ?? '') {

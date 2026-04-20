@@ -7,7 +7,7 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\Accounting\Livewire\{AccountingDashboard, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, Invoices, JournalEntries, Vendors};
+use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, InvoiceDetails, Invoices, JournalEntries, Vendors};
 use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
@@ -28,7 +28,9 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('financial-reports', FinancialReports::class);
         Livewire::component('journal-entries', JournalEntries::class);
         Livewire::component('accounting-invoices', Invoices::class);
+        Livewire::component('accounting-invoice-details', InvoiceDetails::class);
         Livewire::component('accounting-bills', Bills::class);
+        Livewire::component('accounting-bill-details', BillDetails::class);
         Livewire::component('accounting-customers', Customers::class);
         Livewire::component('accounting-vendors', Vendors::class);
         Livewire::component('accounting-expenses', Expenses::class);

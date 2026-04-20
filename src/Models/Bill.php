@@ -99,6 +99,48 @@ class Bill extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 
+    public function convertToBase(float|int|string|null $amount): float
+    {
+        $value = (float) ($amount ?? 0);
+        $rate = (float) ($this->exchange_rate ?? 1);
+
+        if ($rate <= 0) {
+            $rate = 1.0;
+        }
+
+        return round($value * $rate, 2);
+    }
+
+    public function getBaseCurrencyAttribute(): string
+    {
+        return (string) config('accounting.base_currency', 'BDT');
+    }
+
+    public function getBaseSubtotalAttribute(): float
+    {
+        return $this->convertToBase($this->subtotal);
+    }
+
+    public function getBaseTaxAmountAttribute(): float
+    {
+        return $this->convertToBase($this->tax_amount);
+    }
+
+    public function getBaseTotalAttribute(): float
+    {
+        return $this->convertToBase($this->total);
+    }
+
+    public function getBasePaidAmountAttribute(): float
+    {
+        return $this->convertToBase($this->paid_amount);
+    }
+
+    public function getBaseBalanceAttribute(): float
+    {
+        return $this->convertToBase($this->balance);
+    }
+
     public function getBalanceAttribute(): float
     {
         return $this->total - $this->paid_amount;

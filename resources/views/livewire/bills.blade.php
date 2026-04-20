@@ -50,8 +50,8 @@
                     <th>Vendor</th>
                     <th>Bill Date</th>
                     <th>Due Date</th>
-                    <th class="text-right">Total</th>
-                    <th class="text-right">Balance</th>
+                    <th class="text-right">Total ({{ config('accounting.base_currency', 'BDT') }})</th>
+                    <th class="text-right">Balance ({{ config('accounting.base_currency', 'BDT') }})</th>
                     <th>Status</th>
                     <th class="pr-5 text-right">Actions</th>
                 </tr>
@@ -65,9 +65,9 @@
                         <td class="text-sm {{ $bill->due_date->isPast() && !in_array($bill->status->value ?? $bill->status, ['paid','void']) ? 'text-error font-medium' : 'text-base-content/60' }}">
                             {{ $bill->due_date->format('M d, Y') }}
                         </td>
-                        <td class="text-right text-sm font-mono font-medium">{{ number_format($bill->total, 2) }}</td>
-                        <td class="text-right text-sm font-mono {{ $bill->balance > 0 ? 'text-warning' : 'text-success' }}">
-                            {{ number_format($bill->balance, 2) }}
+                        <td class="text-right text-sm font-mono font-medium">{{ $bill->base_currency }} {{ number_format($bill->base_total, 2) }}</td>
+                        <td class="text-right text-sm font-mono {{ $bill->base_balance > 0 ? 'text-warning' : 'text-success' }}">
+                            {{ $bill->base_currency }} {{ number_format($bill->base_balance, 2) }}
                         </td>
                         <td>
                             <x-tallui-badge :type="match($bill->status->value ?? $bill->status) {
@@ -82,13 +82,16 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
+                                <a href="{{ route('accounting.bills.show', $bill) }}" class="btn btn-ghost btn-xs">
+                                    View
+                                </a>
                                 @php $status = $bill->status->value ?? $bill->status; @endphp
                                 @if($status === 'draft')
                                     <x-tallui-button wire:click="postBill({{ $bill->id }})"
                                         wire:confirm="Approve bill {{ $bill->bill_number }}?"
                                         class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
                                 @endif
-                                @if(in_array($status, ['approved', 'partial']) && $bill->balance > 0)
+                                @if(in_array($status, ['approved', 'partial']) && $bill->base_balance > 0)
                                     <x-tallui-button wire:click="openPayModal({{ $bill->id }})" class="btn-success btn-xs" spinner="pay">Pay</x-tallui-button>
                                 @endif
                             </div>
