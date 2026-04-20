@@ -58,6 +58,14 @@ class Invoices extends Component
         $this->invoice_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
+
+        if (request()->query('action') === 'pay' && request()->filled('invoice')) {
+            $invoiceId = (int) request()->query('invoice');
+
+            if ($invoiceId > 0 && Invoice::query()->whereKey($invoiceId)->exists()) {
+                $this->openPayModal($invoiceId);
+            }
+        }
     }
 
     public function addItem(): void

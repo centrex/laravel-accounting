@@ -57,6 +57,14 @@ class Bills extends Component
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
+
+        if (request()->query('action') === 'pay' && request()->filled('bill')) {
+            $billId = (int) request()->query('bill');
+
+            if ($billId > 0 && Bill::query()->whereKey($billId)->exists()) {
+                $this->openPayModal($billId);
+            }
+        }
     }
 
     public function addItem(): void

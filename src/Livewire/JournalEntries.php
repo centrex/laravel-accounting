@@ -44,6 +44,14 @@ class JournalEntries extends Component
     public function mount(): void
     {
         $this->resetForm();
+
+
+        if (request()->boolean('create')) {
+            $this->showModal = true;
+            $this->date = (string) request()->query('date', $this->date);
+            $this->reference = (string) request()->query('reference', '');
+            $this->description = (string) request()->query('description', '');
+        }
     }
 
     public function addLine(): void
