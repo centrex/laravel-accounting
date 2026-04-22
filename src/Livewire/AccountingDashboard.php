@@ -240,6 +240,16 @@ class AccountingDashboard extends Component
                 ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
         ];
 
+        $ledgerStats = [
+            'posted_count' => JournalEntry::where('status', 'posted')
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->count(),
+            'draft_count' => JournalEntry::where('status', 'draft')->count(),
+            'void_count' => JournalEntry::where('status', 'void')
+                ->whereBetween('date', [$this->startDate, $this->endDate])
+                ->count(),
+        ];
+
         // Counts
         $customerCount = Customer::where('is_active', true)->count();
         $vendorCount = Vendor::where('is_active', true)->count();
@@ -275,6 +285,7 @@ class AccountingDashboard extends Component
             'cashFlow',
             'invoiceStats',
             'billStats',
+            'ledgerStats',
             'customerCount',
             'vendorCount',
             'recentInvoices',

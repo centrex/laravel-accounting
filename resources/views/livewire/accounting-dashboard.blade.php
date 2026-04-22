@@ -27,6 +27,12 @@
             :link="route('accounting.journal')"
             class="btn-ghost btn-sm"
         />
+        <x-tallui-button
+            label="Ledger"
+            icon="o-book-open"
+            :link="route('accounting.ledger')"
+            class="btn-ghost btn-sm"
+        />
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -77,7 +83,7 @@
 </div>
 
 {{-- ── AR / AP / Customer / Vendor cards ───────────────────────────────── --}}
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
 
     {{-- Outstanding AR --}}
     <a href="{{ route('accounting.invoices') }}" class="group">
@@ -159,6 +165,30 @@
                 </div>
                 <div class="text-xl font-bold mt-1">{{ number_format($vendorCount) }}</div>
                 <div class="text-xs text-base-content/50 mt-1">Active vendors</div>
+            </div>
+        </div>
+    </a>
+
+    {{-- Ledger --}}
+    <a href="{{ route('accounting.ledger') }}" class="group col-span-2 lg:col-span-1">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-accent/40 transition-all rounded-2xl">
+            <div class="card-body p-4 gap-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Ledger</span>
+                    <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <x-tallui-icon name="o-book-open" class="w-4 h-4 text-accent" />
+                    </div>
+                </div>
+                <div class="text-xl font-bold mt-1">{{ number_format($ledgerStats['posted_count']) }}</div>
+                <div class="text-xs text-base-content/50 mt-1">Posted entries in selected period</div>
+                <div class="flex items-center gap-2 flex-wrap mt-1">
+                    @if($ledgerStats['draft_count'] > 0)
+                        <x-tallui-badge type="warning" size="sm">{{ $ledgerStats['draft_count'] }} draft</x-tallui-badge>
+                    @endif
+                    @if($ledgerStats['void_count'] > 0)
+                        <x-tallui-badge type="error" size="sm">{{ $ledgerStats['void_count'] }} void</x-tallui-badge>
+                    @endif
+                </div>
             </div>
         </div>
     </a>
@@ -301,6 +331,7 @@
 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
     @foreach([
         ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',      'color' => 'primary',   'route' => 'accounting.journal'],
+        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',          'color' => 'accent',    'route' => 'accounting.ledger'],
         ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',       'color' => 'success',   'route' => 'accounting.invoices'],
         ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',       'color' => 'warning',   'route' => 'accounting.bills'],
         ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',               'color' => 'info',      'route' => 'accounting.customers'],
@@ -445,6 +476,7 @@
 {{-- ── Recent Journal Entries ───────────────────────────────────────────── --}}
 <x-tallui-card title="Recent Journal Entries" icon="o-clock">
     <x-slot:actions>
+        <x-tallui-button label="Ledger" icon="o-book-open" :link="route('accounting.ledger')" class="btn-ghost btn-xs" />
         <x-tallui-button label="View All" icon="o-arrow-right" :link="route('accounting.journal')" class="btn-ghost btn-xs" />
         <x-tallui-button label="New Entry" icon="o-plus" :link="route('accounting.journal')" class="btn-primary btn-xs" />
     </x-slot:actions>

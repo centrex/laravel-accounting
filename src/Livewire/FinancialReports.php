@@ -18,6 +18,8 @@ class FinancialReports extends Component
 
     public string $endDate;
 
+    public string $sbuCode = '';
+
     public ?array $reportData = null;
 
     public string $currency;
@@ -36,24 +38,52 @@ class FinancialReports extends Component
 
     public function generateReport(): void
     {
-        $service = app(Accounting::class);
-
         try {
-            $this->reportData = match ($this->reportType) {
-                'trial_balance'    => $service->getTrialBalance($this->startDate, $this->endDate),
-                'balance_sheet'    => $service->getBalanceSheet($this->endDate),
-                'income_statement' => $service->getIncomeStatement($this->startDate, $this->endDate),
-                'cash_flow'        => $service->getCashFlowStatement($this->startDate, $this->endDate),
-                default            => null,
-            };
+            $this->reportData = $this->resolveReportData();
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
     }
 
-    public function exportPdf(): void
+    public function exportPdf()
     {
-        session()->flash('message', 'Export feature coming soon!');
+        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            session()->flash('error', 'PDF export is not available in this environment.');
+
+            return null;
+        }
+
+        try {
+            $reportData = $this->resolveReportData();
+
+            if ($reportData === null) {
+                session()->flash('error', 'Generate a report before exporting it.');
+
+                return null;
+            }
+
+            $this->reportData = $reportData;
+        } catch (\Throwable $e) {
+            session()->flash('error', $e->getMessage());
+
+            return null;
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.financial-report', [
+            'reportType' => $this->reportType,
+            'reportTitle' => $this->reportTitle(),
+            'reportData' => $this->reportData,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+            'sbuCode' => $this->normalizedSbuCode(),
+            'currency' => $this->currency,
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            static fn () => print($pdf->output()),
+            $this->pdfFilename(),
+        );
     }
 
     public function render(): \Illuminate\Contracts\View\View
@@ -63,5 +93,44 @@ class FinancialReports extends Component
         : 'components.layouts.app';
 
         return view('accounting::livewire.financial-reports')->layout($layout, ['title' => __('Financial Reports')]);
+    }
+
+    private function resolveReportData(): ?array
+    {
+        $service = app(Accounting::class);
+
+        return match ($this->reportType) {
+            'trial_balance'    => $service->getTrialBalance($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'balance_sheet'    => $service->getBalanceSheet($this->endDate, $this->normalizedSbuCode()),
+            'income_statement' => $service->getIncomeStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'cash_flow'        => $service->getCashFlowStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            default            => null,
+        };
+    }
+
+    private function normalizedSbuCode(): ?string
+    {
+        $value = strtoupper(trim($this->sbuCode));
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function reportTitle(): string
+    {
+        return match ($this->reportType) {
+            'trial_balance' => 'Trial Balance',
+            'balance_sheet' => 'Balance Sheet',
+            'income_statement' => 'Income Statement',
+            'cash_flow' => 'Cash Flow Statement',
+            default => 'Financial Report',
+        };
+    }
+
+    private function pdfFilename(): string
+    {
+        return str($this->reportType)
+            ->replace('_', '-')
+            ->append('-' . now()->format('Ymd_His') . '.pdf')
+            ->toString();
     }
 }

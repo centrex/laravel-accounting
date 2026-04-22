@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Http\Controllers\Api;
 
 use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Models\Account;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 
@@ -17,12 +18,14 @@ class ReportController extends Controller
         $request->validate([
             'start_date' => ['nullable', 'date'],
             'end_date'   => ['nullable', 'date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
         ]);
 
         try {
             $data = $this->accounting->getTrialBalance(
                 $request->start_date,
                 $request->end_date ?? now()->toDateString(),
+                $request->string('sbu_code')->toString(),
             );
 
             return response()->json([
@@ -49,10 +52,16 @@ class ReportController extends Controller
 
     public function balanceSheet(Request $request): JsonResponse
     {
-        $request->validate(['date' => ['nullable', 'date']]);
+        $request->validate([
+            'date'     => ['nullable', 'date'],
+            'sbu_code' => ['nullable', 'string', 'max:50'],
+        ]);
 
         try {
-            $data = $this->accounting->getBalanceSheet($request->date ?? now()->toDateString());
+            $data = $this->accounting->getBalanceSheet(
+                $request->date ?? now()->toDateString(),
+                $request->string('sbu_code')->toString(),
+            );
 
             return response()->json(['data' => $this->formatAccountGroups($data)]);
         } catch (\Throwable $e) {
@@ -65,10 +74,15 @@ class ReportController extends Controller
         $request->validate([
             'start_date' => ['required', 'date'],
             'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
         ]);
 
         try {
-            $data = $this->accounting->getIncomeStatement($request->start_date, $request->end_date);
+            $data = $this->accounting->getIncomeStatement(
+                $request->start_date,
+                $request->end_date,
+                $request->string('sbu_code')->toString(),
+            );
 
             return response()->json(['data' => $this->formatAccountGroups($data)]);
         } catch (\Throwable $e) {
@@ -81,12 +95,58 @@ class ReportController extends Controller
         $request->validate([
             'start_date' => ['required', 'date'],
             'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
         ]);
 
         try {
-            $data = $this->accounting->getCashFlowStatement($request->start_date, $request->end_date);
+            $data = $this->accounting->getCashFlowStatement(
+                $request->start_date,
+                $request->end_date,
+                $request->string('sbu_code')->toString(),
+            );
 
             return response()->json(['data' => $data]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function generalLedger(Request $request): JsonResponse
+    {
+        $request->validate([
+            'account_id' => ['nullable', 'integer', 'exists:'.(new Account())->getTable().',id'],
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
+        ]);
+
+        try {
+            $data = $this->accounting->getGeneralLedger(
+                $request->integer('account_id') ?: null,
+                $request->start_date,
+                $request->end_date ?? now()->toDateString(),
+                $request->string('sbu_code')->toString(),
+            );
+
+            return response()->json([
+                'data' => [
+                    'period' => $data['period'],
+                    'accounts' => collect($data['accounts'])->map(fn (array $row): array => [
+                        'account' => [
+                            'id' => $row['account']->id,
+                            'code' => $row['account']->code,
+                            'name' => $row['account']->name,
+                            'type' => $row['account']->type instanceof \BackedEnum ? $row['account']->type->value : (string) $row['account']->type,
+                            'subtype' => $row['account']->subtype instanceof \BackedEnum ? $row['account']->subtype->value : (string) $row['account']->subtype,
+                        ],
+                        'opening_balance' => $row['opening_balance'],
+                        'closing_balance' => $row['closing_balance'],
+                        'period_debits' => $row['period_debits'],
+                        'period_credits' => $row['period_credits'],
+                        'entries' => array_values($row['entries']),
+                    ])->values(),
+                ],
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }

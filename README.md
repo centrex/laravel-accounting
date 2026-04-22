@@ -141,6 +141,10 @@ $pl = Accounting::getIncomeStatement('2025-01-01', '2025-12-31');
 // Cash Flow Statement
 $cf = Accounting::getCashFlowStatement('2025-01-01', '2025-12-31');
 // ['operating_activities' => x, 'investing_activities' => x, 'financing_activities' => x, 'net_change' => x]
+
+// General Ledger
+$gl = Accounting::getGeneralLedger($cashAccountId, '2025-01-01', '2025-12-31');
+// ['period' => [...], 'accounts' => [['account' => ..., 'opening_balance' => x, 'entries' => [...], 'closing_balance' => x]]]
 ```
 
 ### Fiscal year closing
@@ -162,6 +166,7 @@ All routes are protected by `web_middleware` (default `['web', 'auth']`) under t
 | `accounting.dashboard` | `/accounting/dashboard` | Overview dashboard |
 | `accounting.accounts` | `/accounting/accounts` | Chart of accounts |
 | `accounting.journal` | `/accounting/journal-entries` | Journal entries |
+| `accounting.ledger` | `/accounting/ledger` | General ledger |
 | `accounting.invoices` | `/accounting/invoices` | Invoice management |
 | `accounting.bills` | `/accounting/bills` | Bill management |
 | `accounting.customers` | `/accounting/customers` | Customer list |
@@ -189,6 +194,7 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | GET | `/api/accounting/reports/balance-sheet` | balance sheet |
 | GET | `/api/accounting/reports/income-statement` | P&L |
 | GET | `/api/accounting/reports/cash-flow` | cash flow |
+| GET | `/api/accounting/reports/general-ledger` | general ledger |
 
 ## Testing
 

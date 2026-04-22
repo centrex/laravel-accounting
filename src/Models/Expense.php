@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Support\Facades\DB;
 
 class Expense extends Model
@@ -76,6 +76,11 @@ class Expense extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ExpenseItem::class);
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     public function getBalanceAttribute(): float

@@ -69,6 +69,7 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+        Route::get('reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
 
         // Expenses
         Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');

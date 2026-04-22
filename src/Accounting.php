@@ -64,6 +64,127 @@ class Accounting
         return round($value * $this->normalizeExchangeRate($exchangeRate), 2);
     }
 
+    private function normalizeSbuCode(?string $sbuCode): ?string
+    {
+        $value = strtoupper(trim((string) $sbuCode));
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function applySbuFilter(mixed $query, ?string $sbuCode, string $journalEntryAlias = 'je'): mixed
+    {
+        $sbuCode = $this->normalizeSbuCode($sbuCode);
+
+        if ($sbuCode === null) {
+            return $query;
+        }
+
+        return $query->where("{$journalEntryAlias}.sbu_code", $sbuCode);
+    }
+
+    private function extractSbuCodeFromMeta(mixed $meta): ?string
+    {
+        if (! is_array($meta)) {
+            return null;
+        }
+
+        return $this->normalizeSbuCode(
+            $meta['default_sbu'] ?? $meta['sbu_code'] ?? $meta['sbu'] ?? null,
+        );
+    }
+
+    private function resolveModelSbuCode(mixed $model): ?string
+    {
+        if (! is_object($model)) {
+            return null;
+        }
+
+        $meta = method_exists($model, 'getAttribute')
+            ? $model->getAttribute('meta')
+            : ($model->meta ?? null);
+
+        return $this->extractSbuCodeFromMeta($meta);
+    }
+
+    private function resolveWarehouseSbuCode(?int $warehouseId): ?string
+    {
+        if ($warehouseId === null || ! class_exists('Centrex\\Inventory\\Models\\Warehouse')) {
+            return null;
+        }
+
+        $warehouseClass = 'Centrex\\Inventory\\Models\\Warehouse';
+        $warehouse = $warehouseClass::query()->find($warehouseId);
+
+        return $this->resolveModelSbuCode($warehouse);
+    }
+
+    private function resolveInvoiceSbuCode(Invoice $invoice): ?string
+    {
+        $existingEntrySbu = $this->normalizeSbuCode($invoice->journalEntry?->sbu_code);
+
+        if ($existingEntrySbu !== null) {
+            return $existingEntrySbu;
+        }
+
+        if ($invoice->inventory_sale_order_id !== null && class_exists('Centrex\\Inventory\\Models\\SaleOrder')) {
+            $saleOrderClass = 'Centrex\\Inventory\\Models\\SaleOrder';
+            $saleOrder = $saleOrderClass::query()
+                ->with(['warehouse', 'customer.modelable'])
+                ->find($invoice->inventory_sale_order_id);
+
+            $sbuCode = $this->resolveWarehouseSbuCode($saleOrder?->warehouse_id);
+            $sbuCode ??= $this->resolveModelSbuCode($saleOrder?->customer?->modelable);
+            $sbuCode ??= $this->resolveModelSbuCode($saleOrder?->customer);
+
+            if ($sbuCode !== null) {
+                return $sbuCode;
+            }
+        }
+
+        $customer = $invoice->relationLoaded('customer') ? $invoice->customer : $invoice->customer()->with('modelable')->first();
+
+        return $this->resolveModelSbuCode($customer?->modelable) ?? $this->resolveModelSbuCode($customer);
+    }
+
+    private function resolveBillSbuCode(Bill $bill): ?string
+    {
+        $existingEntrySbu = $this->normalizeSbuCode($bill->journalEntry?->sbu_code);
+
+        if ($existingEntrySbu !== null) {
+            return $existingEntrySbu;
+        }
+
+        if ($bill->inventory_purchase_order_id !== null && class_exists('Centrex\\Inventory\\Models\\PurchaseOrder')) {
+            $purchaseOrderClass = 'Centrex\\Inventory\\Models\\PurchaseOrder';
+            $purchaseOrder = $purchaseOrderClass::query()
+                ->with(['warehouse', 'supplier.modelable'])
+                ->find($bill->inventory_purchase_order_id);
+
+            $sbuCode = $this->resolveWarehouseSbuCode($purchaseOrder?->warehouse_id);
+            $sbuCode ??= $this->resolveModelSbuCode($purchaseOrder?->supplier?->modelable);
+            $sbuCode ??= $this->resolveModelSbuCode($purchaseOrder?->supplier);
+
+            if ($sbuCode !== null) {
+                return $sbuCode;
+            }
+        }
+
+        $vendor = $bill->relationLoaded('vendor') ? $bill->vendor : $bill->vendor()->with('modelable')->first();
+
+        return $this->resolveModelSbuCode($vendor?->modelable) ?? $this->resolveModelSbuCode($vendor);
+    }
+
+    private function resolveExpenseSbuCode(Expense $expense, ?array $paymentData = null): ?string
+    {
+        $paymentSbu = $this->normalizeSbuCode($paymentData['sbu_code'] ?? null);
+
+        if ($paymentSbu !== null) {
+            return $paymentSbu;
+        }
+
+        return $this->normalizeSbuCode($expense->journalEntry?->sbu_code);
+    }
+
     /**
      * Normalize a journal payload into base currency before persistence.
      *
@@ -102,12 +223,12 @@ class Accounting
      * Returns a Collection keyed by account_id, each item having
      * `total_debit` and `total_credit` properties.
      */
-    private function buildBalanceMap(mixed $startDate, mixed $endDate): Collection
+    private function buildBalanceMap(mixed $startDate, mixed $endDate, ?string $sbuCode = null): Collection
     {
         $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
-        return DB::connection($connection)
+        $query = DB::connection($connection)
             ->table("{$prefix}journal_entry_lines as l")
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
@@ -120,8 +241,9 @@ class Accounting
                 DB::raw("SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit"),
             ])
             ->groupBy('l.account_id')
-            ->get()
-            ->keyBy('account_id');
+        ;
+
+        return $this->applySbuFilter($query, $sbuCode)->get()->keyBy('account_id');
     }
 
     // -------------------------------------------------------------------------
@@ -132,12 +254,13 @@ class Accounting
      * Create a balanced journal entry with lines.
      *
      * @param  array{date: string, reference?: string, type?: string, description?: string,
-     *               currency?: string, exchange_rate?: float, lines: list<array{account_id: int,
+     *               currency?: string, exchange_rate?: float, sbu_code?: string, lines: list<array{account_id: int,
      *               type: string, amount: float, description?: string, reference?: string}>} $data
      */
     public function createJournalEntry(array $data): JournalEntry
     {
         $data = $this->normalizeJournalPayload($data);
+        $data['sbu_code'] = $this->normalizeSbuCode($data['sbu_code'] ?? null);
         $usesGeneratedEntryNumber = empty($data['entry_number']);
 
         return DB::transaction(function () use ($data, $usesGeneratedEntryNumber): JournalEntry {
@@ -159,6 +282,7 @@ class Accounting
                         'source_type'   => $data['source_type'] ?? null,
                         'source_id'     => $data['source_id'] ?? null,
                         'source_action' => $data['source_action'] ?? null,
+                        'sbu_code'      => $data['sbu_code'] ?? null,
                     ]);
 
                     foreach ($data['lines'] as $line) {
@@ -232,6 +356,7 @@ class Accounting
                 'description'   => "Invoice {$invoice->invoice_number} - {$invoice->customer?->name}",
                 'currency'      => $invoice->currency ?? config('accounting.base_currency', 'BDT'),
                 'exchange_rate' => $invoice->exchange_rate ?? 1.0,
+                'sbu_code'      => $this->resolveInvoiceSbuCode($invoice),
                 'lines'         => [
                     ['account_id' => $arAccount->id,      'type' => 'debit',  'amount' => $invoice->total,      'description' => 'Accounts Receivable'],
                     ['account_id' => $revenueAccount->id, 'type' => 'credit', 'amount' => $netRevenueAmount, 'description' => $discountAmount > 0 ? 'Sales Revenue (net of discount)' : 'Sales Revenue'],
@@ -299,6 +424,7 @@ class Accounting
                 'reference'   => $payment->payment_number,
                 'description' => "Payment received for Invoice {$invoice->invoice_number}",
                 'currency'    => $invoice->currency ?? config('accounting.base_currency', 'BDT'),
+                'sbu_code'    => $this->normalizeSbuCode($paymentData['sbu_code'] ?? null) ?? $this->resolveInvoiceSbuCode($invoice),
                 'lines'       => [
                     ['account_id' => $cashAccount->id, 'type' => 'debit',  'amount' => $amount, 'description' => 'Cash received'],
                     ['account_id' => $arAccount->id,   'type' => 'credit', 'amount' => $amount, 'description' => 'Accounts Receivable'],
@@ -340,6 +466,7 @@ class Accounting
                 'description'   => "Bill {$bill->bill_number} - {$bill->vendor?->name}",
                 'currency'      => $bill->currency ?? config('accounting.base_currency', 'BDT'),
                 'exchange_rate' => $bill->exchange_rate ?? 1.0,
+                'sbu_code'      => $this->resolveBillSbuCode($bill),
                 'lines'         => [
                     ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $bill->subtotal,   'description' => 'Expense'],
                     ['account_id' => $taxAccount->id,     'type' => 'debit',  'amount' => $bill->tax_amount, 'description' => 'Tax'],
@@ -397,6 +524,7 @@ class Accounting
                 'reference'   => $payment->payment_number,
                 'description' => "Payment for Bill {$bill->bill_number}",
                 'currency'    => $bill->currency ?? config('accounting.base_currency', 'BDT'),
+                'sbu_code'    => $this->normalizeSbuCode($paymentData['sbu_code'] ?? null) ?? $this->resolveBillSbuCode($bill),
                 'lines'       => [
                     ['account_id' => $apAccount->id,   'type' => 'debit',  'amount' => $amount, 'description' => 'Accounts Payable'],
                     ['account_id' => $cashAccount->id, 'type' => 'credit', 'amount' => $amount, 'description' => 'Cash paid'],
@@ -461,6 +589,7 @@ class Accounting
                 'description'   => "Expense {$expense->expense_number}" . ($expense->vendor_name ? " - {$expense->vendor_name}" : ''),
                 'currency'      => $expense->currency ?? config('accounting.base_currency', 'BDT'),
                 'exchange_rate' => $expense->exchange_rate ?? 1.0,
+                'sbu_code'      => $this->resolveExpenseSbuCode($expense),
                 'lines'         => $lines,
             ]);
 
@@ -518,6 +647,7 @@ class Accounting
                 'reference'   => $payment->payment_number,
                 'description' => "Expense payment {$expense->expense_number}",
                 'currency'    => $expense->currency ?? config('accounting.base_currency', 'BDT'),
+                'sbu_code'    => $this->resolveExpenseSbuCode($expense, $paymentData),
                 'lines'       => [
                     ['account_id' => $payableAccount->id, 'type' => 'debit',  'amount' => $amount, 'description' => 'Expense payable'],
                     ['account_id' => $cashAccount->id,    'type' => 'credit', 'amount' => $amount, 'description' => 'Cash paid'],
@@ -541,11 +671,11 @@ class Accounting
     // -------------------------------------------------------------------------
 
     /** Generate Trial Balance. Uses a single aggregated SQL query instead of N+1. */
-    public function getTrialBalance(mixed $startDate = null, mixed $endDate = null): array
+    public function getTrialBalance(mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
     {
         $tolerance = $this->tolerance();
         $accounts = Account::where('is_active', true)->orderBy('code')->get();
-        $balanceMap = $this->buildBalanceMap($startDate, $endDate);
+        $balanceMap = $this->buildBalanceMap($startDate, $endDate, $sbuCode);
 
         $trialBalance = [];
         $totalDebits = 0.0;
@@ -583,19 +713,20 @@ class Accounting
             'total_debits'  => $totalDebits,
             'total_credits' => $totalCredits,
             'is_balanced'   => abs($totalDebits - $totalCredits) < ($tolerance * 2),
+            'sbu_code'      => $this->normalizeSbuCode($sbuCode),
         ];
     }
 
     /** Generate Balance Sheet (point-in-time). */
-    public function getBalanceSheet(mixed $date = null): array
+    public function getBalanceSheet(mixed $date = null, ?string $sbuCode = null): array
     {
         $date ??= now();
 
-        $assets = $this->getAccountsByType('asset', $date);
-        $liabilities = $this->getAccountsByType('liability', $date);
-        $equity = $this->getAccountsByType('equity', $date);
+        $assets = $this->getAccountsByType('asset', $date, null, $sbuCode);
+        $liabilities = $this->getAccountsByType('liability', $date, null, $sbuCode);
+        $equity = $this->getAccountsByType('equity', $date, null, $sbuCode);
 
-        $netIncome = $this->getNetIncome(null, $date);
+        $netIncome = $this->getNetIncome(null, $date, $sbuCode);
         $retainedEarnings = ($equity['total'] ?? 0) + $netIncome;
 
         return [
@@ -607,6 +738,7 @@ class Accounting
                 'retained_earnings' => $retainedEarnings,
                 'total_with_income' => ($liabilities['total'] ?? 0) + $retainedEarnings,
             ]),
+            'sbu_code'    => $this->normalizeSbuCode($sbuCode),
             'is_balanced' => abs(
                 ($assets['total'] ?? 0) - (($liabilities['total'] ?? 0) + $retainedEarnings),
             ) < ($this->tolerance() * 2),
@@ -614,10 +746,10 @@ class Accounting
     }
 
     /** Generate Income Statement (P&L). */
-    public function getIncomeStatement(mixed $startDate, mixed $endDate): array
+    public function getIncomeStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
     {
-        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
-        $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate, $sbuCode);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode);
 
         return [
             'period'       => ['start' => $startDate, 'end' => $endDate],
@@ -625,6 +757,7 @@ class Accounting
             'expenses'     => $expenses,
             'gross_profit' => $revenue['total'] ?? 0,
             'net_income'   => ($revenue['total'] ?? 0) - ($expenses['total'] ?? 0),
+            'sbu_code'     => $this->normalizeSbuCode($sbuCode),
         ];
     }
 
@@ -632,14 +765,17 @@ class Accounting
      * Generate Cash Flow Statement.
      * Eager-loads journalEntry.lines.account to avoid N+1 per transaction.
      */
-    public function getCashFlowStatement(mixed $startDate, mixed $endDate): array
+    public function getCashFlowStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
     {
         $cashAccount = Account::where('code', '1000')->where('is_active', true)->first()
             ?? throw AccountNotFoundException::forCode('1000');
 
         // Eager-load lines + accounts — eliminates N queries in the loop below
         $transactions = $cashAccount->journalEntryLines()
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->whereBetween('date', [$startDate, $endDate]))
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate, $sbuCode) {
+                $q->where('status', 'posted')->whereBetween('date', [$startDate, $endDate]);
+                $this->applySbuFilter($q, $sbuCode, $q->getModel()->getTable());
+            })
             ->with(['journalEntry.lines.account'])
             ->get();
 
@@ -680,6 +816,149 @@ class Accounting
             'investing_activities' => $investing,
             'financing_activities' => $financing,
             'net_change'           => $operating + $investing + $financing,
+            'sbu_code'             => $this->normalizeSbuCode($sbuCode),
+        ];
+    }
+
+    /**
+     * Generate General Ledger.
+     *
+     * Returns posted journal lines grouped by account, with opening and running
+     * balances using the account's normal balance side.
+     */
+    public function getGeneralLedger(?int $accountId = null, mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
+    {
+        $tolerance = $this->tolerance();
+        $accounts = Account::query()
+            ->where('is_active', true)
+            ->when($accountId !== null, fn ($q) => $q->whereKey($accountId))
+            ->orderBy('code')
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            return [
+                'period' => ['start' => $startDate, 'end' => $endDate],
+                'accounts' => [],
+                'sbu_code' => $this->normalizeSbuCode($sbuCode),
+            ];
+        }
+
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $accountIds = $accounts->pluck('id')->all();
+
+        $openingMap = collect();
+
+        if ($startDate !== null) {
+            $openingQuery = DB::table("{$prefix}journal_entry_lines as l")
+                ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+                ->where('je.status', 'posted')
+                ->whereIn('l.account_id', $accountIds)
+                ->whereDate('je.date', '<', $startDate)
+                ->groupBy('l.account_id')
+                ->selectRaw(
+                    "l.account_id,
+                    SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
+                    SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit"
+                );
+
+            $openingMap = $this->applySbuFilter($openingQuery, $sbuCode)->get()->keyBy('account_id');
+        }
+
+        $lineQuery = DB::table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereIn('l.account_id', $accountIds)
+            ->when($startDate !== null, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
+            ->when($endDate !== null, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->orderBy('l.account_id')
+            ->orderBy('je.date')
+            ->orderBy('je.id')
+            ->orderBy('l.id')
+            ->select([
+                'l.id as line_id',
+                'l.account_id',
+                'l.type',
+                'l.amount',
+                'l.description as line_description',
+                'l.reference as line_reference',
+                'je.id as journal_entry_id',
+                'je.entry_number',
+                'je.date',
+                'je.reference as journal_reference',
+                'je.description as journal_description',
+                'je.type as journal_type',
+                'je.sbu_code',
+            ]);
+
+        $lineMap = $this->applySbuFilter($lineQuery, $sbuCode)->get()->groupBy('account_id');
+
+        $ledgerAccounts = [];
+
+        foreach ($accounts as $account) {
+            $openingRow = $openingMap->get($account->id);
+            $openingDebits = (float) ($openingRow?->total_debit ?? 0);
+            $openingCredits = (float) ($openingRow?->total_credit ?? 0);
+            $openingBalance = $account->isDebitAccount()
+                ? ($openingDebits - $openingCredits)
+                : ($openingCredits - $openingDebits);
+
+            $runningBalance = $openingBalance;
+            $periodDebits = 0.0;
+            $periodCredits = 0.0;
+            $entries = [];
+
+            foreach ($lineMap->get($account->id, collect()) as $row) {
+                $debit = $row->type === 'debit' ? (float) $row->amount : 0.0;
+                $credit = $row->type === 'credit' ? (float) $row->amount : 0.0;
+                $delta = $account->isDebitAccount()
+                    ? ($debit - $credit)
+                    : ($credit - $debit);
+
+                $periodDebits += $debit;
+                $periodCredits += $credit;
+                $runningBalance += $delta;
+
+                $entries[] = [
+                    'line_id' => (int) $row->line_id,
+                    'journal_entry_id' => (int) $row->journal_entry_id,
+                    'entry_number' => $row->entry_number,
+                    'date' => $row->date,
+                    'reference' => $row->line_reference ?: $row->journal_reference,
+                    'journal_type' => $row->journal_type,
+                    'journal_description' => $row->journal_description,
+                    'line_description' => $row->line_description,
+                    'sbu_code' => $row->sbu_code,
+                    'debit' => $debit,
+                    'credit' => $credit,
+                    'running_balance' => $runningBalance,
+                ];
+            }
+
+            $closingBalance = $runningBalance;
+
+            if (
+                $accountId === null
+                && abs($openingBalance) < $tolerance
+                && abs($closingBalance) < $tolerance
+                && $entries === []
+            ) {
+                continue;
+            }
+
+            $ledgerAccounts[] = [
+                'account' => $account,
+                'opening_balance' => $openingBalance,
+                'closing_balance' => $closingBalance,
+                'period_debits' => $periodDebits,
+                'period_credits' => $periodCredits,
+                'entries' => $entries,
+            ];
+        }
+
+        return [
+            'period' => ['start' => $startDate, 'end' => $endDate],
+            'accounts' => $ledgerAccounts,
+            'sbu_code' => $this->normalizeSbuCode($sbuCode),
         ];
     }
 
@@ -919,10 +1198,10 @@ class Accounting
     // -------------------------------------------------------------------------
 
     /** Get net income by type using the shared balance map. */
-    protected function getNetIncome(mixed $startDate, mixed $endDate): float
+    protected function getNetIncome(mixed $startDate, mixed $endDate, ?string $sbuCode = null): float
     {
-        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate);
-        $expenses = $this->getAccountsByType('expense', $endDate, $startDate);
+        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate, $sbuCode);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode);
 
         return (float) (($revenue['total'] ?? 0) - ($expenses['total'] ?? 0));
     }
@@ -931,11 +1210,11 @@ class Accounting
      * Get accounts of a given type with their balances.
      * Uses the shared balance map — no per-account queries.
      */
-    protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null): array
+    protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null, ?string $sbuCode = null): array
     {
         $tolerance = $this->tolerance();
         $accounts = Account::where('type', $type)->where('is_active', true)->orderBy('code')->get();
-        $balanceMap = $this->buildBalanceMap($startDate, $endDate);
+        $balanceMap = $this->buildBalanceMap($startDate, $endDate, $sbuCode);
 
         $accountsData = [];
         $total = 0.0;
@@ -955,6 +1234,6 @@ class Accounting
             }
         }
 
-        return ['accounts' => $accountsData, 'total' => $total];
+        return ['accounts' => $accountsData, 'total' => $total, 'sbu_code' => $this->normalizeSbuCode($sbuCode)];
     }
 }

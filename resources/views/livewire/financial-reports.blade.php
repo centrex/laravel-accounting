@@ -9,7 +9,7 @@
 
 {{-- ── Report Configuration ─────────────────────────────────────────────── --}}
 <x-tallui-card padding="compact">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-1">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-1">
         <x-tallui-form-group label="Report Type">
             <x-tallui-select wire:model.live="reportType" class="select-sm">
                 <option value="trial_balance">Trial Balance</option>
@@ -25,6 +25,14 @@
 
         <x-tallui-form-group label="End Date">
             <x-tallui-input type="date" wire:model="endDate" class="input-sm" />
+        </x-tallui-form-group>
+
+        <x-tallui-form-group label="SBU Code">
+            <x-tallui-input
+                wire:model.live.debounce.300ms="sbuCode"
+                class="input-sm"
+                placeholder="All SBUs or e.g. OCT"
+            />
         </x-tallui-form-group>
 
         <div class="flex items-end">
@@ -66,6 +74,9 @@
                     As of {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
                 @else
                     {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} – {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
+                @endif
+                @if(($reportData['sbu_code'] ?? null) || $sbuCode !== '')
+                    · SBU: {{ $reportData['sbu_code'] ?? strtoupper($sbuCode) }}
                 @endif
             </p>
         </div>
