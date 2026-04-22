@@ -213,6 +213,9 @@
         <x-tallui-form-group label="Reference">
             <x-tallui-input wire:model="pay_reference" placeholder="Transaction ID, check #…" />
         </x-tallui-form-group>
+        <x-tallui-form-group label="Notes">
+            <x-tallui-textarea wire:model="pay_notes" rows="2" placeholder="Payment notes…" />
+        </x-tallui-form-group>
     </form>
 
     <x-slot:footer>

@@ -59,12 +59,43 @@ class Invoices extends Component
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
 
-        if (request()->query('action') === 'pay' && request()->filled('invoice')) {
-            $invoiceId = (int) request()->query('invoice');
+        $this->handleRequestedAction();
+    }
 
-            if ($invoiceId > 0 && Invoice::query()->whereKey($invoiceId)->exists()) {
-                $this->openPayModal($invoiceId);
+    protected function handleRequestedAction(): void
+    {
+        if (!request()->filled('invoice')) {
+            return;
+        }
+
+        $invoiceId = (int) request()->query('invoice');
+
+        if ($invoiceId <= 0) {
+            return;
+        }
+
+        $invoice = Invoice::query()->find($invoiceId);
+
+        if (!$invoice) {
+            return;
+        }
+
+        $action = (string) request()->query('action', '');
+
+        if (in_array($action, ['post', 'post-and-pay'], true) && ($invoice->status->value ?? (string) $invoice->status) === 'draft') {
+            try {
+                app(Accounting::class)->postInvoice($invoice);
+                $invoice->refresh();
+                $this->dispatch('notify', type: 'success', message: "Invoice {$invoice->invoice_number} posted.");
+            } catch (\Throwable $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+                return;
             }
+        }
+
+        if (in_array($action, ['pay', 'post-and-pay'], true)) {
+            $this->openPayModal($invoiceId);
         }
     }
 

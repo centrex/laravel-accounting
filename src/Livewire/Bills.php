@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Models\{Bill, BillItem, Payment, Vendor};
+use Centrex\Accounting\Models\{Bill, BillItem, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 
@@ -49,6 +49,8 @@ class Bills extends Component
 
     public string $pay_reference = '';
 
+    public string $pay_notes = '';
+
     protected array $queryString = ['search', 'statusFilter'];
 
     public function mount(): void
@@ -58,12 +60,43 @@ class Bills extends Component
         $this->currency = config('accounting.base_currency', 'BDT');
         $this->addItem();
 
-        if (request()->query('action') === 'pay' && request()->filled('bill')) {
-            $billId = (int) request()->query('bill');
+        $this->handleRequestedAction();
+    }
 
-            if ($billId > 0 && Bill::query()->whereKey($billId)->exists()) {
-                $this->openPayModal($billId);
+    protected function handleRequestedAction(): void
+    {
+        if (!request()->filled('bill')) {
+            return;
+        }
+
+        $billId = (int) request()->query('bill');
+
+        if ($billId <= 0) {
+            return;
+        }
+
+        $bill = Bill::query()->find($billId);
+
+        if (!$bill) {
+            return;
+        }
+
+        $action = (string) request()->query('action', '');
+
+        if (in_array($action, ['post', 'post-and-pay'], true) && ($bill->status->value ?? (string) $bill->status) === 'draft') {
+            try {
+                app(Accounting::class)->postBill($bill);
+                $bill->refresh();
+                $this->dispatch('notify', type: 'success', message: "Bill {$bill->bill_number} approved.");
+            } catch (\Throwable $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+                return;
             }
+        }
+
+        if (in_array($action, ['pay', 'post-and-pay'], true)) {
+            $this->openPayModal($billId);
         }
     }
 
@@ -163,6 +196,7 @@ class Bills extends Component
         $this->pay_amount = number_format($bill->balance, 2, '.', '');
         $this->pay_method = 'bank_transfer';
         $this->pay_reference = '';
+        $this->pay_notes = '';
         $this->showPayModal = true;
     }
 
@@ -176,23 +210,20 @@ class Bills extends Component
 
         $bill = Bill::findOrFail($this->payingBillId);
 
-        DB::transaction(function () use ($bill): void {
-            Payment::create([
-                'payable_type'   => Bill::class,
-                'payable_id'     => $bill->id,
-                'payment_date'   => $this->pay_date,
-                'amount'         => $this->pay_amount,
-                'payment_method' => $this->pay_method,
-                'reference'      => $this->pay_reference ?: null,
+        try {
+            app(Accounting::class)->recordBillPayment($bill, [
+                'date'      => $this->pay_date,
+                'amount'    => $this->pay_amount,
+                'method'    => $this->pay_method,
+                'reference' => $this->pay_reference ?: null,
+                'notes'     => $this->pay_notes ?: null,
             ]);
 
-            $bill->increment('paid_amount', $this->pay_amount);
-            $bill->refresh();
-            $bill->update(['status' => (float) $bill->paid_amount >= (float) $bill->total ? 'settled' : 'partially_settled']);
-        });
-
-        $this->dispatch('notify', type: 'success', message: 'Payment recorded!');
-        $this->showPayModal = false;
+            $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');
+            $this->showPayModal = false;
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+        }
     }
 
     public function getSubtotalProperty(): float
