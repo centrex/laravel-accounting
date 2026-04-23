@@ -83,6 +83,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Period Lock
+    |--------------------------------------------------------------------------
+    | When true, posting a journal entry whose date falls inside a closed
+    | FiscalPeriod throws AccountingException. Set to false to disable the
+    | guard (e.g. during data migrations or for legacy back-dating).
+    | Internal closing/adjusting entries always bypass this check.
+    */
+    'enforce_period_lock' => env('ACCOUNTING_ENFORCE_PERIOD_LOCK', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Number Format
     |--------------------------------------------------------------------------
     */

@@ -2,8 +2,8 @@
 <x-tallui-notification />
 
 <x-tallui-page-header
-    title="General Ledger"
-    subtitle="Review posted journal activity with opening, period, and running balances"
+    title="Ledger"
+    subtitle="Review account activity across general, customer, and vendor ledgers"
     icon="o-book-open"
 >
     <x-slot:actions>
@@ -16,6 +16,13 @@
         />
     </x-slot:actions>
 </x-tallui-page-header>
+
+{{-- Ledger tab navigation --}}
+<div role="tablist" class="tabs tabs-boxed w-fit">
+    <a href="{{ route('accounting.ledger') }}" role="tab" class="tab tab-active">General Ledger</a>
+    <a href="{{ route('accounting.ledger.customers') }}" role="tab" class="tab">Customer Ledger</a>
+    <a href="{{ route('accounting.ledger.vendors') }}" role="tab" class="tab">Vendor Ledger</a>
+</div>
 
 <x-tallui-card padding="compact">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-1">

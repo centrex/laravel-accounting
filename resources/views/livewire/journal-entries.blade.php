@@ -20,6 +20,7 @@
                 <x-tallui-select wire:model.live="statusFilter" class="select-sm">
                     <option value="">All</option>
                     <option value="draft">Draft</option>
+                    <option value="submitted">Pending Approval @if($pendingCount > 0)({{ $pendingCount }})@endif</option>
                     <option value="posted">Posted</option>
                     <option value="void">Void</option>
                 </x-tallui-select>
@@ -78,27 +79,55 @@
                             {{ number_format($entry->lines->where('type', 'debit')->sum('amount'), 2) }}
                         </td>
                         <td>
-                            <x-tallui-badge :type="match($entry->status->value ?? $entry->status) {
-                                'posted' => 'success',
-                                'void'   => 'error',
-                                default  => 'warning',
-                            }">
-                                {{ ucfirst($entry->status->value ?? $entry->status) }}
-                            </x-tallui-badge>
+                            @php $statusVal = $entry->status->value ?? $entry->status; @endphp
+                            <div class="flex flex-col gap-1">
+                                <x-tallui-badge :type="match($statusVal) {
+                                    'posted'    => 'success',
+                                    'submitted' => 'info',
+                                    'void'      => 'error',
+                                    default     => 'warning',
+                                }">
+                                    {{ $statusVal === 'submitted' ? 'Pending Approval' : ucfirst($statusVal) }}
+                                </x-tallui-badge>
+                                @if($statusVal === 'submitted' && $entry->submitter)
+                                    <span class="text-xs text-base-content/50">by {{ $entry->submitter->name }}</span>
+                                @endif
+                                @if($statusVal === 'draft' && $entry->reviewer_note)
+                                    <span class="text-xs text-warning" title="{{ $entry->reviewer_note }}">Returned</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="viewEntry({{ $entry->id }})" icon="o-eye" class="btn-ghost btn-xs" />
-                                @if(($entry->status->value ?? $entry->status) === 'draft')
+                                @if($statusVal === 'draft')
                                     <x-tallui-button wire:click="openEditModal({{ $entry->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
+                                    <x-tallui-button
+                                        wire:click="submitEntry({{ $entry->id }})"
+                                        wire:confirm="Submit this entry for approval?"
+                                        label="Submit"
+                                        class="btn-info btn-xs"
+                                        spinner="submitEntry({{ $entry->id }})"
+                                    />
                                 @endif
-                                @if(($entry->status->value ?? $entry->status) === 'draft')
-                                    <x-tallui-button wire:click="postEntry({{ $entry->id }})" wire:confirm="Post this journal entry?" class="btn-success btn-xs" spinner="save">
-                                        Post
-                                    </x-tallui-button>
+                                @if($statusVal === 'submitted')
+                                    <x-tallui-button
+                                        wire:click="postEntry({{ $entry->id }})"
+                                        wire:confirm="Approve and post this journal entry?"
+                                        label="Approve"
+                                        class="btn-success btn-xs"
+                                        spinner="postEntry({{ $entry->id }})"
+                                    />
+                                    <x-tallui-button
+                                        wire:click="returnEntry({{ $entry->id }})"
+                                        wire:confirm="Return this entry to draft?"
+                                        label="Return"
+                                        class="btn-warning btn-xs btn-outline"
+                                        spinner="returnEntry({{ $entry->id }})"
+                                    />
                                 @endif
-                                @if(($entry->status->value ?? $entry->status) === 'posted')
-                                    <x-tallui-button wire:click="voidEntry({{ $entry->id }})" wire:confirm="Void this entry? This cannot be undone." class="btn-error btn-xs btn-outline" spinner="void">
+                                @if($statusVal === 'posted')
+                                    <x-tallui-button wire:click="voidEntry({{ $entry->id }})" wire:confirm="Void this entry? This cannot be undone." class="btn-error btn-xs btn-outline" spinner="voidEntry({{ $entry->id }})">
                                         Void
                                     </x-tallui-button>
                                 @endif

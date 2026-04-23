@@ -26,6 +26,8 @@ class JournalEntries extends Component
 
     public $showDetailModal = false;
 
+    public string $reviewerNote = '';
+
     public $journalEntryId = null;
 
     public $viewingEntry = null;
@@ -221,6 +223,31 @@ class JournalEntries extends Component
         }
     }
 
+    public function submitEntry(int $id): void
+    {
+        $entry = JournalEntry::findOrFail($id);
+
+        try {
+            $entry->submit();
+            session()->flash('message', 'Journal entry submitted for approval.');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function returnEntry(int $id): void
+    {
+        $entry = JournalEntry::findOrFail($id);
+
+        try {
+            $entry->returnToDraft($this->reviewerNote ?: null);
+            $this->reviewerNote = '';
+            session()->flash('message', 'Journal entry returned to draft.');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function voidEntry($id): void
     {
         $entry = JournalEntry::findOrFail($id);
@@ -246,7 +273,7 @@ class JournalEntries extends Component
     public function render()
     {
         $entries = JournalEntry::query()
-            ->with(['lines.account', 'creator'])
+            ->with(['lines.account', 'creator', 'submitter'])
             ->when($this->search, function ($q): void {
                 $q->where(function ($query): void {
                     $query->where('entry_number', 'like', '%' . $this->search . '%')
@@ -260,6 +287,8 @@ class JournalEntries extends Component
             ->latest('date')
             ->paginate(15);
 
+        $pendingCount = JournalEntry::where('status', 'submitted')->count();
+
         $accounts = Account::where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -269,8 +298,9 @@ class JournalEntries extends Component
         : 'components.layouts.app';
 
         return view('accounting::livewire.journal-entries', [
-            'entries'  => $entries,
-            'accounts' => $accounts,
+            'entries'      => $entries,
+            'accounts'     => $accounts,
+            'pendingCount' => $pendingCount,
         ])->layout($layout, ['title' => __('Journal Entries')]);
     }
 }

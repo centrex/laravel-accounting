@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
-use Centrex\Accounting\Models\Customer;
+use Centrex\Accounting\Models\{Customer, Invoice};
 use Livewire\{Component, WithPagination};
 
 class Customers extends Component
@@ -130,7 +130,17 @@ class Customers extends Component
 
     public function render()
     {
+        $customerTable = (new Customer)->getTable();
+
         $customers = Customer::query()
+            ->select("{$customerTable}.*")
+            ->selectSub(
+                Invoice::query()
+                    ->selectRaw('COALESCE(SUM(total - paid_amount), 0)')
+                    ->whereColumn('customer_id', "{$customerTable}.id")
+                    ->whereIn('status', ['issued', 'partially_settled', 'overdue']),
+                'outstanding',
+            )
             ->when($this->search, fn ($q) => $q->where(function ($q): void {
                 $q->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('code', 'like', '%' . $this->search . '%')

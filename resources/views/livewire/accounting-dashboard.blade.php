@@ -182,6 +182,9 @@
                 <div class="text-xl font-bold mt-1">{{ number_format($ledgerStats['posted_count']) }}</div>
                 <div class="text-xs text-base-content/50 mt-1">Posted entries in selected period</div>
                 <div class="flex items-center gap-2 flex-wrap mt-1">
+                    @if($ledgerStats['submitted_count'] > 0)
+                        <x-tallui-badge type="info" size="sm">{{ $ledgerStats['submitted_count'] }} pending</x-tallui-badge>
+                    @endif
                     @if($ledgerStats['draft_count'] > 0)
                         <x-tallui-badge type="warning" size="sm">{{ $ledgerStats['draft_count'] }} draft</x-tallui-badge>
                     @endif
@@ -193,6 +196,97 @@
         </div>
     </a>
 </div>
+
+{{-- ── Action Alerts: Pending Approvals + Period Status ──────────────── --}}
+@if($ledgerStats['submitted_count'] > 0 || $openPeriod)
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    {{-- Pending Approvals --}}
+    @if($ledgerStats['submitted_count'] > 0)
+    <x-tallui-card padding="none">
+        <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <x-tallui-icon name="o-clock" class="w-5 h-5 text-info" />
+                <h3 class="font-semibold text-sm">Pending Approval</h3>
+                <span class="badge badge-info badge-sm">{{ $ledgerStats['submitted_count'] }}</span>
+            </div>
+            <x-tallui-button
+                label="Review All"
+                :link="route('accounting.journal') . '?statusFilter=submitted'"
+                class="btn-ghost btn-xs"
+            />
+        </div>
+        <div class="divide-y divide-base-200">
+            @forelse($pendingJournals as $pj)
+                <div class="px-5 py-3 flex items-center justify-between hover:bg-base-200/40">
+                    <div>
+                        <div class="text-sm font-mono font-medium text-primary">{{ $pj->entry_number }}</div>
+                        <div class="text-xs text-base-content/60 truncate max-w-[220px]">{{ $pj->description }}</div>
+                        <div class="text-xs text-base-content/40 mt-0.5">
+                            by {{ $pj->submitter?->name ?? 'Unknown' }}
+                            · {{ $pj->submitted_at?->diffForHumans() ?? '' }}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-sm font-semibold">
+                            {{ $currency }} {{ number_format($pj->lines->where('type', 'debit')->sum('amount'), 2) }}
+                        </span>
+                        <a href="{{ route('accounting.journal') }}" class="btn btn-success btn-xs">Approve</a>
+                    </div>
+                </div>
+            @empty
+            @endforelse
+        </div>
+    </x-tallui-card>
+    @endif
+
+    {{-- Current Period Status --}}
+    @if($openPeriod)
+    <x-tallui-card>
+        <div class="flex items-center gap-3 mb-3">
+            <x-tallui-icon name="o-calendar-days" class="w-5 h-5 text-secondary" />
+            <h3 class="font-semibold text-sm">Current Accounting Period</h3>
+        </div>
+        <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+                <span class="text-base-content/60">Period</span>
+                <span class="font-medium">{{ $openPeriod->name }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-base-content/60">From</span>
+                <span class="font-mono">{{ \Carbon\Carbon::parse($openPeriod->start_date)->format('M d, Y') }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-base-content/60">Ends</span>
+                <span class="font-mono {{ now()->gt($openPeriod->end_date) ? 'text-error font-semibold' : '' }}">
+                    {{ \Carbon\Carbon::parse($openPeriod->end_date)->format('M d, Y') }}
+                    @if(now()->gt($openPeriod->end_date))
+                        <span class="badge badge-error badge-xs ml-1">Overdue</span>
+                    @else
+                        <span class="text-xs text-base-content/40 ml-1">
+                            ({{ \Carbon\Carbon::parse($openPeriod->end_date)->diffForHumans() }})
+                        </span>
+                    @endif
+                </span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-base-content/60">Status</span>
+                <x-tallui-badge type="success">Open</x-tallui-badge>
+            </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-base-200">
+            <x-tallui-button
+                label="Close Period"
+                icon="o-lock-closed"
+                :link="route('accounting.period-close')"
+                class="btn-outline btn-sm w-full"
+            />
+        </div>
+    </x-tallui-card>
+    @endif
+
+</div>
+@endif
 
 {{-- ── Charts ──────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -325,6 +419,49 @@
         :categories="$forecastChart['categories']"
         :height="240"
     />
+
+    @if (data_get($inventoryForecast, 'available'))
+        <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+            @foreach([
+                ['label' => 'Inventory Cash In', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_in', 0), 'color' => 'success'],
+                ['label' => 'Inventory Cash Out', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_out', 0), 'color' => 'warning'],
+                ['label' => 'Inventory Net', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0), 'color' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0) >= 0 ? 'info' : 'error'],
+                ['label' => 'Replenishment Cost', 'value' => data_get($inventoryForecast, 'summary.required_procurement_cost', 0), 'color' => 'secondary'],
+            ] as $metric)
+                <div class="rounded-xl border border-base-200 bg-base-100 p-3">
+                    <div class="text-xs text-base-content/50">{{ $metric['label'] }}</div>
+                    <div @class([
+                        'mt-1 text-sm font-bold',
+                        'text-success' => $metric['color'] === 'success',
+                        'text-warning' => $metric['color'] === 'warning',
+                        'text-info' => $metric['color'] === 'info',
+                        'text-error' => $metric['color'] === 'error',
+                        'text-secondary' => $metric['color'] === 'secondary',
+                    ])>
+                        {{ $currency }} {{ number_format((float) $metric['value'], 2) }}
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="mt-4 space-y-2">
+            @foreach (data_get($inventoryForecast, 'timeline.categories', []) as $index => $month)
+                <div class="rounded-xl border border-base-200 bg-base-100 px-4 py-3 text-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="font-medium">{{ $month }}</div>
+                        <div class="text-xs text-base-content/50">
+                            {{ number_format((float) data_get($inventoryForecast, "timeline.series.0.data.$index", 0), 2) }} qty
+                        </div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
+                        <div><span class="text-base-content/50">Cash In</span><div class="font-semibold text-success">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.2.data.$index", 0), 2) }}</div></div>
+                        <div><span class="text-base-content/50">Cash Out</span><div class="font-semibold">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.3.data.$index", 0), 2) }}</div></div>
+                        <div><span class="text-base-content/50">Net</span><div class="font-semibold {{ (float) data_get($inventoryForecast, "timeline.series.4.data.$index", 0) >= 0 ? 'text-success' : 'text-error' }}">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.4.data.$index", 0), 2) }}</div></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </x-tallui-card>
 
 {{-- ── Quick Actions ────────────────────────────────────────────────────── --}}
@@ -513,11 +650,12 @@
                             </td>
                             <td>
                                 <x-tallui-badge size="sm" :type="match($entry->status->value ?? $entry->status) {
-                                    'posted' => 'success',
-                                    'void'   => 'error',
-                                    default  => 'warning',
+                                    'posted'    => 'success',
+                                    'submitted' => 'info',
+                                    'void'      => 'error',
+                                    default     => 'warning',
                                 }">
-                                    {{ ucfirst($entry->status->value ?? $entry->status) }}
+                                    {{ ($entry->status->value ?? $entry->status) === 'submitted' ? 'Pending' : ucfirst($entry->status->value ?? $entry->status) }}
                                 </x-tallui-badge>
                             </td>
                         </tr>

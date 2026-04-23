@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\{Account, Bill, Customer, Invoice, JournalEntry, Vendor};
+use Centrex\Accounting\Models\{Account, Bill, Customer, FiscalPeriod, Invoice, JournalEntry, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -84,7 +84,7 @@ class AccountingDashboard extends Component
         }
 
         return [
-            'series'     => [
+            'series' => [
                 ['name' => 'Revenue', 'data' => $revenue],
                 ['name' => 'Expenses', 'data' => $expenses],
             ],
@@ -130,7 +130,7 @@ class AccountingDashboard extends Component
         }
 
         return [
-            'series'     => [
+            'series' => [
                 ['name' => 'Inflow', 'data' => $inflow],
                 ['name' => 'Outflow', 'data' => $outflow],
                 ['name' => 'Net', 'data' => $net],
@@ -154,7 +154,7 @@ class AccountingDashboard extends Component
 
         if ($n < 2) {
             return [
-                'series'     => [
+                'series' => [
                     ['name' => 'Actual Net', 'type' => 'area', 'data' => array_pad($actual, $allMonths, null)],
                     ['name' => 'Forecast',   'type' => 'line', 'data' => array_fill(0, $allMonths, null)],
                 ],
@@ -189,11 +189,29 @@ class AccountingDashboard extends Component
         }
 
         return [
-            'series'     => [
+            'series' => [
                 ['name' => 'Actual Net', 'type' => 'area', 'data' => $actualSeries],
                 ['name' => 'Forecast',   'type' => 'line', 'data' => $forecastSeries],
             ],
             'categories' => $allCategories,
+        ];
+    }
+
+    private function inventoryForecastCashflow(): array
+    {
+        $inventoryClass = \Centrex\Inventory\Inventory::class;
+
+        if (!class_exists($inventoryClass)) {
+            return ['available' => false];
+        }
+
+        $forecast = app($inventoryClass)->salesForecast();
+
+        return [
+            'available' => true,
+            'summary'   => data_get($forecast, 'summary', []),
+            'timeline'  => data_get($forecast, 'timeline', []),
+            'window'    => data_get($forecast, 'window', []),
         ];
     }
 
@@ -244,11 +262,23 @@ class AccountingDashboard extends Component
             'posted_count' => JournalEntry::where('status', 'posted')
                 ->whereBetween('date', [$this->startDate, $this->endDate])
                 ->count(),
-            'draft_count' => JournalEntry::where('status', 'draft')->count(),
-            'void_count' => JournalEntry::where('status', 'void')
+            'draft_count'     => JournalEntry::where('status', 'draft')->count(),
+            'submitted_count' => JournalEntry::where('status', 'submitted')->count(),
+            'void_count'      => JournalEntry::where('status', 'void')
                 ->whereBetween('date', [$this->startDate, $this->endDate])
                 ->count(),
         ];
+
+        $pendingJournals = JournalEntry::with(['submitter', 'lines'])
+            ->where('status', 'submitted')
+            ->latest('submitted_at')
+            ->limit(5)
+            ->get();
+
+        $openPeriod = FiscalPeriod::query()
+            ->where('is_closed', false)
+            ->orderBy('end_date')
+            ->first();
 
         // Counts
         $customerCount = Customer::where('is_active', true)->count();
@@ -267,8 +297,9 @@ class AccountingDashboard extends Component
         $revenueExpensesChart = $this->monthlyRevenueExpenses();
         $cashFlowChart = $this->monthlyCashFlow();
         $forecastChart = $this->cashFlowForecast($cashFlowChart);
+        $inventoryForecast = $this->inventoryForecastCashflow();
         $balanceChart = [
-            'series'     => [
+            'series' => [
                 max(0, (float) $metrics['total_assets']),
                 max(0, (float) $metrics['total_liabilities']),
                 max(0, (float) $metrics['total_equity']),
@@ -291,9 +322,12 @@ class AccountingDashboard extends Component
             'recentInvoices',
             'recentBills',
             'recentEntries',
+            'pendingJournals',
+            'openPeriod',
             'revenueExpensesChart',
             'cashFlowChart',
             'forecastChart',
+            'inventoryForecast',
             'balanceChart',
         ))->layout($layout, ['title' => __('Accounting Dashboard')]);
     }

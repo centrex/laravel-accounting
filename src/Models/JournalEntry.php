@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Enums\JvStatus;
-use Centrex\Accounting\Exceptions\{InvalidStatusTransitionException, UnbalancedJournalException};
+use Centrex\Accounting\Exceptions\{AccountingException, InvalidStatusTransitionException, UnbalancedJournalException};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
@@ -33,13 +33,15 @@ class JournalEntry extends Model
     protected $fillable = [
         'entry_number', 'date', 'reference', 'type', 'description',
         'currency', 'exchange_rate', 'created_by', 'approved_by',
-        'approved_at', 'status', 'source_type', 'source_id', 'source_action', 'sbu_code',
+        'approved_at', 'submitted_by', 'submitted_at', 'reviewer_note',
+        'status', 'source_type', 'source_id', 'source_action', 'sbu_code',
     ];
 
     protected $casts = [
         'date'          => 'date',
         'status'        => JvStatus::class,
         'approved_at'   => 'datetime',
+        'submitted_at'  => 'datetime',
         'exchange_rate' => 'decimal:6',
     ];
 
@@ -65,15 +67,72 @@ class JournalEntry extends Model
         return abs((float) $debits - (float) $credits) < $tolerance;
     }
 
-    /** Post the entry: validates balance, sets status → posted. */
-    public function post(): bool
+    /** Submit a draft entry for approval (Draft → Submitted). */
+    public function submit(): bool
+    {
+        $statusValue = $this->status instanceof \BackedEnum ? $this->status->value : (string) $this->status;
+
+        if ($statusValue !== 'draft') {
+            throw InvalidStatusTransitionException::make('JournalEntry', $statusValue, 'submitted');
+        }
+
+        if (!$this->isBalanced()) {
+            throw UnbalancedJournalException::make($this);
+        }
+
+        $this->update([
+            'status'       => 'submitted',
+            'submitted_by' => auth()->id(),
+            'submitted_at' => now(),
+        ]);
+
+        return true;
+    }
+
+    /** Return a submitted entry to draft (Submitted → Draft). */
+    public function returnToDraft(?string $note = null): bool
+    {
+        $statusValue = $this->status instanceof \BackedEnum ? $this->status->value : (string) $this->status;
+
+        if ($statusValue !== 'submitted') {
+            throw InvalidStatusTransitionException::make('JournalEntry', $statusValue, 'draft');
+        }
+
+        $this->update([
+            'status'        => 'draft',
+            'submitted_by'  => null,
+            'submitted_at'  => null,
+            'reviewer_note' => $note,
+        ]);
+
+        return true;
+    }
+
+    /** Post the entry: validates balance, checks period lock, sets status → posted. */
+    public function post(bool $bypassPeriodLock = false): bool
     {
         if (!$this->isBalanced()) {
             throw UnbalancedJournalException::make($this);
         }
 
-        if ($this->status === JvStatus::POSTED || $this->status?->value === 'posted') {
-            throw InvalidStatusTransitionException::make('JournalEntry', 'posted', 'posted');
+        $statusValue = $this->status instanceof \BackedEnum ? $this->status->value : (string) $this->status;
+
+        if (!in_array($statusValue, ['draft', 'submitted'])) {
+            throw InvalidStatusTransitionException::make('JournalEntry', $statusValue, 'posted');
+        }
+
+        if (!$bypassPeriodLock && config('accounting.enforce_period_lock', true)) {
+            $isClosed = FiscalPeriod::query()
+                ->where('is_closed', true)
+                ->whereDate('start_date', '<=', $this->date)
+                ->whereDate('end_date', '>=', $this->date)
+                ->exists();
+
+            if ($isClosed) {
+                throw new AccountingException(
+                    "Cannot post to a closed period. Entry date {$this->date->format('Y-m-d')} falls in a locked accounting period."
+                );
+            }
         }
 
         $this->update([
@@ -112,5 +171,12 @@ class JournalEntry extends Model
         $userModel = config('auth.providers.users.model', \Illuminate\Foundation\Auth\User::class);
 
         return $this->belongsTo($userModel, 'approved_by');
+    }
+
+    public function submitter(): BelongsTo
+    {
+        $userModel = config('auth.providers.users.model', \Illuminate\Foundation\Auth\User::class);
+
+        return $this->belongsTo($userModel, 'submitted_by');
     }
 }

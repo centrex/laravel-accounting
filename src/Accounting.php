@@ -14,13 +14,18 @@ use Centrex\Accounting\Exceptions\{
 };
 use Centrex\Accounting\Models\{
     Account,
+    AccountBalance,
     Bill,
     Budget,
     BudgetItem,
+    FiscalPeriod,
     FiscalYear,
+    InventoryFinancingFacility,
     Invoice,
     JournalEntry,
-    Payment
+    LoanFacility,
+    Payment,
+    PeriodInventorySnapshot
 };
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Support\Collection;
@@ -214,6 +219,32 @@ class Accounting
     {
         return Account::where('code', $code)->where('is_active', true)->first()
             ?? throw AccountNotFoundException::forCode($code);
+    }
+
+    /**
+     * Find the next unused account code within [rangeStart, rangeEnd].
+     * Used to allocate per-lender sub-accounts sequentially.
+     */
+    private function nextSubAccountCode(string $rangeStart, string $rangeEnd): string
+    {
+        $existing = Account::whereBetween('code', [$rangeStart, $rangeEnd])
+            ->pluck('code')
+            ->map(fn ($c): int => (int) $c)
+            ->sort()
+            ->values();
+
+        $start = (int) $rangeStart;
+        $end   = (int) $rangeEnd;
+
+        for ($code = $start + 1; $code <= $end; $code++) {
+            if (!$existing->contains($code)) {
+                return (string) $code;
+            }
+        }
+
+        throw new \RuntimeException(
+            "No available account codes between {$rangeStart} and {$rangeEnd}. Add more range capacity.",
+        );
     }
 
     /**
@@ -979,9 +1010,14 @@ class Accounting
             ['code' => '1800', 'name' => 'Accumulated Depreciation', 'type' => 'asset',     'subtype' => 'fixed_asset'],
             ['code' => '2000', 'name' => 'Accounts Payable',        'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2100', 'name' => 'Credit Card Payable',     'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2150', 'name' => 'Inventory Financing Payable',          'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2170', 'name' => 'Accrued Interest — Inventory Financing', 'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2200', 'name' => 'Accrued Expenses',        'type' => 'liability', 'subtype' => 'current_liability'],
-            ['code' => '2300', 'name' => 'Sales Tax Payable',       'type' => 'liability', 'subtype' => 'current_liability'],
-            ['code' => '2500', 'name' => 'Long-term Debt',          'type' => 'liability', 'subtype' => 'long_term_liability'],
+            ['code' => '2300', 'name' => 'Sales Tax Payable',              'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2400', 'name' => 'Short-term Loans Payable',      'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2420', 'name' => 'Accrued Interest — Short-term Loans', 'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2500', 'name' => 'Long-term Loans Payable',       'type' => 'liability', 'subtype' => 'long_term_liability'],
+            ['code' => '2520', 'name' => 'Accrued Interest — Long-term Loans',  'type' => 'liability', 'subtype' => 'long_term_liability'],
             ['code' => '3000', 'name' => "Owner's Equity",          'type' => 'equity',    'subtype' => 'capital_account'],
             ['code' => '3100', 'name' => 'Retained Earnings',       'type' => 'equity',    'subtype' => 'retained_earnings_account'],
             ['code' => '3200', 'name' => "Owner's Draw",            'type' => 'equity',    'subtype' => 'drawings_account'],
@@ -997,6 +1033,9 @@ class Accounting
             ['code' => '6500', 'name' => 'Marketing & Advertising', 'type' => 'expense',   'subtype' => 'marketing_expense'],
             ['code' => '6600', 'name' => 'Depreciation',            'type' => 'expense',   'subtype' => 'depreciation_expense'],
             ['code' => '6700', 'name' => 'Interest Expense',        'type' => 'expense',   'subtype' => 'interest_expense'],
+            ['code' => '6710', 'name' => 'Interest Expense — Inventory Financing', 'type' => 'expense', 'subtype' => 'interest_expense'],
+            ['code' => '6720', 'name' => 'Interest Expense — Short-term Loans',   'type' => 'expense', 'subtype' => 'interest_expense'],
+            ['code' => '6730', 'name' => 'Interest Expense — Long-term Loans',    'type' => 'expense', 'subtype' => 'interest_expense'],
             ['code' => '6800', 'name' => 'Bank Fees',               'type' => 'expense',   'subtype' => 'bank_fees_expense'],
         ];
 
@@ -1005,6 +1044,22 @@ class Accounting
                 ['code' => $accountData['code']],
                 array_merge($accountData, ['is_system' => true]),
             );
+        }
+
+        // Wire parent relationships for sub-accounts
+        $parentMap = [
+            '6710' => '6700',  // Inv. Financing Interest → Interest Expense
+            '6720' => '6700',  // Short-term Loan Interest → Interest Expense
+            '6730' => '6700',  // Long-term Loan Interest → Interest Expense
+        ];
+
+        foreach ($parentMap as $childCode => $parentCode) {
+            $parent = Account::where('code', $parentCode)->first();
+            $child  = Account::where('code', $childCode)->first();
+
+            if ($parent && $child && $child->parent_id === null) {
+                $child->update(['parent_id' => $parent->id]);
+            }
         }
     }
 
@@ -1061,11 +1116,197 @@ class Accounting
                     ],
                 ]);
 
-                $entry->post();
+                $entry->post(bypassPeriodLock: true);
             }
 
             $fiscalYear->update(['is_closed' => true]);
         });
+    }
+
+    // -------------------------------------------------------------------------
+    // Period (Month-End) Closing
+    // -------------------------------------------------------------------------
+
+    /**
+     * Pre-close checks for a fiscal period.
+     * Returns counts of items that block or warn before closing.
+     */
+    public function getPeriodCloseChecks(FiscalPeriod $period): array
+    {
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $db = DB::connection($connection);
+
+        $unpostedJournals = $db->table("{$prefix}journal_entries")
+            ->whereNull('deleted_at')
+            ->where('status', 'draft')
+            ->whereDate('date', '>=', $period->start_date)
+            ->whereDate('date', '<=', $period->end_date)
+            ->count();
+
+        $openInvoices = $db->table("{$prefix}invoices")
+            ->whereNull('deleted_at')
+            ->whereIn('status', ['draft', 'sent'])
+            ->whereDate('invoice_date', '>=', $period->start_date)
+            ->whereDate('invoice_date', '<=', $period->end_date)
+            ->count();
+
+        $openBills = $db->table("{$prefix}bills")
+            ->whereNull('deleted_at')
+            ->whereIn('status', ['draft', 'sent'])
+            ->whereDate('bill_date', '>=', $period->start_date)
+            ->whereDate('bill_date', '<=', $period->end_date)
+            ->count();
+
+        return [
+            'unposted_journals' => $unpostedJournals,
+            'open_invoices'     => $openInvoices,
+            'open_bills'        => $openBills,
+            'has_blockers'      => $unpostedJournals > 0,
+            'has_warnings'      => $openInvoices > 0 || $openBills > 0,
+        ];
+    }
+
+    /**
+     * Close a fiscal period: snapshot GL balances, optionally snapshot inventory WAC/qty, then lock the period.
+     *
+     * @return array{period: FiscalPeriod, inventory: array|null}
+     */
+    public function closeFiscalPeriod(FiscalPeriod $period, bool $snapshotInventory = true): array
+    {
+        return DB::transaction(function () use ($period, $snapshotInventory): array {
+            $period = FiscalPeriod::query()->lockForUpdate()->findOrFail($period->id);
+
+            if ($period->is_closed) {
+                throw InvalidStatusTransitionException::make('FiscalPeriod', 'closed', 'closed');
+            }
+
+            $inventoryResult = null;
+
+            if ($snapshotInventory && $this->inventoryIntegrationEnabled()) {
+                $inventoryResult = $this->takeInventoryPeriodSnapshot($period);
+            }
+
+            $this->upsertAccountBalancesForPeriod($period);
+
+            $period->update(['is_closed' => true]);
+
+            return [
+                'period'    => $period->fresh(),
+                'inventory' => $inventoryResult,
+            ];
+        });
+    }
+
+    private function inventoryIntegrationEnabled(): bool
+    {
+        return config('inventory.erp.accounting.enabled', false)
+            && class_exists(\Centrex\Inventory\Models\WarehouseProduct::class);
+    }
+
+    /**
+     * Snapshot WAC and qty_on_hand per warehouse+product at period-end and reconcile against GL.
+     */
+    private function takeInventoryPeriodSnapshot(FiscalPeriod $period): array
+    {
+        $currency = $this->baseCurrency();
+
+        // Idempotent: remove any previous snapshot for this period before re-inserting
+        PeriodInventorySnapshot::where('fiscal_period_id', $period->id)->delete();
+
+        $warehouseProducts = \Centrex\Inventory\Models\WarehouseProduct::query()
+            ->with(['warehouse:id,code,name', 'product:id,sku,name'])
+            ->get();
+
+        $rows = $warehouseProducts->map(fn ($wp) => [
+            'fiscal_period_id' => $period->id,
+            'warehouse_code'   => $wp->warehouse?->code,
+            'warehouse_name'   => $wp->warehouse?->name,
+            'product_sku'      => $wp->product?->sku,
+            'product_name'     => $wp->product?->name,
+            'qty_on_hand'      => (float) $wp->qty_on_hand,
+            'wac_amount'       => (float) $wp->wac_amount,
+            'total_value'      => round((float) $wp->qty_on_hand * (float) $wp->wac_amount, 2),
+            'currency'         => $currency,
+            'snapshot_date'    => $period->end_date,
+            'created_at'       => now(),
+            'updated_at'       => now(),
+        ])->toArray();
+
+        if ($rows !== []) {
+            PeriodInventorySnapshot::insert($rows);
+        }
+
+        $physicalValue = (float) collect($rows)->sum('total_value');
+        $inventoryAccountCode = config('inventory.erp.accounting.accounts.inventory_asset', '1300');
+        $glBalance = $this->getAccountGlBalance($inventoryAccountCode, $period->end_date);
+        $variance = round($physicalValue - $glBalance, 2);
+
+        return [
+            'snapshot_count' => count($rows),
+            'physical_value' => $physicalValue,
+            'gl_balance'     => $glBalance,
+            'variance'       => $variance,
+            'is_reconciled'  => abs($variance) < 1.0,
+            'currency'       => $currency,
+        ];
+    }
+
+    /** Get the net GL running balance of an account code up to (and including) a given date. */
+    private function getAccountGlBalance(string $accountCode, mixed $asOfDate): float
+    {
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $account = Account::where('code', $accountCode)->first();
+
+        if (!$account) {
+            return 0.0;
+        }
+
+        $row = DB::connection($connection)
+            ->table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereNull('je.deleted_at')
+            ->where('l.account_id', $account->id)
+            ->when($asOfDate, fn ($q) => $q->whereDate('je.date', '<=', $asOfDate))
+            ->selectRaw("SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE -l.amount END) as balance")
+            ->first();
+
+        return round((float) ($row->balance ?? 0), 2);
+    }
+
+    /** Compute period-level debit/credit totals and upsert them into acct_account_balances. */
+    private function upsertAccountBalancesForPeriod(FiscalPeriod $period): void
+    {
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $connection = config('accounting.drivers.database.connection', config('database.default'));
+
+        $rows = DB::connection($connection)
+            ->table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereNull('je.deleted_at')
+            ->whereDate('je.date', '>=', $period->start_date)
+            ->whereDate('je.date', '<=', $period->end_date)
+            ->select([
+                'l.account_id',
+                DB::raw("SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as debit"),
+                DB::raw("SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as credit"),
+            ])
+            ->groupBy('l.account_id')
+            ->get();
+
+        foreach ($rows as $row) {
+            AccountBalance::updateOrCreate(
+                ['account_id' => $row->account_id, 'fiscal_period_id' => $period->id],
+                [
+                    'debit'   => $row->debit,
+                    'credit'  => $row->credit,
+                    'balance' => (float) $row->debit - (float) $row->credit,
+                ],
+            );
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -1191,6 +1432,523 @@ class Accounting
         }
 
         return array_values($summary);
+    }
+
+    // -------------------------------------------------------------------------
+    // Inventory Financing
+    // -------------------------------------------------------------------------
+
+    /**
+     * Register a new lender and auto-create its dedicated GL sub-accounts.
+     *
+     * Sub-accounts are allocated sequentially under parent 2150 (principal)
+     * and 2170 (accrued interest). Supports up to 19 lenders per range.
+     *
+     * @param  string  $lenderName    Display name of the financing entity
+     * @param  string  $lenderType    bank | private | ngo | mfi | other
+     * @param  float   $monthlyRate   Interest rate per month (0.02 = 2%)
+     * @param  float|null $creditLimit  Maximum draw-down allowed (informational)
+     * @param  string|null $contact   Contact person / reference
+     */
+    public function addFinancingFacility(
+        string $lenderName,
+        string $lenderType = 'bank',
+        float $monthlyRate = 0.02,
+        ?float $creditLimit = null,
+        ?string $contact = null,
+    ): InventoryFinancingFacility {
+        return DB::transaction(function () use ($lenderName, $lenderType, $monthlyRate, $creditLimit, $contact): InventoryFinancingFacility {
+            $principalParent = $this->requireAccount('2150');
+            $interestParent  = $this->requireAccount('2170');
+
+            // Next available code under each parent range
+            $principalCode = $this->nextSubAccountCode('2150', '2169');
+            $interestCode  = $this->nextSubAccountCode('2170', '2189');
+
+            $shortName = Str::limit($lenderName, 30, '');
+
+            $principalAccount = Account::create([
+                'code'      => $principalCode,
+                'name'      => "Inv. Financing Payable — {$shortName}",
+                'type'      => 'liability',
+                'subtype'   => 'current_liability',
+                'parent_id' => $principalParent->id,
+                'is_system' => false,
+            ]);
+
+            $interestAccount = Account::create([
+                'code'      => $interestCode,
+                'name'      => "Accrued Interest — {$shortName}",
+                'type'      => 'liability',
+                'subtype'   => 'current_liability',
+                'parent_id' => $interestParent->id,
+                'is_system' => false,
+            ]);
+
+            return InventoryFinancingFacility::create([
+                'lender_name'          => $lenderName,
+                'lender_type'          => $lenderType,
+                'lender_contact'       => $contact,
+                'principal_account_id' => $principalAccount->id,
+                'interest_account_id'  => $interestAccount->id,
+                'monthly_rate'         => $monthlyRate,
+                'credit_limit'         => $creditLimit,
+            ]);
+        });
+    }
+
+    /**
+     * Draw down funds from a financing facility to purchase inventory.
+     *
+     * DR Inventory (1300) / CR Facility Principal Payable (215x)
+     */
+    public function drawdownFinancing(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+    ): JournalEntry {
+        if (!$facility->is_active) {
+            throw new \RuntimeException("Financing facility '{$facility->lender_name}' is inactive.");
+        }
+
+        $creditLimit = $facility->credit_limit;
+
+        if ($creditLimit !== null) {
+            $outstanding = $facility->outstandingPrincipal();
+
+            if (($outstanding + $amount) > $creditLimit) {
+                throw new \RuntimeException(
+                    "Draw-down of {$amount} would exceed credit limit of {$creditLimit} for '{$facility->lender_name}'.",
+                );
+            }
+        }
+
+        $inventory = $this->requireAccount('1300');
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'description' => $description ?? "Inventory financing draw-down — {$facility->lender_name}",
+            'lines'       => [
+                ['account_id' => $inventory->id,                     'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $facility->principal_account_id,    'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Accrue one month's interest for a single facility.
+     *
+     * DR Interest Expense — Inv. Financing (6710) / CR Accrued Interest (217x)
+     * Skipped (returns null) when outstanding principal is zero.
+     */
+    public function accrueFinancingInterest(
+        InventoryFinancingFacility $facility,
+        mixed $date = null,
+    ): ?JournalEntry {
+        $principal = $facility->outstandingPrincipal();
+
+        if ($principal <= 0) {
+            return null;
+        }
+
+        $interest      = round($principal * $facility->monthly_rate, 2);
+        $date          = $date ?? now()->endOfMonth()->toDateString();
+        $interestAcct  = $this->requireAccount('6710');
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => 'INT-' . now()->format('Y-m') . '-' . $facility->id,
+            'type'        => 'general',
+            'description' => sprintf(
+                'Interest accrual — %s — %s — principal %s × %.2f%%/mo',
+                $facility->lender_name,
+                now()->format('F Y'),
+                number_format($principal, 2),
+                $facility->monthly_rate * 100,
+            ),
+            'lines' => [
+                ['account_id' => $interestAcct->id,               'type' => 'debit',  'amount' => $interest],
+                ['account_id' => $facility->interest_account_id,  'type' => 'credit', 'amount' => $interest],
+            ],
+        ]);
+    }
+
+    /**
+     * Accrue monthly interest for ALL active facilities in a single call.
+     * Returns an array keyed by facility id → JournalEntry|null.
+     */
+    public function accrueAllFinancingInterest(mixed $date = null): array
+    {
+        $results = [];
+
+        InventoryFinancingFacility::where('is_active', true)->each(function (InventoryFinancingFacility $facility) use ($date, &$results): void {
+            $results[$facility->id] = $this->accrueFinancingInterest($facility, $date);
+        });
+
+        return $results;
+    }
+
+    /**
+     * Pay accrued interest for a facility.
+     *
+     * DR Accrued Interest (217x) / CR Bank (1100)
+     */
+    public function payFinancingInterest(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+    ): JournalEntry {
+        $bank = $this->requireAccount('1100');
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'description' => "Interest payment — {$facility->lender_name}",
+            'lines'       => [
+                ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Repay principal to a financing lender (typically as inventory is sold).
+     *
+     * DR Facility Principal Payable (215x) / CR Bank (1100)
+     */
+    public function repayFinancing(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+    ): JournalEntry {
+        $outstanding = $facility->outstandingPrincipal();
+
+        if ($amount > $outstanding + 0.01) {
+            throw new \RuntimeException(
+                "Repayment of {$amount} exceeds outstanding principal of {$outstanding} for '{$facility->lender_name}'.",
+            );
+        }
+
+        $bank = $this->requireAccount('1100');
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'description' => $description ?? "Principal repayment — {$facility->lender_name}",
+            'lines'       => [
+                ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Summary of all financing facilities with current balances.
+     */
+    public function getFinancingSummary(): array
+    {
+        return InventoryFinancingFacility::with(['principalAccount', 'interestAccount'])
+            ->orderBy('lender_name')
+            ->get()
+            ->map(fn (InventoryFinancingFacility $f): array => [
+                'id'                   => $f->id,
+                'lender_name'          => $f->lender_name,
+                'lender_type'          => $f->lender_type,
+                'is_active'            => $f->is_active,
+                'monthly_rate'         => $f->monthly_rate,
+                'credit_limit'         => $f->credit_limit,
+                'outstanding_principal' => $f->outstandingPrincipal(),
+                'accrued_interest'     => $f->accruedInterest(),
+                'monthly_interest'     => $f->monthlyInterestAmount(),
+                'principal_account'    => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
+                'interest_account'     => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
+            ])
+            ->all();
+    }
+
+    // -------------------------------------------------------------------------
+    // Organizational Loans (term, working-capital, inter-company, director …)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Register a loan facility and auto-create its dedicated GL sub-accounts.
+     *
+     * short_term loans → principal 240x, accrued interest 242x
+     * long_term  loans → principal 250x, accrued interest 252x
+     *
+     * @param  string      $lenderName   Name of the lending entity
+     * @param  string      $loanType     term_loan | working_capital | inter_company | director | equipment | overdraft | bridge
+     * @param  string      $loanTerm     short_term | long_term
+     * @param  float       $monthlyRate  Monthly interest rate (0.02 = 2%)
+     * @param  string|null $sbuCode      SBU all journal entries for this facility will be tagged with
+     * @param  float|null  $loanAmount   Sanctioned/approved loan amount (informational)
+     * @param  string|null $disbursedAt  Date the loan was disbursed
+     * @param  string|null $dueAt        Repayment due date
+     * @param  int|null    $tenureMonths Tenure in months
+     * @param  string|null $contact      Lender contact reference
+     */
+    public function addLoanFacility(
+        string $lenderName,
+        string $loanType = 'term_loan',
+        string $loanTerm = 'short_term',
+        float $monthlyRate = 0.02,
+        ?string $sbuCode = null,
+        ?float $loanAmount = null,
+        ?string $disbursedAt = null,
+        ?string $dueAt = null,
+        ?int $tenureMonths = null,
+        ?string $contact = null,
+    ): LoanFacility {
+        return DB::transaction(function () use (
+            $lenderName, $loanType, $loanTerm, $monthlyRate,
+            $sbuCode, $loanAmount, $disbursedAt, $dueAt, $tenureMonths, $contact,
+        ): LoanFacility {
+            $isShort = $loanTerm === 'short_term';
+
+            // Ranges: short_term → 2401–2419 / 2421–2439; long_term → 2501–2519 / 2521–2539
+            [$principalParentCode, $principalRangeEnd] = $isShort ? ['2400', '2419'] : ['2500', '2519'];
+            [$interestParentCode,  $interestRangeEnd]  = $isShort ? ['2420', '2439'] : ['2520', '2539'];
+
+            $principalParent = $this->requireAccount($principalParentCode);
+            $interestParent  = $this->requireAccount($interestParentCode);
+
+            $principalCode = $this->nextSubAccountCode($principalParentCode, $principalRangeEnd);
+            $interestCode  = $this->nextSubAccountCode($interestParentCode, $interestRangeEnd);
+
+            $shortName   = Str::limit($lenderName, 28, '');
+            $typeLabel   = str_replace('_', ' ', ucfirst($loanType));
+
+            $principalAccount = Account::create([
+                'code'      => $principalCode,
+                'name'      => "{$typeLabel} Payable — {$shortName}",
+                'type'      => 'liability',
+                'subtype'   => $isShort ? 'current_liability' : 'long_term_liability',
+                'parent_id' => $principalParent->id,
+                'is_system' => false,
+            ]);
+
+            $interestAccount = Account::create([
+                'code'      => $interestCode,
+                'name'      => "Accrued Interest — {$shortName}",
+                'type'      => 'liability',
+                'subtype'   => $isShort ? 'current_liability' : 'long_term_liability',
+                'parent_id' => $interestParent->id,
+                'is_system' => false,
+            ]);
+
+            return LoanFacility::create([
+                'lender_name'          => $lenderName,
+                'loan_type'            => $loanType,
+                'loan_term'            => $loanTerm,
+                'lender_contact'       => $contact,
+                'sbu_code'             => $sbuCode ? strtoupper(trim($sbuCode)) : null,
+                'principal_account_id' => $principalAccount->id,
+                'interest_account_id'  => $interestAccount->id,
+                'monthly_rate'         => $monthlyRate,
+                'loan_amount'          => $loanAmount,
+                'disbursed_at'         => $disbursedAt,
+                'due_at'               => $dueAt,
+                'tenure_months'        => $tenureMonths,
+            ]);
+        });
+    }
+
+    /**
+     * Record a loan disbursement — funds received into Bank.
+     *
+     * DR Bank (1100) / CR Loan Payable (240x or 250x)
+     * Journal entry is tagged with the facility's sbu_code.
+     */
+    public function drawdownLoan(
+        LoanFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+        ?string $sbuCode = null,
+    ): JournalEntry {
+        if (!$facility->is_active) {
+            throw new \RuntimeException("Loan facility '{$facility->lender_name}' is inactive.");
+        }
+
+        $bank = $this->requireAccount('1100');
+        $effectiveSbu = $sbuCode ?? $facility->sbu_code;
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'description' => $description ?? "Loan disbursement — {$facility->lender_name}",
+            'sbu_code'    => $effectiveSbu,
+            'lines'       => [
+                ['account_id' => $bank->id,                          'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $facility->principal_account_id,    'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Accrue one month's interest for a single loan facility.
+     *
+     * DR Interest Expense 6720 (short) or 6730 (long) / CR Accrued Interest (242x or 252x)
+     * Returns null when outstanding principal is zero.
+     */
+    public function accrueLoanInterest(
+        LoanFacility $facility,
+        mixed $date = null,
+    ): ?JournalEntry {
+        $principal = $facility->outstandingPrincipal();
+
+        if ($principal <= 0) {
+            return null;
+        }
+
+        $interest      = round($principal * $facility->monthly_rate, 2);
+        $date          = $date ?? now()->endOfMonth()->toDateString();
+        $expenseCode   = $facility->isShortTerm() ? '6720' : '6730';
+        $expenseAcct   = $this->requireAccount($expenseCode);
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => 'LOAN-INT-' . now()->format('Y-m') . '-' . $facility->id,
+            'type'        => 'general',
+            'sbu_code'    => $facility->sbu_code,
+            'description' => sprintf(
+                'Loan interest accrual — %s (%s) — %s — principal %s × %.2f%%/mo',
+                $facility->lender_name,
+                str_replace('_', ' ', $facility->loan_type),
+                now()->format('F Y'),
+                number_format($principal, 2),
+                $facility->monthly_rate * 100,
+            ),
+            'lines' => [
+                ['account_id' => $expenseAcct->id,               'type' => 'debit',  'amount' => $interest],
+                ['account_id' => $facility->interest_account_id, 'type' => 'credit', 'amount' => $interest],
+            ],
+        ]);
+    }
+
+    /**
+     * Accrue monthly interest for ALL active loan facilities.
+     * Returns array keyed by facility id → JournalEntry|null.
+     */
+    public function accrueAllLoanInterest(mixed $date = null): array
+    {
+        $results = [];
+
+        LoanFacility::where('is_active', true)->each(function (LoanFacility $facility) use ($date, &$results): void {
+            $results[$facility->id] = $this->accrueLoanInterest($facility, $date);
+        });
+
+        return $results;
+    }
+
+    /**
+     * Pay accrued interest to the lender.
+     *
+     * DR Accrued Interest (242x or 252x) / CR Bank (1100)
+     */
+    public function payLoanInterest(
+        LoanFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+    ): JournalEntry {
+        $bank = $this->requireAccount('1100');
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'sbu_code'    => $facility->sbu_code,
+            'description' => "Loan interest payment — {$facility->lender_name}",
+            'lines'       => [
+                ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Repay principal to the lender.
+     *
+     * DR Loan Payable (240x or 250x) / CR Bank (1100)
+     */
+    public function repayLoan(
+        LoanFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+        ?string $sbuCode = null,
+    ): JournalEntry {
+        $outstanding = $facility->outstandingPrincipal();
+
+        if ($amount > $outstanding + 0.01) {
+            throw new \RuntimeException(
+                "Repayment of {$amount} exceeds outstanding principal of {$outstanding} for '{$facility->lender_name}'.",
+            );
+        }
+
+        $bank = $this->requireAccount('1100');
+        $effectiveSbu = $sbuCode ?? $facility->sbu_code;
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'sbu_code'    => $effectiveSbu,
+            'description' => $description ?? "Loan principal repayment — {$facility->lender_name}",
+            'lines'       => [
+                ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Portfolio summary of all loan facilities, optionally filtered by SBU.
+     * Includes outstanding principal, accrued interest, monthly charge, and months remaining.
+     */
+    public function getLoanSummary(?string $sbuCode = null): array
+    {
+        $query = LoanFacility::with(['principalAccount', 'interestAccount'])
+            ->orderBy('loan_term')
+            ->orderBy('lender_name');
+
+        if ($sbuCode !== null) {
+            $query->where('sbu_code', strtoupper(trim($sbuCode)));
+        }
+
+        return $query->get()
+            ->map(fn (LoanFacility $f): array => [
+                'id'                    => $f->id,
+                'lender_name'           => $f->lender_name,
+                'loan_type'             => $f->loan_type,
+                'loan_term'             => $f->loan_term,
+                'sbu_code'              => $f->sbu_code,
+                'is_active'             => $f->is_active,
+                'monthly_rate'          => $f->monthly_rate,
+                'loan_amount'           => $f->loan_amount,
+                'disbursed_at'          => $f->disbursed_at?->toDateString(),
+                'due_at'                => $f->due_at?->toDateString(),
+                'months_remaining'      => $f->monthsRemaining(),
+                'outstanding_principal' => $f->outstandingPrincipal(),
+                'accrued_interest'      => $f->accruedInterest(),
+                'monthly_interest'      => $f->monthlyInterestAmount(),
+                'principal_account'     => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
+                'interest_account'      => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
+            ])
+            ->all();
     }
 
     // -------------------------------------------------------------------------

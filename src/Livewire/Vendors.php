@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
-use Centrex\Accounting\Models\Vendor;
+use Centrex\Accounting\Models\{Bill, Vendor};
 use Livewire\{Component, WithPagination};
 
 class Vendors extends Component
@@ -123,7 +123,17 @@ class Vendors extends Component
 
     public function render()
     {
+        $vendorTable = (new Vendor)->getTable();
+
         $vendors = Vendor::query()
+            ->select("{$vendorTable}.*")
+            ->selectSub(
+                Bill::query()
+                    ->selectRaw('COALESCE(SUM(total - paid_amount), 0)')
+                    ->whereColumn('vendor_id', "{$vendorTable}.id")
+                    ->whereIn('status', ['issued', 'partially_settled', 'overdue']),
+                'outstanding',
+            )
             ->when($this->search, fn ($q) => $q->where(function ($q): void {
                 $q->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('code', 'like', '%' . $this->search . '%')

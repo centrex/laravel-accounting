@@ -31,6 +31,7 @@
                     <th>Phone</th>
                     <th>Currency</th>
                     <th class="text-right">Credit Limit</th>
+                    <th class="text-right">Outstanding</th>
                     <th>Terms</th>
                     <th>Status</th>
                     <th class="pr-5 text-right">Actions</th>
@@ -45,6 +46,9 @@
                         <td class="text-sm text-base-content/60">{{ $customer->phone ?? '—' }}</td>
                         <td class="text-sm text-base-content/60">{{ $customer->currency }}</td>
                         <td class="text-right text-sm font-mono">{{ number_format($customer->credit_limit, 2) }}</td>
+                        <td class="text-right text-sm font-mono {{ $customer->outstanding > 0 ? 'text-warning font-semibold' : 'text-base-content/60' }}">
+                            {{ number_format($customer->outstanding, 2) }}
+                        </td>
                         <td class="text-sm text-base-content/60">{{ $customer->payment_terms }}d</td>
                         <td>
                             <x-tallui-badge :type="$customer->is_active ? 'success' : 'neutral'">
@@ -53,6 +57,7 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
+                                <x-tallui-button :link="route('accounting.customers.ledger', $customer->id)" icon="o-book-open" class="btn-ghost btn-xs" title="Ledger" />
                                 <x-tallui-button wire:click="openModal({{ $customer->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                 <x-tallui-button wire:click="toggleStatus({{ $customer->id }})" icon="{{ $customer->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
@@ -60,7 +65,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <x-tallui-empty-state title="No customers found" description="Add your first customer to start invoicing" />
                         </td>
                     </tr>

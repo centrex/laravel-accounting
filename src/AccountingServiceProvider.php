@@ -7,8 +7,8 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, ChartOfAccounts, Customers, Expenses, FinancialReports, InvoiceDetails, Invoices, JournalEntries, Vendors};
-use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, Invoice, InvoiceItem, JournalEntry, Payment};
+use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, InventoryFinancingFacility, Invoice, InvoiceItem, JournalEntry, LoanFacility, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\{Event, Gate};
@@ -34,6 +34,13 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('accounting-customers', Customers::class);
         Livewire::component('accounting-vendors', Vendors::class);
         Livewire::component('accounting-expenses', Expenses::class);
+        Livewire::component('accounting-general-ledger', GeneralLedger::class);
+        Livewire::component('accounting-customer-ledger', CustomerLedger::class);
+        Livewire::component('accounting-customer-ledger-index', CustomerLedgerIndex::class);
+        Livewire::component('accounting-vendor-ledger', VendorLedger::class);
+        Livewire::component('accounting-vendor-ledger-index', VendorLedgerIndex::class);
+        Livewire::component('accounting-budgets', Budgets::class);
+        Livewire::component('accounting-period-close', PeriodClose::class);
 
         // Register model observers
         JournalEntry::observe(JournalEntryObserver::class);
@@ -115,6 +122,7 @@ class AccountingServiceProvider extends ServiceProvider
             // Journal entries
             'accounting.journal.view',
             'accounting.journal.create',
+            'accounting.journal.submit',
             'accounting.journal.post',
             'accounting.journal.void',
 

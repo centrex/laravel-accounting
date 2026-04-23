@@ -28,6 +28,7 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Currency</th>
+                    <th class="text-right">Outstanding</th>
                     <th>Terms</th>
                     <th>Status</th>
                     <th class="pr-5 text-right">Actions</th>
@@ -41,6 +42,9 @@
                         <td class="text-sm text-base-content/60">{{ $vendor->email ?? '—' }}</td>
                         <td class="text-sm text-base-content/60">{{ $vendor->phone ?? '—' }}</td>
                         <td class="text-sm text-base-content/60">{{ $vendor->currency }}</td>
+                        <td class="text-right text-sm font-mono {{ $vendor->outstanding > 0 ? 'text-warning font-semibold' : 'text-base-content/60' }}">
+                            {{ number_format($vendor->outstanding, 2) }}
+                        </td>
                         <td class="text-sm text-base-content/60">{{ $vendor->payment_terms }}d</td>
                         <td>
                             <x-tallui-badge :type="$vendor->is_active ? 'success' : 'neutral'">
@@ -49,6 +53,7 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
+                                <x-tallui-button :link="route('accounting.vendors.ledger', $vendor->id)" icon="o-book-open" class="btn-ghost btn-xs" title="Ledger" />
                                 <x-tallui-button wire:click="openModal({{ $vendor->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                 <x-tallui-button wire:click="toggleStatus({{ $vendor->id }})" icon="{{ $vendor->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
@@ -56,7 +61,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <x-tallui-empty-state title="No vendors found" description="Add your first vendor to start tracking bills" />
                         </td>
                     </tr>

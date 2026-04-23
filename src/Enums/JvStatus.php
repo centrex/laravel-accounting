@@ -29,6 +29,14 @@ enum JvStatus: string
     case DRAFT = 'draft';
 
     /**
+     * Submitted
+     *
+     * Journal has been submitted for review/approval.
+     * No impact on ledger balances until posted.
+     */
+    case SUBMITTED = 'submitted';
+
+    /**
      * Posted
      *
      * Journal is finalized and posted to the General Ledger.
