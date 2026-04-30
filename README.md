@@ -18,6 +18,7 @@ Full double-entry accounting system for Laravel. Includes a chart of accounts, j
 - [Journal Entries — Two-Step Workflow](#journal-entries--two-step-workflow)
 - [Invoices & Payments](#invoices--payments)
 - [Bills & Vendor Payments](#bills--vendor-payments)
+- [Invoice & Bill Charges / Discounts](#invoice--bill-charges--discounts)
 - [Expenses](#expenses)
 - [Customer & Vendor Ledger](#customer--vendor-ledger)
 - [General Ledger](#general-ledger)
@@ -32,6 +33,7 @@ Full double-entry accounting system for Laravel. Includes a chart of accounts, j
 - [Authorization Gates](#authorization-gates)
 - [Web UI Routes](#web-ui-routes)
 - [REST API](#rest-api)
+- [Artisan Commands](#artisan-commands)
 - [Testing](#testing)
 
 ---
@@ -376,6 +378,208 @@ Accounting::recordBillPayment($bill, [
 ]);
 // $bill->status → 'settled'
 ```
+
+---
+
+## Invoice & Bill Charges / Discounts
+
+The invoice and bill detail pages support recording additional charges and price adjustments with full double-entry journal entries. All amounts are guarded by an AR/AP balance check so payments plus discounts can never exceed the effective receivable or payable balance.
+
+### Invoice Charges (Delivery / COD)
+
+Records an additional charge against a posted invoice — e.g., a delivery fee or cash-on-delivery charge billed to the customer. Journal entry: DR Accounts Receivable (1200) / CR Revenue account.
+
+| Account | Code | Use |
+| --- | --- | --- |
+| Delivery Charge | 4210 | Standard courier / shipping charge |
+| Cash on Delivery Charge | 4220 | COD handling fee |
+
+```php
+use Centrex\Accounting\Models\{Account, Expense, Invoice};
+use Centrex\Accounting\Facades\Accounting;
+
+$invoice      = Invoice::find($id);
+$arAccount    = Account::where('code', '1200')->first();
+$chargeAccount = Account::where('code', '4210')->first(); // or 4220
+
+$expense = Expense::create([
+    'chargeable_type' => Invoice::class,
+    'chargeable_id'   => $invoice->id,
+    'account_id'      => $chargeAccount->id,
+    'expense_date'    => today(),
+    'subtotal'        => 500,
+    'total'           => 500,
+    'paid_amount'     => 500,
+    'currency'        => 'BDT',
+    'status'          => 'paid',
+    'payment_method'  => 'cash',
+    'reference'       => $invoice->invoice_number,
+]);
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => $invoice->invoice_number,
+    'type'        => 'general',
+    'description' => 'Delivery Charge — ' . $invoice->invoice_number,
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $arAccount->id,     'type' => 'debit',  'amount' => 500, 'description' => 'Delivery Charge'],
+        ['account_id' => $chargeAccount->id, 'type' => 'credit', 'amount' => 500, 'description' => 'Delivery Charge Revenue'],
+    ],
+]);
+$entry->post();
+$expense->update(['journal_entry_id' => $entry->id]);
+```
+
+The UI equivalent is the **Record Charge** button on the invoice detail page (`/accounting/invoices/{id}`).
+
+### Invoice Discounts (Sales Discount)
+
+Records a price concession granted to the customer, reducing the AR balance. Journal entry: DR Sales Discount (6130) / CR Accounts Receivable (1200).
+
+```php
+$discountAccount = Account::where('code', '6130')->first();
+$arAccount       = Account::where('code', '1200')->first();
+
+$expense = Expense::create([
+    'chargeable_type' => Invoice::class,
+    'chargeable_id'   => $invoice->id,
+    'account_id'      => $discountAccount->id,
+    'expense_date'    => today(),
+    'subtotal'        => 1000,
+    'total'           => 1000,
+    'paid_amount'     => 1000,
+    'currency'        => 'BDT',
+    'status'          => 'paid',
+    'payment_method'  => 'cash',
+    'reference'       => $invoice->invoice_number,
+]);
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => $invoice->invoice_number,
+    'type'        => 'general',
+    'description' => 'Sales Discount — ' . $invoice->invoice_number,
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $discountAccount->id, 'type' => 'debit',  'amount' => 1000, 'description' => 'Sales Discount'],
+        ['account_id' => $arAccount->id,       'type' => 'credit', 'amount' => 1000, 'description' => 'Discount applied to AR'],
+    ],
+]);
+$entry->post();
+$expense->update(['journal_entry_id' => $entry->id]);
+```
+
+AR balance guard — discount amount is validated not to exceed `effective_ar`. The same guard prevents over-payment.
+
+```text
+effective_ar = invoice->total + Σcharges(4210/4220) − invoice->paid_amount − Σdiscounts(6130)
+```
+
+---
+
+### Bill Charges (Freight / Shipping)
+
+Records an additional vendor cost against a posted bill — e.g., a courier charge or carriage fee.
+
+Journal entry: DR Expense account / CR Accounts Payable (2000).
+
+| Account | Code | Use |
+| --- | --- | --- |
+| Courier Bill / Charge | 6310 | Standard courier fee |
+| Shipping / Transfer Bill (Carriage) | 6320 | Freight / sea or land carriage |
+| Hand Carry Delivery | 6330 | Hand-carried goods delivery |
+| Delivery Return Charge | 6340 | Return shipment fee |
+
+```php
+use Centrex\Accounting\Models\{Account, Bill, Expense};
+
+$bill          = Bill::find($id);
+$apAccount     = Account::where('code', '2000')->first();
+$chargeAccount = Account::where('code', '6310')->first(); // or 6320, 6330, 6340
+
+$expense = Expense::create([
+    'chargeable_type' => Bill::class,
+    'chargeable_id'   => $bill->id,
+    'account_id'      => $chargeAccount->id,
+    'expense_date'    => today(),
+    'subtotal'        => 300,
+    'total'           => 300,
+    'paid_amount'     => 0,
+    'currency'        => 'BDT',
+    'status'          => 'approved',
+    'payment_method'  => 'credit',
+    'reference'       => $bill->bill_number,
+]);
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => $bill->bill_number,
+    'type'        => 'general',
+    'description' => 'Courier Charge — ' . $bill->bill_number,
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $chargeAccount->id, 'type' => 'debit',  'amount' => 300, 'description' => 'Courier Charge'],
+        ['account_id' => $apAccount->id,     'type' => 'credit', 'amount' => 300, 'description' => 'Accounts Payable'],
+    ],
+]);
+$entry->post();
+$expense->update(['journal_entry_id' => $entry->id]);
+```
+
+### Bill Discounts (Purchase Discount)
+
+Records a price reduction granted by the vendor, reducing the AP balance. Journal entry: DR Accounts Payable (2000) / CR Purchase Discount (5500).
+
+```php
+$discountAccount = Account::where('code', '5500')->first();
+$apAccount       = Account::where('code', '2000')->first();
+
+$expense = Expense::create([
+    'chargeable_type' => Bill::class,
+    'chargeable_id'   => $bill->id,
+    'account_id'      => $discountAccount->id,
+    'expense_date'    => today(),
+    'subtotal'        => 2000,
+    'total'           => 2000,
+    'paid_amount'     => 2000,
+    'currency'        => 'BDT',
+    'status'          => 'paid',
+    'payment_method'  => 'cash',
+    'reference'       => $bill->bill_number,
+]);
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => $bill->bill_number,
+    'type'        => 'general',
+    'description' => 'Purchase Discount — ' . $bill->bill_number,
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $apAccount->id,       'type' => 'debit',  'amount' => 2000, 'description' => 'Discount applied to AP'],
+        ['account_id' => $discountAccount->id, 'type' => 'credit', 'amount' => 2000, 'description' => 'Purchase Discount'],
+    ],
+]);
+$entry->post();
+$expense->update(['journal_entry_id' => $entry->id]);
+```
+
+AP balance guard — discount amount is validated not to exceed `effective_ap`.
+
+```text
+effective_ap = bill->total + Σcharges(6310/6320/6330/6340) − bill->paid_amount − Σdiscounts(5500)
+```
+
+The UI equivalent is the **Record Charge** and **Record Discount** buttons on the bill detail page (`/accounting/bills/{id}`).
+
+### Journal Flow at a Glance
+
+| Event | DR | CR |
+| --- | --- | --- |
+| Invoice delivery charge | AR `1200` | Delivery Charge `4210` / COD `4220` |
+| Invoice sales discount | Sales Discount `6130` | AR `1200` |
+| Bill freight charge | Courier/Shipping `6310–6340` | AP `2000` |
+| Bill purchase discount | AP `2000` | Purchase Discount `5500` |
 
 ---
 
@@ -1428,6 +1632,7 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/journal-entries` | List entries (filterable by status, date) |
 | `POST` | `/api/accounting/journal-entries` | Create entry |
+| `POST` | `/api/accounting/journal-entries/{id}/submit` | Submit entry for approval |
 | `POST` | `/api/accounting/journal-entries/{id}/post` | Post entry to GL |
 | `POST` | `/api/accounting/journal-entries/{id}/void` | Void entry |
 
@@ -1491,6 +1696,33 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | `GET` | `/api/accounting/reports/income-statement` | P&L (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/cash-flow` | Cash flow (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/general-ledger` | General ledger (`?account_id=&start=&end=&sbu=`) |
+
+---
+
+## Artisan Commands
+
+### Demo data
+
+```bash
+# Seed a full multi-entity demo dataset (invoices, bills, expenses, journal entries, budgets)
+php artisan accounting:demo
+```
+
+### Report generation
+
+```bash
+# Print a report to the terminal
+php artisan accounting:report income-statement --start=2026-01-01 --end=2026-04-30 --format=table
+php artisan accounting:report balance-sheet    --date=2026-04-30  --format=table
+php artisan accounting:report trial-balance    --start=2026-01-01 --end=2026-04-30 --format=json
+
+# Export to file
+php artisan accounting:report all --start=2026-01-01 --end=2026-12-31 --format=csv --output=reports/fy2026.csv
+```
+
+Available types: `all` (default) | `trial-balance` | `balance-sheet` | `income-statement` | `cash-flow`
+
+Available formats: `table` | `csv` | `json`
 
 ---
 

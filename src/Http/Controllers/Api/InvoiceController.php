@@ -7,7 +7,7 @@ namespace Centrex\Accounting\Http\Controllers\Api;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\AccountingException;
 use Centrex\Accounting\Http\Requests\{RecordPaymentRequest, StoreInvoiceRequest};
-use Centrex\Accounting\Http\Resources\{InvoiceResource, PaymentResource};
+use Centrex\Accounting\Http\Resources\{ExpenseResource, InvoiceResource, PaymentResource};
 use Centrex\Accounting\Models\{Invoice, InvoiceItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
@@ -131,6 +131,33 @@ class InvoiceController extends Controller
             return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
             Log::error('Invoice payment error', ['invoice_id' => $invoice->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
+        }
+    }
+
+    public function recordExpense(Request $request, Invoice $invoice): JsonResponse
+    {
+        $request->validate([
+            'description'    => ['required', 'string', 'max:255'],
+            'amount'         => ['required', 'numeric', 'min:0.01'],
+            'account_id'     => ['nullable', 'integer'],
+            'tax_amount'     => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,cheque,card,credit'],
+            'vendor_name'    => ['nullable', 'string', 'max:255'],
+            'reference'      => ['nullable', 'string', 'max:255'],
+            'notes'          => ['nullable', 'string'],
+            'date'           => ['nullable', 'date'],
+        ]);
+
+        try {
+            $expense = $this->accounting->recordInvoiceExpense($invoice, $request->all());
+
+            return response()->json(['data' => new ExpenseResource($expense->load('items'))], 201);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
+        } catch (\Throwable $e) {
+            Log::error('Invoice expense error', ['invoice_id' => $invoice->id, 'exception' => $e]);
 
             return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }

@@ -6,8 +6,9 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\{Customer, Invoice, InvoiceItem};
+use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem};
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\{Component, WithPagination};
 
 class Invoices extends Component
@@ -46,6 +47,8 @@ class Invoices extends Component
     public string $pay_amount = '';
 
     public string $pay_method = 'bank_transfer';
+
+    public string $pay_account_code = '1100';
 
     public string $pay_reference = '';
 
@@ -193,6 +196,16 @@ class Invoices extends Component
         }
     }
 
+    #[Computed]
+    public function paymentAccounts(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Account::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(fn ($q) => $q->where('code', 'like', '10%')->orWhere('code', 'like', '11%'))
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
+    }
+
     public function openPayModal(int $id): void
     {
         $invoice = Invoice::findOrFail($id);
@@ -200,6 +213,7 @@ class Invoices extends Component
         $this->pay_date = now()->format('Y-m-d');
         $this->pay_amount = number_format($invoice->balance, 2, '.', '');
         $this->pay_method = 'bank_transfer';
+        $this->pay_account_code = '1100';
         $this->pay_reference = '';
         $this->pay_notes = '';
         $this->showPayModal = true;
@@ -208,20 +222,22 @@ class Invoices extends Component
     public function recordPayment(): void
     {
         $this->validate([
-            'pay_date'   => 'required|date',
-            'pay_amount' => 'required|numeric|min:0.01',
-            'pay_method' => 'required|string',
+            'pay_date'         => 'required|date',
+            'pay_amount'       => 'required|numeric|min:0.01',
+            'pay_method'       => 'required|string',
+            'pay_account_code' => 'required|string',
         ]);
 
         $invoice = Invoice::findOrFail($this->payingInvoiceId);
 
         try {
             app(Accounting::class)->recordInvoicePayment($invoice, [
-                'date'      => $this->pay_date,
-                'amount'    => $this->pay_amount,
-                'method'    => $this->pay_method,
-                'reference' => $this->pay_reference ?: null,
-                'notes'     => $this->pay_notes ?: null,
+                'date'         => $this->pay_date,
+                'amount'       => $this->pay_amount,
+                'method'       => $this->pay_method,
+                'account_code' => $this->pay_account_code,
+                'reference'    => $this->pay_reference ?: null,
+                'notes'        => $this->pay_notes ?: null,
             ]);
 
             $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');

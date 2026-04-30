@@ -635,6 +635,134 @@ class Accounting
         });
     }
 
+    /**
+     * Create and immediately post an expense linked to a specific invoice.
+     *
+     * Typical use: shipping out, courier fee, COD handling, or any fulfilment cost
+     * borne by the company against a customer invoice.
+     *
+     * Journal entry:
+     *   DR [expense_account]  (subtotal)
+     *   DR Sales Tax (2300)   (tax_amount, if > 0)
+     *   CR Cash (1000)        (payment_method != 'credit')
+     *   CR AP   (2000)        (payment_method == 'credit')
+     */
+    public function recordInvoiceExpense(Invoice $invoice, array $data): Expense
+    {
+        return $this->recordDocumentExpense(
+            $invoice,
+            $invoice->invoice_number,
+            fn () => $this->resolveInvoiceSbuCode($invoice),
+            $data,
+            'Invoice expense',
+        );
+    }
+
+    /**
+     * Create and immediately post an expense linked to a specific bill.
+     *
+     * Typical use: freight-in, customs duty, insurance, or any landed cost
+     * associated with a vendor bill / purchase.
+     *
+     * Journal entry:
+     *   DR [expense_account]  (subtotal)
+     *   DR Sales Tax (2300)   (tax_amount, if > 0)
+     *   CR Cash (1000)        (payment_method != 'credit')
+     *   CR AP   (2000)        (payment_method == 'credit')
+     */
+    public function recordBillExpense(Bill $bill, array $data): Expense
+    {
+        return $this->recordDocumentExpense(
+            $bill,
+            $bill->bill_number,
+            fn () => $this->resolveBillSbuCode($bill),
+            $data,
+            'Bill expense',
+        );
+    }
+
+    /** Shared implementation for recordInvoiceExpense / recordBillExpense. */
+    private function recordDocumentExpense(
+        Invoice|Bill $document,
+        string $documentNumber,
+        \Closure $resolveSbu,
+        array $data,
+        string $defaultDescription,
+    ): Expense {
+        return DB::transaction(function () use ($document, $documentNumber, $resolveSbu, $data, $defaultDescription): Expense {
+            $subtotal    = round((float) ($data['amount'] ?? 0), 2);
+            $taxAmount   = round((float) ($data['tax_amount'] ?? 0), 2);
+            $total       = round($subtotal + $taxAmount, 2);
+            $isCash      = ($data['payment_method'] ?? 'cash') !== 'credit';
+            $currency    = $data['currency'] ?? $document->currency ?? config('accounting.base_currency', 'BDT');
+            $date        = $data['date'] ?? $document->{'invoice_date'} ?? $document->{'bill_date'};
+            $description = $data['description'] ?? $defaultDescription;
+
+            $expense = Expense::create([
+                'chargeable_type' => $document::class,
+                'chargeable_id'   => $document->id,
+                'account_id'      => $data['account_id'] ?? null,
+                'expense_date'    => $date,
+                'subtotal'        => $subtotal,
+                'tax_amount'      => $taxAmount,
+                'total'           => $total,
+                'paid_amount'     => 0,
+                'currency'        => $currency,
+                'exchange_rate'   => $data['exchange_rate'] ?? 1.0,
+                'status'          => 'draft',
+                'payment_method'  => $data['payment_method'] ?? 'cash',
+                'vendor_name'     => $data['vendor_name'] ?? null,
+                'reference'       => $data['reference'] ?? $documentNumber,
+                'notes'           => $data['notes'] ?? null,
+            ]);
+
+            $expenseAccount = $expense->account_id
+                ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
+                : $this->requireAccount('5000');
+
+            $taxAccount     = Account::where('code', '2300')->where('is_active', true)->first();
+            $cashAccount    = $this->requireAccount('1000');
+            $payableAccount = $this->requireAccount('2000');
+            $creditAccount  = $isCash ? $cashAccount : $payableAccount;
+
+            $lines = [
+                ['account_id' => $expenseAccount->id, 'type' => 'debit', 'amount' => $subtotal, 'description' => $description],
+            ];
+
+            if ($taxAmount > 0 && $taxAccount !== null) {
+                $lines[] = ['account_id' => $taxAccount->id, 'type' => 'debit', 'amount' => $taxAmount, 'description' => 'Tax'];
+            }
+
+            $lines[] = [
+                'account_id'  => $creditAccount->id,
+                'type'        => 'credit',
+                'amount'      => $total,
+                'description' => $isCash ? 'Cash paid' : 'Accounts Payable',
+            ];
+
+            $entry = $this->createJournalEntry([
+                'date'          => $date,
+                'reference'     => $expense->expense_number,
+                'type'          => 'general',
+                'description'   => "{$description} — {$documentNumber}",
+                'currency'      => $currency,
+                'exchange_rate' => $data['exchange_rate'] ?? 1.0,
+                'sbu_code'      => $this->normalizeSbuCode($data['sbu_code'] ?? null) ?? $resolveSbu(),
+                'lines'         => $lines,
+            ]);
+
+            $entry->post();
+
+            $expense->update([
+                'journal_entry_id' => $entry->id,
+                'paid_amount'      => $isCash ? $total : 0,
+                'status'           => $isCash ? 'paid' : 'approved',
+            ]);
+
+            return $expense;
+        });
+    }
+
     /** Record settlement of a credit expense: DR AP / CR Cash. */
     public function recordExpensePayment(Expense $expense, array $paymentData): Payment
     {

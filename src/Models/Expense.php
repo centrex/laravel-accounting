@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
 use Illuminate\Support\Facades\DB;
 
 class Expense extends Model
@@ -30,6 +30,7 @@ class Expense extends Model
         'subtotal', 'tax_amount', 'total', 'paid_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
         'payment_method', 'reference', 'vendor_name',
+        'chargeable_type', 'chargeable_id',
     ];
 
     protected $casts = [
@@ -78,9 +79,20 @@ class Expense extends Model
         return $this->hasMany(ExpenseItem::class);
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    /** Polymorphic parent — may be Invoice, Bill, or any future document type. */
+    public function chargeable(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     public function getBalanceAttribute(): float

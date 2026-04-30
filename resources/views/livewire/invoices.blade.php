@@ -208,15 +208,25 @@
                 <x-tallui-input type="number" step="0.01" wire:model="pay_amount" class="text-right" />
             </x-tallui-form-group>
         </div>
-        <x-tallui-form-group label="Payment Method *" :error="$errors->first('pay_method')">
-            <x-tallui-select wire:model="pay_method">
-                <option value="cash">Cash</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="check">Check</option>
-                <option value="card">Card</option>
-                <option value="other">Other</option>
-            </x-tallui-select>
-        </x-tallui-form-group>
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Payment Method *" :error="$errors->first('pay_method')">
+                <x-tallui-select wire:model="pay_method">
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="check">Check</option>
+                    <option value="card">Card</option>
+                    <option value="mobile_banking">Mobile Banking</option>
+                    <option value="other">Other</option>
+                </x-tallui-select>
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Bank / Cash Account *" :error="$errors->first('pay_account_code')">
+                <x-tallui-select wire:model="pay_account_code">
+                    @foreach($this->paymentAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                    @endforeach
+                </x-tallui-select>
+            </x-tallui-form-group>
+        </div>
         <x-tallui-form-group label="Reference">
             <x-tallui-input wire:model="pay_reference" placeholder="Transaction ID, check #…" />
         </x-tallui-form-group>

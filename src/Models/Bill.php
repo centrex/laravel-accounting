@@ -7,7 +7,7 @@ namespace Centrex\Accounting\Models;
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphMany};
 use Illuminate\Support\Facades\DB;
 
 class Bill extends Model
@@ -97,6 +97,11 @@ class Bill extends Model
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function expenses(): MorphMany
+    {
+        return $this->morphMany(Expense::class, 'chargeable');
     }
 
     public function convertToBase(float|int|string|null $amount): float

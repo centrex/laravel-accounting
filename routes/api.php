@@ -40,6 +40,7 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::post('invoices/{invoice}/post', [InvoiceController::class, 'post'])->name('invoices.post');
         Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->name('invoices.payments');
+        Route::post('invoices/{invoice}/expenses', [InvoiceController::class, 'recordExpense'])->name('invoices.expenses');
         Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
 
         // Bills
@@ -48,6 +49,7 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('bills/{bill}', [BillController::class, 'show'])->name('bills.show');
         Route::post('bills/{bill}/post', [BillController::class, 'post'])->name('bills.post');
         Route::post('bills/{bill}/payments', [BillController::class, 'recordPayment'])->name('bills.payments');
+        Route::post('bills/{bill}/expenses', [BillController::class, 'recordExpense'])->name('bills.expenses');
         Route::delete('bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
 
         // Customers

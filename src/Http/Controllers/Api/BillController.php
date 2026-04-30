@@ -7,7 +7,7 @@ namespace Centrex\Accounting\Http\Controllers\Api;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\AccountingException;
 use Centrex\Accounting\Http\Requests\{RecordPaymentRequest, StoreBillRequest};
-use Centrex\Accounting\Http\Resources\{BillResource, PaymentResource};
+use Centrex\Accounting\Http\Resources\{BillResource, ExpenseResource, PaymentResource};
 use Centrex\Accounting\Models\{Bill, BillItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
@@ -119,6 +119,33 @@ class BillController extends Controller
             return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
         } catch (\Throwable $e) {
             Log::error('Bill payment error', ['bill_id' => $bill->id, 'exception' => $e]);
+
+            return response()->json(['message' => 'An internal accounting error occurred.'], 500);
+        }
+    }
+
+    public function recordExpense(Request $request, Bill $bill): JsonResponse
+    {
+        $request->validate([
+            'description'    => ['required', 'string', 'max:255'],
+            'amount'         => ['required', 'numeric', 'min:0.01'],
+            'account_id'     => ['nullable', 'integer'],
+            'tax_amount'     => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,cheque,card,credit'],
+            'vendor_name'    => ['nullable', 'string', 'max:255'],
+            'reference'      => ['nullable', 'string', 'max:255'],
+            'notes'          => ['nullable', 'string'],
+            'date'           => ['nullable', 'date'],
+        ]);
+
+        try {
+            $expense = $this->accounting->recordBillExpense($bill, $request->all());
+
+            return response()->json(['data' => new ExpenseResource($expense->load('items'))], 201);
+        } catch (AccountingException $e) {
+            return response()->json(['message' => $e->getMessage(), 'code' => class_basename($e)], 422);
+        } catch (\Throwable $e) {
+            Log::error('Bill expense error', ['bill_id' => $bill->id, 'exception' => $e]);
 
             return response()->json(['message' => 'An internal accounting error occurred.'], 500);
         }
