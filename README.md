@@ -385,21 +385,25 @@ Accounting::recordBillPayment($bill, [
 
 The invoice and bill detail pages support recording additional charges and price adjustments with full double-entry journal entries. All amounts are guarded by an AR/AP balance check so payments plus discounts can never exceed the effective receivable or payable balance.
 
-### Invoice Charges (Delivery / COD)
+### Invoice Expenses (Delivery / COD)
 
-Records an additional charge against a posted invoice — e.g., a delivery fee or cash-on-delivery charge billed to the customer. Journal entry: DR Accounts Receivable (1200) / CR Revenue account.
+Records an additional company-borne expense against a posted invoice — e.g., a delivery fee, courier charge, or cash-on-delivery handling cost. Journal entry: DR Expense account / CR Cash (1000).
 
 | Account | Code | Use |
 | --- | --- | --- |
 | Delivery Charge | 4210 | Standard courier / shipping charge |
 | Cash on Delivery Charge | 4220 | COD handling fee |
+| Courier Bill / Charge | 6310 | Courier fee |
+| Shipping / Transfer Bill (Carriage) | 6320 | Freight / carriage |
+| Hand Carry Delivery | 6330 | Hand-carried delivery |
+| Delivery Return Charge | 6340 | Return shipment fee |
 
 ```php
 use Centrex\Accounting\Models\{Account, Expense, Invoice};
 use Centrex\Accounting\Facades\Accounting;
 
 $invoice      = Invoice::find($id);
-$arAccount    = Account::where('code', '1200')->first();
+$cashAccount  = Account::where('code', '1000')->first();
 $chargeAccount = Account::where('code', '4210')->first(); // or 4220
 
 $expense = Expense::create([
@@ -420,11 +424,11 @@ $entry = Accounting::createJournalEntry([
     'date'        => today(),
     'reference'   => $invoice->invoice_number,
     'type'        => 'general',
-    'description' => 'Delivery Charge — ' . $invoice->invoice_number,
+    'description' => 'Delivery expense — ' . $invoice->invoice_number,
     'currency'    => 'BDT',
     'lines' => [
-        ['account_id' => $arAccount->id,     'type' => 'debit',  'amount' => 500, 'description' => 'Delivery Charge'],
-        ['account_id' => $chargeAccount->id, 'type' => 'credit', 'amount' => 500, 'description' => 'Delivery Charge Revenue'],
+        ['account_id' => $chargeAccount->id, 'type' => 'debit',  'amount' => 500, 'description' => 'Delivery Charge'],
+        ['account_id' => $cashAccount->id,   'type' => 'credit', 'amount' => 500, 'description' => 'Cash payment for Delivery Charge'],
     ],
 ]);
 $entry->post();
@@ -473,7 +477,7 @@ $expense->update(['journal_entry_id' => $entry->id]);
 AR balance guard — discount amount is validated not to exceed `effective_ar`. The same guard prevents over-payment.
 
 ```text
-effective_ar = invoice->total + Σcharges(4210/4220) − invoice->paid_amount − Σdiscounts(6130)
+effective_ar = invoice->total − invoice->paid_amount − Σdiscounts(6130)
 ```
 
 ---
@@ -482,7 +486,7 @@ effective_ar = invoice->total + Σcharges(4210/4220) − invoice->paid_amount �
 
 Records an additional vendor cost against a posted bill — e.g., a courier charge or carriage fee.
 
-Journal entry: DR Expense account / CR Accounts Payable (2000).
+Journal entry: DR Expense account / CR Cash (1000).
 
 | Account | Code | Use |
 | --- | --- | --- |
@@ -495,7 +499,7 @@ Journal entry: DR Expense account / CR Accounts Payable (2000).
 use Centrex\Accounting\Models\{Account, Bill, Expense};
 
 $bill          = Bill::find($id);
-$apAccount     = Account::where('code', '2000')->first();
+$cashAccount   = Account::where('code', '1000')->first();
 $chargeAccount = Account::where('code', '6310')->first(); // or 6320, 6330, 6340
 
 $expense = Expense::create([
@@ -505,10 +509,10 @@ $expense = Expense::create([
     'expense_date'    => today(),
     'subtotal'        => 300,
     'total'           => 300,
-    'paid_amount'     => 0,
+    'paid_amount'     => 300,
     'currency'        => 'BDT',
-    'status'          => 'approved',
-    'payment_method'  => 'credit',
+    'status'          => 'paid',
+    'payment_method'  => 'cash',
     'reference'       => $bill->bill_number,
 ]);
 
@@ -520,7 +524,7 @@ $entry = Accounting::createJournalEntry([
     'currency'    => 'BDT',
     'lines' => [
         ['account_id' => $chargeAccount->id, 'type' => 'debit',  'amount' => 300, 'description' => 'Courier Charge'],
-        ['account_id' => $apAccount->id,     'type' => 'credit', 'amount' => 300, 'description' => 'Accounts Payable'],
+        ['account_id' => $cashAccount->id,   'type' => 'credit', 'amount' => 300, 'description' => 'Cash payment for Courier Charge'],
     ],
 ]);
 $entry->post();
@@ -567,7 +571,7 @@ $expense->update(['journal_entry_id' => $entry->id]);
 AP balance guard — discount amount is validated not to exceed `effective_ap`.
 
 ```text
-effective_ap = bill->total + Σcharges(6310/6320/6330/6340) − bill->paid_amount − Σdiscounts(5500)
+effective_ap = bill->total − bill->paid_amount − Σdiscounts(5500)
 ```
 
 The UI equivalent is the **Record Charge** and **Record Discount** buttons on the bill detail page (`/accounting/bills/{id}`).
@@ -576,9 +580,9 @@ The UI equivalent is the **Record Charge** and **Record Discount** buttons on th
 
 | Event | DR | CR |
 | --- | --- | --- |
-| Invoice delivery charge | AR `1200` | Delivery Charge `4210` / COD `4220` |
+| Invoice delivery/COD expense | Delivery/COD/Courier expense `4210` / `4220` / `6310–6340` | Cash `1000` |
 | Invoice sales discount | Sales Discount `6130` | AR `1200` |
-| Bill freight charge | Courier/Shipping `6310–6340` | AP `2000` |
+| Bill freight charge | Courier/Shipping `6310–6340` | Cash `1000` |
 | Bill purchase discount | AP `2000` | Purchase Discount `5500` |
 
 ---

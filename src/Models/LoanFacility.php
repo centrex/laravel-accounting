@@ -7,6 +7,8 @@ namespace Centrex\Accounting\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
 /**
  * Tracks any organizational loan — term, working-capital, inter-company, director, equipment, etc.
@@ -18,8 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *   short_term  → principal 240x, accrued interest 242x, expense 6720
  *   long_term   → principal 250x, accrued interest 252x, expense 6730
  */
-class LoanFacility extends Model
+class LoanFacility extends Model implements Auditable
 {
+    use AuditableTrait;
     use SoftDeletes;
 
     protected $guarded = [];

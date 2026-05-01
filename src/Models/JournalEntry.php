@@ -9,9 +9,12 @@ use Centrex\Accounting\Enums\JvStatus;
 use Centrex\Accounting\Exceptions\{AccountingException, InvalidStatusTransitionException, UnbalancedJournalException};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class JournalEntry extends Model
+class JournalEntry extends Model implements Auditable
 {
+    use AuditableTrait;
     use AddTablePrefix;
     use SoftDeletes;
 

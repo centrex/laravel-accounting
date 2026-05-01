@@ -8,10 +8,13 @@ use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Concerns\HasPrimaryImage;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo};
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 
-class Vendor extends Model implements HasMedia
+class Vendor extends Model implements Auditable, HasMedia
 {
+    use AuditableTrait;
     use AddTablePrefix;
     use HasPrimaryImage;
     use SoftDeletes;

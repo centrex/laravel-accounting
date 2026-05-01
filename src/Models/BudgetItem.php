@@ -8,9 +8,12 @@ use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Database\Eloquent\{Collection as EloquentCollection, Model};
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class BudgetItem extends Model
+class BudgetItem extends Model implements Auditable
 {
+    use AuditableTrait;
     use AddTablePrefix;
 
     protected $fillable = [

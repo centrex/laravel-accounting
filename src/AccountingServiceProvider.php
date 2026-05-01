@@ -8,8 +8,8 @@ use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand}
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
 use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, VendorLedger, VendorLedgerIndex, Vendors};
-use Centrex\Accounting\Models\{Bill, BillItem, Expense, ExpenseItem, InventoryFinancingFacility, Invoice, InvoiceItem, JournalEntry, LoanFacility, Payment};
-use Centrex\Accounting\Observers\{BillItemObserver, BillObserver, ExpenseItemObserver, ExpenseObserver, InvoiceItemObserver, InvoiceObserver, JournalEntryObserver, PaymentObserver};
+use Centrex\Accounting\Models\{BillItem, ExpenseItem, InvoiceItem, JournalEntry, Payment};
+use Centrex\Accounting\Observers\{BillItemObserver, ExpenseItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
@@ -45,11 +45,8 @@ class AccountingServiceProvider extends ServiceProvider
         // Register model observers
         JournalEntry::observe(JournalEntryObserver::class);
         Payment::observe(PaymentObserver::class);
-        Invoice::observe(InvoiceObserver::class);
-        Bill::observe(BillObserver::class);
         BillItem::observe(BillItemObserver::class);
         InvoiceItem::observe(InvoiceItemObserver::class);
-        Expense::observe(ExpenseObserver::class);
         ExpenseItem::observe(ExpenseItemObserver::class);
         // Register event listeners
         Event::listen(InvoicePosted::class, [SyncCustomerOutstanding::class, 'handle']);

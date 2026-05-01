@@ -7,13 +7,16 @@ namespace Centrex\Accounting\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
 /**
  * Tracks an inventory financing credit line from a single lender entity.
  * Each facility owns two GL sub-accounts: one for principal payable, one for accrued interest.
  */
-class InventoryFinancingFacility extends Model
+class InventoryFinancingFacility extends Model implements Auditable
 {
+    use AuditableTrait;
     use SoftDeletes;
 
     protected $guarded = [];

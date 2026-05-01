@@ -6,9 +6,12 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class TaxRate extends Model
+class TaxRate extends Model implements Auditable
 {
+    use AuditableTrait;
     use AddTablePrefix;
 
     protected function getTableSuffix(): string

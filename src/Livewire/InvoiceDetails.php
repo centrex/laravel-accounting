@@ -18,7 +18,7 @@ class InvoiceDetails extends Component
     // Charge modal (delivery / COD — DR expense / CR Cash, does not affect AR)
     public bool $showChargeModal = false;
 
-    public string $charge_type = '6310';
+    public string $charge_type = '4210';
 
     public string $charge_amount = '';
 
@@ -65,7 +65,7 @@ class InvoiceDetails extends Component
     public function openChargeModal(): void
     {
         $this->reset(['charge_amount', 'charge_notes']);
-        $this->charge_type = '6310';
+        $this->charge_type = '4210';
         $this->charge_date = now()->format('Y-m-d');
         $this->showChargeModal = true;
     }
@@ -73,7 +73,7 @@ class InvoiceDetails extends Component
     public function recordCharge(): void
     {
         $this->validate([
-            'charge_type'   => 'required|in:6310,6320,6330,6340',
+            'charge_type'   => 'required|in:4210,4220,6310,6320,6330,6340',
             'charge_amount' => 'required|numeric|min:0.01',
             'charge_date'   => 'required|date',
         ]);
@@ -115,7 +115,7 @@ class InvoiceDetails extends Component
                     'notes'           => $this->charge_notes ?: null,
                 ]);
 
-                // DR expense (6310/6320/6330/6340) / CR Cash (1000) — does not affect AR
+                // DR expense (4210/4220/6310/6320/6330/6340) / CR Cash (1000) — does not affect AR
                 $entry = app(Accounting::class)->createJournalEntry([
                     'date'        => $this->charge_date,
                     'reference'   => $this->invoice->invoice_number,

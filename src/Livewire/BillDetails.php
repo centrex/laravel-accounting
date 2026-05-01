@@ -75,7 +75,7 @@ class BillDetails extends Component
     public function recordCharge(): void
     {
         $this->validate([
-            'charge_type'   => 'required|in:6310,6320,6330,6340',
+            'charge_type'   => 'required|in:4210,4220,6310,6320,6330,6340',
             'charge_amount' => 'required|numeric|min:0.01',
             'charge_date'   => 'required|date',
         ]);
@@ -117,7 +117,7 @@ class BillDetails extends Component
                     'notes'           => $this->charge_notes ?: null,
                 ]);
 
-                // DR expense (6310/6320/6330/6340) / CR Cash (1000) — does not affect AP
+                // DR expense (4210/4220/6310/6320/6330/6340) / CR Cash (1000) — does not affect AP
                 $entry = app(Accounting::class)->createJournalEntry([
                     'date'        => $this->charge_date,
                     'reference'   => $this->bill->bill_number,

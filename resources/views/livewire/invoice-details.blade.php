@@ -40,7 +40,7 @@
             $allJournals->push([
                 'type'  => $charge->account?->name ?? 'Charge',
                 'badge' => match($charge->account?->code ?? '') {
-                    '6310', '6320', '6330', '6340' => 'info',
+                    '4210', '4220', '6310', '6320', '6330', '6340' => 'info',
                     '6130' => 'error',
                     default => 'neutral',
                 },
@@ -227,7 +227,7 @@
                 @foreach($invoice->expenses as $charge)
                     @php
                         $chargeBadge = match($charge->account?->code ?? '') {
-                            '6310', '6320', '6330', '6340' => 'info',
+                            '4210', '4220', '6310', '6320', '6330', '6340' => 'info',
                             '6130' => 'error',
                             default => 'neutral',
                         };
@@ -396,7 +396,9 @@
             <div>
                 <label class="label"><span class="label-text font-medium">Charge Type <span class="text-error">*</span></span></label>
                 <select wire:model="charge_type" class="select select-bordered w-full">
-                    <option value="6310">Delivery / Courier Charge (6310)</option>
+                    <option value="4210">Delivery Charge (4210)</option>
+                    <option value="4220">Cash on Delivery Charge (4220)</option>
+                    <option value="6310">Courier Bill / Charge (6310)</option>
                     <option value="6320">Shipping / Carriage Charge (6320)</option>
                     <option value="6330">Hand Carry Delivery (6330)</option>
                     <option value="6340">Delivery Return Charge (6340)</option>
