@@ -199,9 +199,9 @@ class AccountingDashboard extends Component
 
     private function inventoryForecastCashflow(): array
     {
-        $inventoryClass = \Centrex\Inventory\Inventory::class;
+        $inventoryClass = config('accounting.integrations.inventory.forecast_service');
 
-        if (!class_exists($inventoryClass)) {
+        if (! is_string($inventoryClass) || !class_exists($inventoryClass)) {
             return ['available' => false];
         }
 

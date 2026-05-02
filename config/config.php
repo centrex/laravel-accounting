@@ -94,6 +94,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Optional Integrations
+    |--------------------------------------------------------------------------
+    | Accounting stays independent by resolving optional package integrations
+    | through contracts instead of importing their concrete models directly.
+    */
+    'integrations' => [
+        'inventory' => [
+            'snapshot_provider' => env(
+                'ACCOUNTING_INVENTORY_SNAPSHOT_PROVIDER',
+                'Centrex\\Inventory\\Support\\AccountingInventorySnapshotProvider',
+            ),
+            'forecast_service' => env(
+                'ACCOUNTING_INVENTORY_FORECAST_SERVICE',
+                'Centrex\\Inventory\\Inventory',
+            ),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multi-Tenancy
+    |--------------------------------------------------------------------------
+    | When enabled, a TenantScope global scope is applied to all root-aggregate
+    | models, scoping every query to the current tenant set via TenantContext::set().
+    | The tenant column name is configurable; the tenant ID is typically the
+    | authenticated user's current Team ID resolved in SetCurrentTenant middleware.
+    */
+    'tenant' => [
+        'enabled' => env('ACCOUNTING_TENANT_ENABLED', true),
+        'column'  => env('ACCOUNTING_TENANT_COLUMN', 'tenant_id'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Number Format
     |--------------------------------------------------------------------------
     */
@@ -120,5 +154,32 @@ return [
     'admin_roles'          => env('ACCOUNTING_ADMIN_ROLES', 'accountant,admin'),
     'admin_role_attribute' => env('ACCOUNTING_ADMIN_ROLE_ATTRIBUTE', null),
     'user_foreign_keys'    => env('ACCOUNTING_USER_FOREIGN_KEYS', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account Code Mappings
+    |--------------------------------------------------------------------------
+    | Override any of these to match your chart of accounts. These codes are
+    | used by the package when auto-generating journal entries (postInvoice,
+    | postBill, recordPayment, postExpense, closeFiscalYear, etc.).
+    */
+    'accounts' => [
+        'cash'                => env('ACCOUNTING_ACCOUNT_CASH', '1000'),
+        'bank'                => env('ACCOUNTING_ACCOUNT_BANK', '1100'),
+        'accounts_receivable' => env('ACCOUNTING_ACCOUNT_AR', '1200'),
+        'inventory'           => env('ACCOUNTING_ACCOUNT_INVENTORY', '1300'),
+        'accounts_payable'    => env('ACCOUNTING_ACCOUNT_AP', '2000'),
+        'tax_payable'         => env('ACCOUNTING_ACCOUNT_TAX_PAYABLE', '2300'),
+        'retained_earnings'   => env('ACCOUNTING_ACCOUNT_RETAINED_EARNINGS', '3100'),
+        'sales_revenue'       => env('ACCOUNTING_ACCOUNT_SALES_REVENUE', '4000'),
+        'cogs'                => env('ACCOUNTING_ACCOUNT_COGS', '5000'),
+        'purchase_discount'   => env('ACCOUNTING_ACCOUNT_PURCHASE_DISCOUNT', '5500'),
+        'sales_discount'      => env('ACCOUNTING_ACCOUNT_SALES_DISCOUNT', '6130'),
+        'delivery_charge'     => env('ACCOUNTING_ACCOUNT_DELIVERY_CHARGE', '6310'),
+        'shipping'            => env('ACCOUNTING_ACCOUNT_SHIPPING', '6320'),
+        'local_delivery'      => env('ACCOUNTING_ACCOUNT_LOCAL_DELIVERY', '6330'),
+        'return_charge'       => env('ACCOUNTING_ACCOUNT_RETURN_CHARGE', '6340'),
+        'financing_interest'  => env('ACCOUNTING_ACCOUNT_FINANCING_INTEREST', '6710'),
+    ],
 
 ];

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Concerns\HasTenant;
 use Centrex\Accounting\Enums\EntryStatus;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphMany};
@@ -16,6 +17,7 @@ class Bill extends Model implements Auditable
 {
     use AuditableTrait;
     use AddTablePrefix;
+    use HasTenant;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
@@ -33,6 +35,7 @@ class Bill extends Model implements Auditable
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
         'subtotal', 'tax_amount', 'total', 'paid_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
+        'source_type', 'source_id', 'source_reference', 'sbu_code',
         'inventory_purchase_order_id',
     ];
 

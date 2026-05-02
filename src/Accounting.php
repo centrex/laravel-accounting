@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
+use Centrex\Accounting\Contracts\InventorySnapshotProvider;
 use Centrex\Accounting\Enums\AccountSubtype;
 use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
@@ -104,23 +105,23 @@ class Accounting
             return null;
         }
 
-        $meta = method_exists($model, 'getAttribute')
-            ? $model->getAttribute('meta')
-            : ($model->meta ?? null);
+        // Use getAttributes() to guard against MissingAttributeException on models
+        // (e.g. App\Models\User) that don't have a meta column.
+        if (method_exists($model, 'getAttributes')) {
+            $meta = array_key_exists('meta', $model->getAttributes())
+                ? $model->getAttribute('meta')
+                : null;
+        } else {
+            $meta = $model->meta ?? null;
+        }
 
         return $this->extractSbuCodeFromMeta($meta);
     }
 
-    private function resolveWarehouseSbuCode(?int $warehouseId): ?string
+    /** Resolve a semantic account key to a code from config, with a hardcoded fallback. */
+    private function accountCode(string $key): string
     {
-        if ($warehouseId === null || ! class_exists('Centrex\\Inventory\\Models\\Warehouse')) {
-            return null;
-        }
-
-        $warehouseClass = 'Centrex\\Inventory\\Models\\Warehouse';
-        $warehouse = $warehouseClass::query()->find($warehouseId);
-
-        return $this->resolveModelSbuCode($warehouse);
+        return (string) config("accounting.accounts.{$key}");
     }
 
     private function resolveInvoiceSbuCode(Invoice $invoice): ?string
@@ -131,19 +132,10 @@ class Accounting
             return $existingEntrySbu;
         }
 
-        if ($invoice->inventory_sale_order_id !== null && class_exists('Centrex\\Inventory\\Models\\SaleOrder')) {
-            $saleOrderClass = 'Centrex\\Inventory\\Models\\SaleOrder';
-            $saleOrder = $saleOrderClass::query()
-                ->with(['warehouse', 'customer.modelable'])
-                ->find($invoice->inventory_sale_order_id);
+        $documentSbu = $this->normalizeSbuCode($invoice->sbu_code);
 
-            $sbuCode = $this->resolveWarehouseSbuCode($saleOrder?->warehouse_id);
-            $sbuCode ??= $this->resolveModelSbuCode($saleOrder?->customer?->modelable);
-            $sbuCode ??= $this->resolveModelSbuCode($saleOrder?->customer);
-
-            if ($sbuCode !== null) {
-                return $sbuCode;
-            }
+        if ($documentSbu !== null) {
+            return $documentSbu;
         }
 
         $customer = $invoice->relationLoaded('customer') ? $invoice->customer : $invoice->customer()->with('modelable')->first();
@@ -159,19 +151,10 @@ class Accounting
             return $existingEntrySbu;
         }
 
-        if ($bill->inventory_purchase_order_id !== null && class_exists('Centrex\\Inventory\\Models\\PurchaseOrder')) {
-            $purchaseOrderClass = 'Centrex\\Inventory\\Models\\PurchaseOrder';
-            $purchaseOrder = $purchaseOrderClass::query()
-                ->with(['warehouse', 'supplier.modelable'])
-                ->find($bill->inventory_purchase_order_id);
+        $documentSbu = $this->normalizeSbuCode($bill->sbu_code);
 
-            $sbuCode = $this->resolveWarehouseSbuCode($purchaseOrder?->warehouse_id);
-            $sbuCode ??= $this->resolveModelSbuCode($purchaseOrder?->supplier?->modelable);
-            $sbuCode ??= $this->resolveModelSbuCode($purchaseOrder?->supplier);
-
-            if ($sbuCode !== null) {
-                return $sbuCode;
-            }
+        if ($documentSbu !== null) {
+            return $documentSbu;
         }
 
         $vendor = $bill->relationLoaded('vendor') ? $bill->vendor : $bill->vendor()->with('modelable')->first();
@@ -374,9 +357,9 @@ class Accounting
         }
 
         return DB::transaction(function () use ($invoice): JournalEntry {
-            $arAccount = $this->requireAccount('1200');
-            $revenueAccount = $this->requireAccount('4000');
-            $taxAccount = $this->requireAccount('2300');
+            $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
+            $revenueAccount = $this->requireAccount($this->accountCode('sales_revenue'));
+            $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
             $discountAmount = round((float) ($invoice->discount_amount ?? 0), 2);
             $netRevenueAmount = round((float) $invoice->subtotal - $discountAmount, 2);
 
@@ -446,9 +429,9 @@ class Accounting
             ]);
 
             // Resolve cash account — caller may specify a custom account code (e.g. bank vs cash)
-            $cashCode = $paymentData['account_code'] ?? '1000';
+            $cashCode = $paymentData['account_code'] ?? $this->accountCode('cash');
             $cashAccount = $this->requireAccount($cashCode);
-            $arAccount = $this->requireAccount('1200');
+            $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
 
             $entry = $this->createJournalEntry([
                 'date'        => $paymentData['date'],
@@ -487,9 +470,9 @@ class Accounting
         }
 
         return DB::transaction(function () use ($bill): JournalEntry {
-            $apAccount = $this->requireAccount('2000');
-            $expenseAccount = $this->requireAccount('5000');
-            $taxAccount = $this->requireAccount('2300');
+            $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
+            $expenseAccount = $this->requireAccount($this->accountCode('cogs'));
+            $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
 
             $entry = $this->createJournalEntry([
                 'date'          => $bill->bill_date,
@@ -547,8 +530,8 @@ class Accounting
                 'notes'          => $paymentData['notes'] ?? null,
             ]);
 
-            $apAccount = $this->requireAccount('2000');
-            $cashAccount = $this->requireAccount($paymentData['account_code'] ?? '1000');
+            $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
+            $cashAccount = $this->requireAccount($paymentData['account_code'] ?? $this->accountCode('cash'));
 
             $entry = $this->createJournalEntry([
                 'date'        => $paymentData['date'],
@@ -592,11 +575,11 @@ class Accounting
         return DB::transaction(function () use ($expense): JournalEntry {
             $expenseAccount = $expense->account_id
                 ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
-                : $this->requireAccount('5000');
+                : $this->requireAccount($this->accountCode('cogs'));
 
-            $cashAccount = $this->requireAccount('1000');
-            $payableAccount = $this->requireAccount('2000');
-            $taxAccount = Account::where('code', '2300')->where('is_active', true)->first();
+            $cashAccount = $this->requireAccount($this->accountCode('cash'));
+            $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
+            $taxAccount = Account::where('code', $this->accountCode('tax_payable'))->where('is_active', true)->first();
             $isCreditExpense = $expense->payment_method === 'credit';
 
             $lines = [
@@ -718,11 +701,11 @@ class Accounting
 
             $expenseAccount = $expense->account_id
                 ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
-                : $this->requireAccount('5000');
+                : $this->requireAccount($this->accountCode('cogs'));
 
-            $taxAccount     = Account::where('code', '2300')->where('is_active', true)->first();
-            $cashAccount    = $this->requireAccount('1000');
-            $payableAccount = $this->requireAccount('2000');
+            $taxAccount     = Account::where('code', $this->accountCode('tax_payable'))->where('is_active', true)->first();
+            $cashAccount    = $this->requireAccount($this->accountCode('cash'));
+            $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
             $creditAccount  = $isCash ? $cashAccount : $payableAccount;
 
             $lines = [
@@ -798,8 +781,8 @@ class Accounting
                 'notes'          => $paymentData['notes'] ?? null,
             ]);
 
-            $payableAccount = $this->requireAccount('2000');
-            $cashAccount = $this->requireAccount($paymentData['account_code'] ?? '1000');
+            $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
+            $cashAccount = $this->requireAccount($paymentData['account_code'] ?? $this->accountCode('cash'));
 
             $entry = $this->createJournalEntry([
                 'date'        => $paymentData['date'],
@@ -1163,7 +1146,7 @@ class Accounting
             ['code' => '6300', 'name' => 'Office Supplies',         'type' => 'expense',   'subtype' => 'office_supplies_expense'],
             ['code' => '6310', 'name' => 'Courier Bill / Charge',   'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
             ['code' => '6320', 'name' => 'Shipping / Transfer Bill (Carriage)', 'type' => 'expense', 'subtype' => 'postage_and_shipping_expense'],
-            ['code' => '6330', 'name' => 'Hand Carry Delivery',     'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
+            ['code' => '6330', 'name' => 'Local Delivery Charge',    'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
             ['code' => '6340', 'name' => 'Delivery Return Charge',  'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
             ['code' => '6400', 'name' => 'Insurance',               'type' => 'expense',   'subtype' => 'insurance_expense'],
             ['code' => '6500', 'name' => 'Marketing & Advertising', 'type' => 'expense',   'subtype' => 'marketing_expense'],
@@ -1219,7 +1202,7 @@ class Accounting
 
             $netIncome = $this->getNetIncome($fiscalYear->start_date, $fiscalYear->end_date);
 
-            $retainedEarnings = $this->requireAccount('3100');
+            $retainedEarnings = $this->requireAccount($this->accountCode('retained_earnings'));
 
             $incomeSummary = Account::where('code', '3900')->first()
                 ?? Account::create([
@@ -1336,8 +1319,7 @@ class Accounting
 
     private function inventoryIntegrationEnabled(): bool
     {
-        return config('inventory.erp.accounting.enabled', false)
-            && class_exists(\Centrex\Inventory\Models\WarehouseProduct::class);
+        return $this->inventorySnapshotProvider() instanceof InventorySnapshotProvider;
     }
 
     /**
@@ -1346,35 +1328,30 @@ class Accounting
     private function takeInventoryPeriodSnapshot(FiscalPeriod $period): array
     {
         $currency = $this->baseCurrency();
+        $snapshot = $this->inventorySnapshotProvider()?->snapshotForPeriod($period, $currency) ?? [];
 
         // Idempotent: remove any previous snapshot for this period before re-inserting
         PeriodInventorySnapshot::where('fiscal_period_id', $period->id)->delete();
 
-        $warehouseProducts = \Centrex\Inventory\Models\WarehouseProduct::query()
-            ->with(['warehouse:id,code,name', 'product:id,sku,name'])
-            ->get();
-
-        $rows = $warehouseProducts->map(fn ($wp) => [
-            'fiscal_period_id' => $period->id,
-            'warehouse_code'   => $wp->warehouse?->code,
-            'warehouse_name'   => $wp->warehouse?->name,
-            'product_sku'      => $wp->product?->sku,
-            'product_name'     => $wp->product?->name,
-            'qty_on_hand'      => (float) $wp->qty_on_hand,
-            'wac_amount'       => (float) $wp->wac_amount,
-            'total_value'      => round((float) $wp->qty_on_hand * (float) $wp->wac_amount, 2),
-            'currency'         => $currency,
-            'snapshot_date'    => $period->end_date,
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ])->toArray();
+        $rows = collect($snapshot['rows'] ?? [])
+            ->map(function (array $row) use ($period, $currency): array {
+                return array_merge($row, [
+                    'fiscal_period_id' => $period->id,
+                    'currency'         => $row['currency'] ?? $currency,
+                    'snapshot_date'    => $row['snapshot_date'] ?? $period->end_date,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+            })
+            ->toArray();
 
         if ($rows !== []) {
             PeriodInventorySnapshot::insert($rows);
         }
 
         $physicalValue = (float) collect($rows)->sum('total_value');
-        $inventoryAccountCode = config('inventory.erp.accounting.accounts.inventory_asset', '1300');
+        $inventoryAccountCode = (string) ($snapshot['inventory_account_code'] ?? $this->accountCode('inventory'));
+        $inventoryAccountCode = $inventoryAccountCode !== '' ? $inventoryAccountCode : '1300';
         $glBalance = $this->getAccountGlBalance($inventoryAccountCode, $period->end_date);
         $variance = round($physicalValue - $glBalance, 2);
 
@@ -1386,6 +1363,19 @@ class Accounting
             'is_reconciled'  => abs($variance) < 1.0,
             'currency'       => $currency,
         ];
+    }
+
+    private function inventorySnapshotProvider(): ?InventorySnapshotProvider
+    {
+        $providerClass = config('accounting.integrations.inventory.snapshot_provider');
+
+        if (! is_string($providerClass) || $providerClass === '' || ! class_exists($providerClass)) {
+            return null;
+        }
+
+        $provider = app($providerClass);
+
+        return $provider instanceof InventorySnapshotProvider ? $provider : null;
     }
 
     /** Get the net GL running balance of an account code up to (and including) a given date. */
@@ -1661,7 +1651,7 @@ class Accounting
             }
         }
 
-        $inventory = $this->requireAccount('1300');
+        $inventory = $this->requireAccount($this->accountCode('inventory'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -1693,7 +1683,7 @@ class Accounting
 
         $interest      = round($principal * $facility->monthly_rate, 2);
         $date          = $date ?? now()->endOfMonth()->toDateString();
-        $interestAcct  = $this->requireAccount('6710');
+        $interestAcct  = $this->requireAccount($this->accountCode('financing_interest'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -1739,7 +1729,7 @@ class Accounting
         string $date,
         string $reference,
     ): JournalEntry {
-        $bank = $this->requireAccount('1100');
+        $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -1773,7 +1763,7 @@ class Accounting
             );
         }
 
-        $bank = $this->requireAccount('1100');
+        $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -1916,7 +1906,7 @@ class Accounting
             throw new \RuntimeException("Loan facility '{$facility->lender_name}' is inactive.");
         }
 
-        $bank = $this->requireAccount('1100');
+        $bank = $this->requireAccount($this->accountCode('bank'));
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([
@@ -1999,7 +1989,7 @@ class Accounting
         string $date,
         string $reference,
     ): JournalEntry {
-        $bank = $this->requireAccount('1100');
+        $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -2035,7 +2025,7 @@ class Accounting
             );
         }
 
-        $bank = $this->requireAccount('1100');
+        $bank = $this->requireAccount($this->accountCode('bank'));
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Concerns\HasTenant;
 use Centrex\Accounting\Concerns\HasPrimaryImage;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo};
@@ -16,6 +17,7 @@ class Customer extends Model implements Auditable, HasMedia
 {
     use AuditableTrait;
     use AddTablePrefix;
+    use HasTenant;
     use HasPrimaryImage;
     use SoftDeletes;
 

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Concerns\HasTenant;
 use Centrex\Accounting\Enums\JvStatus;
 use Centrex\Accounting\Exceptions\{AccountingException, InvalidStatusTransitionException, UnbalancedJournalException};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
@@ -16,6 +17,7 @@ class JournalEntry extends Model implements Auditable
 {
     use AuditableTrait;
     use AddTablePrefix;
+    use HasTenant;
     use SoftDeletes;
 
     protected function getTableSuffix(): string

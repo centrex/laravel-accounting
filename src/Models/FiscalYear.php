@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
+use Centrex\Accounting\Concerns\HasTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable as AuditableTrait;
@@ -14,6 +15,7 @@ class FiscalYear extends Model implements Auditable
 {
     use AuditableTrait;
     use AddTablePrefix;
+    use HasTenant;
 
     protected function getTableSuffix(): string
     {

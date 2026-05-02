@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Centrex\Accounting\Livewire;
 
+use Centrex\Accounting\Contracts\InventorySnapshotProvider;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
 use Centrex\Accounting\Exceptions\AccountingException;
@@ -109,8 +110,10 @@ class PeriodClose extends Component
             ->orderByDesc('start_date')
             ->get();
 
-        $inventoryEnabled = config('inventory.erp.accounting.enabled', false)
-            && class_exists(\Centrex\Inventory\Models\WarehouseProduct::class);
+        $snapshotProvider = config('accounting.integrations.inventory.snapshot_provider');
+        $inventoryEnabled = is_string($snapshotProvider)
+            && class_exists($snapshotProvider)
+            && app($snapshotProvider) instanceof InventorySnapshotProvider;
 
         $recentSnapshots = PeriodInventorySnapshot::query()
             ->with('fiscalPeriod')
