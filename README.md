@@ -7,6 +7,8 @@
 
 Full double-entry accounting system for Laravel. Includes a chart of accounts, journal entries with two-step approval workflow, invoices, bills, expenses, customer/vendor ledgers, financial reports, month-end period closing with inventory reconciliation, fiscal year closing, budgets, and a Livewire UI with a complete REST API layer.
 
+Developer architecture notes live in [docs/developer-architecture.md](docs/developer-architecture.md).
+
 ---
 
 ## Table of Contents

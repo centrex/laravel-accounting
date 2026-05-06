@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
-use Centrex\Accounting\Concerns\HasTenant;
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
@@ -17,7 +16,6 @@ class Budget extends Model implements Auditable
 {
     use AuditableTrait;
     use AddTablePrefix;
-    use HasTenant;
     use SoftDeletes;
 
     protected function getTableSuffix(): string

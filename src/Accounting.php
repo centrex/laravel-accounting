@@ -29,10 +29,9 @@ use Centrex\Accounting\Models\{
     PeriodInventorySnapshot
 };
 use Centrex\Accounting\Models\Expense;
-use Illuminate\Support\Collection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class Accounting
 {
@@ -90,7 +89,7 @@ class Accounting
 
     private function extractSbuCodeFromMeta(mixed $meta): ?string
     {
-        if (! is_array($meta)) {
+        if (!is_array($meta)) {
             return null;
         }
 
@@ -101,7 +100,7 @@ class Accounting
 
     private function resolveModelSbuCode(mixed $model): ?string
     {
-        if (! is_object($model)) {
+        if (!is_object($model)) {
             return null;
         }
 
@@ -176,7 +175,7 @@ class Accounting
     /**
      * Normalize a journal payload into base currency before persistence.
      *
-     * @param  array{currency?: string, exchange_rate?: float, lines?: array<int, array{amount?: float|int|string}>} $data
+     * @param  array{currency?: string, exchange_rate?: float, lines?: array<int, array{amount?: float|int|string}>}  $data
      * @return array<string, mixed>
      */
     private function normalizeJournalPayload(array $data): array
@@ -217,7 +216,7 @@ class Accounting
             ->values();
 
         $start = (int) $rangeStart;
-        $end   = (int) $rangeEnd;
+        $end = (int) $rangeEnd;
 
         for ($code = $start + 1; $code <= $end; $code++) {
             if (!$existing->contains($code)) {
@@ -254,8 +253,7 @@ class Accounting
                 DB::raw("SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as total_debit"),
                 DB::raw("SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit"),
             ])
-            ->groupBy('l.account_id')
-        ;
+            ->groupBy('l.account_id');
 
         return $this->applySbuFilter($query, $sbuCode)->get()->keyBy('account_id');
     }
@@ -315,7 +313,7 @@ class Accounting
 
                     return $entry;
                 } catch (QueryException $exception) {
-                    if (! $usesGeneratedEntryNumber || ! $this->isDuplicateJournalEntryNumberException($exception)) {
+                    if (!$usesGeneratedEntryNumber || !$this->isDuplicateJournalEntryNumberException($exception)) {
                         throw $exception;
                     }
 
@@ -673,63 +671,36 @@ class Accounting
         string $defaultDescription,
     ): Expense {
         return DB::transaction(function () use ($document, $documentNumber, $resolveSbu, $data, $defaultDescription): Expense {
-            $subtotal    = round((float) ($data['amount'] ?? 0), 2);
-            $taxAmount   = round((float) ($data['tax_amount'] ?? 0), 2);
-            $total       = round($subtotal + $taxAmount, 2);
-            $isCash      = ($data['payment_method'] ?? 'cash') !== 'credit';
-            $currency    = $data['currency'] ?? $document->currency ?? config('accounting.base_currency', 'BDT');
-            $date        = $data['date'] ?? $document->{'invoice_date'} ?? $document->{'bill_date'};
-            $description = $data['description'] ?? $defaultDescription;
+            $payload = $this->documentExpensePayload($document, $data, $defaultDescription);
 
             $expense = Expense::create([
                 'chargeable_type' => $document::class,
                 'chargeable_id'   => $document->id,
                 'account_id'      => $data['account_id'] ?? null,
-                'expense_date'    => $date,
-                'subtotal'        => $subtotal,
-                'tax_amount'      => $taxAmount,
-                'total'           => $total,
+                'expense_date'    => $payload['date'],
+                'subtotal'        => $payload['subtotal'],
+                'tax_amount'      => $payload['tax_amount'],
+                'total'           => $payload['total'],
                 'paid_amount'     => 0,
-                'currency'        => $currency,
-                'exchange_rate'   => $data['exchange_rate'] ?? 1.0,
+                'currency'        => $payload['currency'],
+                'exchange_rate'   => $payload['exchange_rate'],
                 'status'          => 'draft',
-                'payment_method'  => $data['payment_method'] ?? 'cash',
+                'payment_method'  => $payload['payment_method'],
                 'vendor_name'     => $data['vendor_name'] ?? null,
                 'reference'       => $data['reference'] ?? $documentNumber,
                 'notes'           => $data['notes'] ?? null,
             ]);
 
-            $expenseAccount = $expense->account_id
-                ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
-                : $this->requireAccount($this->accountCode('cogs'));
-
-            $taxAccount     = Account::where('code', $this->accountCode('tax_payable'))->where('is_active', true)->first();
-            $cashAccount    = $this->requireAccount($this->accountCode('cash'));
-            $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
-            $creditAccount  = $isCash ? $cashAccount : $payableAccount;
-
-            $lines = [
-                ['account_id' => $expenseAccount->id, 'type' => 'debit', 'amount' => $subtotal, 'description' => $description],
-            ];
-
-            if ($taxAmount > 0 && $taxAccount !== null) {
-                $lines[] = ['account_id' => $taxAccount->id, 'type' => 'debit', 'amount' => $taxAmount, 'description' => 'Tax'];
-            }
-
-            $lines[] = [
-                'account_id'  => $creditAccount->id,
-                'type'        => 'credit',
-                'amount'      => $total,
-                'description' => $isCash ? 'Cash paid' : 'Accounts Payable',
-            ];
+            $accounts = $this->documentExpenseAccounts($expense->account_id, $payload['is_cash']);
+            $lines = $this->documentExpenseJournalLines($payload, $accounts);
 
             $entry = $this->createJournalEntry([
-                'date'          => $date,
+                'date'          => $payload['date'],
                 'reference'     => $expense->expense_number,
                 'type'          => 'general',
-                'description'   => "{$description} — {$documentNumber}",
-                'currency'      => $currency,
-                'exchange_rate' => $data['exchange_rate'] ?? 1.0,
+                'description'   => "{$payload['description']} — {$documentNumber}",
+                'currency'      => $payload['currency'],
+                'exchange_rate' => $payload['exchange_rate'],
                 'sbu_code'      => $this->normalizeSbuCode($data['sbu_code'] ?? null) ?? $resolveSbu(),
                 'lines'         => $lines,
             ]);
@@ -738,12 +709,65 @@ class Accounting
 
             $expense->update([
                 'journal_entry_id' => $entry->id,
-                'paid_amount'      => $isCash ? $total : 0,
-                'status'           => $isCash ? 'paid' : 'approved',
+                'paid_amount'      => $payload['is_cash'] ? $payload['total'] : 0,
+                'status'           => $payload['is_cash'] ? 'paid' : 'approved',
             ]);
 
             return $expense;
         });
+    }
+
+    private function documentExpensePayload(Invoice|Bill $document, array $data, string $defaultDescription): array
+    {
+        $subtotal = round((float) ($data['amount'] ?? 0), 2);
+        $taxAmount = round((float) ($data['tax_amount'] ?? 0), 2);
+
+        return [
+            'subtotal'       => $subtotal,
+            'tax_amount'     => $taxAmount,
+            'total'          => round($subtotal + $taxAmount, 2),
+            'is_cash'        => ($data['payment_method'] ?? 'cash') !== 'credit',
+            'payment_method' => $data['payment_method'] ?? 'cash',
+            'currency'       => $data['currency'] ?? $document->currency ?? config('accounting.base_currency', 'BDT'),
+            'exchange_rate'  => $data['exchange_rate'] ?? 1.0,
+            'date'           => $data['date'] ?? $document->{'invoice_date'} ?? $document->{'bill_date'},
+            'description'    => $data['description'] ?? $defaultDescription,
+        ];
+    }
+
+    private function documentExpenseAccounts(?int $expenseAccountId, bool $isCash): array
+    {
+        $expenseAccount = $expenseAccountId
+            ? (Account::find($expenseAccountId) ?? throw AccountNotFoundException::forCode('custom'))
+            : $this->requireAccount($this->accountCode('cogs'));
+        $cashAccount = $this->requireAccount($this->accountCode('cash'));
+        $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
+
+        return [
+            'expense' => $expenseAccount,
+            'tax'     => Account::where('code', $this->accountCode('tax_payable'))->where('is_active', true)->first(),
+            'credit'  => $isCash ? $cashAccount : $payableAccount,
+        ];
+    }
+
+    private function documentExpenseJournalLines(array $payload, array $accounts): array
+    {
+        $lines = [
+            ['account_id' => $accounts['expense']->id, 'type' => 'debit', 'amount' => $payload['subtotal'], 'description' => $payload['description']],
+        ];
+
+        if ($payload['tax_amount'] > 0 && $accounts['tax'] !== null) {
+            $lines[] = ['account_id' => $accounts['tax']->id, 'type' => 'debit', 'amount' => $payload['tax_amount'], 'description' => 'Tax'];
+        }
+
+        $lines[] = [
+            'account_id'  => $accounts['credit']->id,
+            'type'        => 'credit',
+            'amount'      => $payload['total'],
+            'description' => $payload['is_cash'] ? 'Cash paid' : 'Accounts Payable',
+        ];
+
+        return $lines;
     }
 
     /** Record settlement of a credit expense: DR AP / CR Cash. */
@@ -909,8 +933,18 @@ class Accounting
      */
     public function getCashFlowStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
     {
-        $cashAccount = Account::where('code', '1000')->where('is_active', true)->first()
-            ?? throw AccountNotFoundException::forCode('1000');
+        $cashAccount = Account::where('code', $this->accountCode('cash'))->where('is_active', true)->first();
+
+        if (!$cashAccount) {
+            return [
+                'period'               => ['start' => $startDate, 'end' => $endDate],
+                'operating_activities' => 0.0,
+                'investing_activities' => 0.0,
+                'financing_activities' => 0.0,
+                'net_change'           => 0.0,
+                'sbu_code'             => $this->normalizeSbuCode($sbuCode),
+            ];
+        }
 
         // Eager-load lines + accounts — eliminates N queries in the loop below
         $transactions = $cashAccount->journalEntryLines()
@@ -979,7 +1013,7 @@ class Accounting
 
         if ($accounts->isEmpty()) {
             return [
-                'period' => ['start' => $startDate, 'end' => $endDate],
+                'period'   => ['start' => $startDate, 'end' => $endDate],
                 'accounts' => [],
                 'sbu_code' => $this->normalizeSbuCode($sbuCode),
             ];
@@ -1000,7 +1034,7 @@ class Accounting
                 ->selectRaw(
                     "l.account_id,
                     SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
-                    SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit"
+                    SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
                 );
 
             $openingMap = $this->applySbuFilter($openingQuery, $sbuCode)->get()->keyBy('account_id');
@@ -1061,18 +1095,18 @@ class Accounting
                 $runningBalance += $delta;
 
                 $entries[] = [
-                    'line_id' => (int) $row->line_id,
-                    'journal_entry_id' => (int) $row->journal_entry_id,
-                    'entry_number' => $row->entry_number,
-                    'date' => $row->date,
-                    'reference' => $row->line_reference ?: $row->journal_reference,
-                    'journal_type' => $row->journal_type,
+                    'line_id'             => (int) $row->line_id,
+                    'journal_entry_id'    => (int) $row->journal_entry_id,
+                    'entry_number'        => $row->entry_number,
+                    'date'                => $row->date,
+                    'reference'           => $row->line_reference ?: $row->journal_reference,
+                    'journal_type'        => $row->journal_type,
                     'journal_description' => $row->journal_description,
-                    'line_description' => $row->line_description,
-                    'sbu_code' => $row->sbu_code,
-                    'debit' => $debit,
-                    'credit' => $credit,
-                    'running_balance' => $runningBalance,
+                    'line_description'    => $row->line_description,
+                    'sbu_code'            => $row->sbu_code,
+                    'debit'               => $debit,
+                    'credit'              => $credit,
+                    'running_balance'     => $runningBalance,
                 ];
             }
 
@@ -1088,17 +1122,17 @@ class Accounting
             }
 
             $ledgerAccounts[] = [
-                'account' => $account,
+                'account'         => $account,
                 'opening_balance' => $openingBalance,
                 'closing_balance' => $closingBalance,
-                'period_debits' => $periodDebits,
-                'period_credits' => $periodCredits,
-                'entries' => $entries,
+                'period_debits'   => $periodDebits,
+                'period_credits'  => $periodCredits,
+                'entries'         => $entries,
             ];
         }
 
         return [
-            'period' => ['start' => $startDate, 'end' => $endDate],
+            'period'   => ['start' => $startDate, 'end' => $endDate],
             'accounts' => $ledgerAccounts,
             'sbu_code' => $this->normalizeSbuCode($sbuCode),
         ];
@@ -1174,7 +1208,7 @@ class Accounting
 
         foreach ($parentMap as $childCode => $parentCode) {
             $parent = Account::where('code', $parentCode)->first();
-            $child  = Account::where('code', $childCode)->first();
+            $child = Account::where('code', $childCode)->first();
 
             if ($parent && $child && $child->parent_id === null) {
                 $child->update(['parent_id' => $parent->id]);
@@ -1369,7 +1403,7 @@ class Accounting
     {
         $providerClass = config('accounting.integrations.inventory.snapshot_provider');
 
-        if (! is_string($providerClass) || $providerClass === '' || ! class_exists($providerClass)) {
+        if (!is_string($providerClass) || $providerClass === '' || !class_exists($providerClass)) {
             return null;
         }
 
@@ -1570,11 +1604,11 @@ class Accounting
      * Sub-accounts are allocated sequentially under parent 2150 (principal)
      * and 2170 (accrued interest). Supports up to 19 lenders per range.
      *
-     * @param  string  $lenderName    Display name of the financing entity
-     * @param  string  $lenderType    bank | private | ngo | mfi | other
-     * @param  float   $monthlyRate   Interest rate per month (0.02 = 2%)
-     * @param  float|null $creditLimit  Maximum draw-down allowed (informational)
-     * @param  string|null $contact   Contact person / reference
+     * @param  string  $lenderName  Display name of the financing entity
+     * @param  string  $lenderType  bank | private | ngo | mfi | other
+     * @param  float  $monthlyRate  Interest rate per month (0.02 = 2%)
+     * @param  float|null  $creditLimit  Maximum draw-down allowed (informational)
+     * @param  string|null  $contact  Contact person / reference
      */
     public function addFinancingFacility(
         string $lenderName,
@@ -1585,11 +1619,11 @@ class Accounting
     ): InventoryFinancingFacility {
         return DB::transaction(function () use ($lenderName, $lenderType, $monthlyRate, $creditLimit, $contact): InventoryFinancingFacility {
             $principalParent = $this->requireAccount('2150');
-            $interestParent  = $this->requireAccount('2170');
+            $interestParent = $this->requireAccount('2170');
 
             // Next available code under each parent range
             $principalCode = $this->nextSubAccountCode('2150', '2169');
-            $interestCode  = $this->nextSubAccountCode('2170', '2189');
+            $interestCode = $this->nextSubAccountCode('2170', '2189');
 
             $shortName = Str::limit($lenderName, 30, '');
 
@@ -1681,9 +1715,9 @@ class Accounting
             return null;
         }
 
-        $interest      = round($principal * $facility->monthly_rate, 2);
-        $date          = $date ?? now()->endOfMonth()->toDateString();
-        $interestAcct  = $this->requireAccount($this->accountCode('financing_interest'));
+        $interest = round($principal * $facility->monthly_rate, 2);
+        $date ??= now()->endOfMonth()->toDateString();
+        $interestAcct = $this->requireAccount($this->accountCode('financing_interest'));
 
         return $this->createJournalEntry([
             'date'        => $date,
@@ -1786,17 +1820,17 @@ class Accounting
             ->orderBy('lender_name')
             ->get()
             ->map(fn (InventoryFinancingFacility $f): array => [
-                'id'                   => $f->id,
-                'lender_name'          => $f->lender_name,
-                'lender_type'          => $f->lender_type,
-                'is_active'            => $f->is_active,
-                'monthly_rate'         => $f->monthly_rate,
-                'credit_limit'         => $f->credit_limit,
+                'id'                    => $f->id,
+                'lender_name'           => $f->lender_name,
+                'lender_type'           => $f->lender_type,
+                'is_active'             => $f->is_active,
+                'monthly_rate'          => $f->monthly_rate,
+                'credit_limit'          => $f->credit_limit,
                 'outstanding_principal' => $f->outstandingPrincipal(),
-                'accrued_interest'     => $f->accruedInterest(),
-                'monthly_interest'     => $f->monthlyInterestAmount(),
-                'principal_account'    => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
-                'interest_account'     => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
+                'accrued_interest'      => $f->accruedInterest(),
+                'monthly_interest'      => $f->monthlyInterestAmount(),
+                'principal_account'     => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
+                'interest_account'      => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
             ])
             ->all();
     }
@@ -1811,16 +1845,16 @@ class Accounting
      * short_term loans → principal 240x, accrued interest 242x
      * long_term  loans → principal 250x, accrued interest 252x
      *
-     * @param  string      $lenderName   Name of the lending entity
-     * @param  string      $loanType     term_loan | working_capital | inter_company | director | equipment | overdraft | bridge
-     * @param  string      $loanTerm     short_term | long_term
-     * @param  float       $monthlyRate  Monthly interest rate (0.02 = 2%)
-     * @param  string|null $sbuCode      SBU all journal entries for this facility will be tagged with
-     * @param  float|null  $loanAmount   Sanctioned/approved loan amount (informational)
-     * @param  string|null $disbursedAt  Date the loan was disbursed
-     * @param  string|null $dueAt        Repayment due date
-     * @param  int|null    $tenureMonths Tenure in months
-     * @param  string|null $contact      Lender contact reference
+     * @param  string  $lenderName  Name of the lending entity
+     * @param  string  $loanType  term_loan | working_capital | inter_company | director | equipment | overdraft | bridge
+     * @param  string  $loanTerm  short_term | long_term
+     * @param  float  $monthlyRate  Monthly interest rate (0.02 = 2%)
+     * @param  string|null  $sbuCode  SBU all journal entries for this facility will be tagged with
+     * @param  float|null  $loanAmount  Sanctioned/approved loan amount (informational)
+     * @param  string|null  $disbursedAt  Date the loan was disbursed
+     * @param  string|null  $dueAt  Repayment due date
+     * @param  int|null  $tenureMonths  Tenure in months
+     * @param  string|null  $contact  Lender contact reference
      */
     public function addLoanFacility(
         string $lenderName,
@@ -1842,16 +1876,16 @@ class Accounting
 
             // Ranges: short_term → 2401–2419 / 2421–2439; long_term → 2501–2519 / 2521–2539
             [$principalParentCode, $principalRangeEnd] = $isShort ? ['2400', '2419'] : ['2500', '2519'];
-            [$interestParentCode,  $interestRangeEnd]  = $isShort ? ['2420', '2439'] : ['2520', '2539'];
+            [$interestParentCode,  $interestRangeEnd] = $isShort ? ['2420', '2439'] : ['2520', '2539'];
 
             $principalParent = $this->requireAccount($principalParentCode);
-            $interestParent  = $this->requireAccount($interestParentCode);
+            $interestParent = $this->requireAccount($interestParentCode);
 
             $principalCode = $this->nextSubAccountCode($principalParentCode, $principalRangeEnd);
-            $interestCode  = $this->nextSubAccountCode($interestParentCode, $interestRangeEnd);
+            $interestCode = $this->nextSubAccountCode($interestParentCode, $interestRangeEnd);
 
-            $shortName   = Str::limit($lenderName, 28, '');
-            $typeLabel   = str_replace('_', ' ', ucfirst($loanType));
+            $shortName = Str::limit($lenderName, 28, '');
+            $typeLabel = str_replace('_', ' ', ucfirst($loanType));
 
             $principalAccount = Account::create([
                 'code'      => $principalCode,
@@ -1938,10 +1972,10 @@ class Accounting
             return null;
         }
 
-        $interest      = round($principal * $facility->monthly_rate, 2);
-        $date          = $date ?? now()->endOfMonth()->toDateString();
-        $expenseCode   = $facility->isShortTerm() ? '6720' : '6730';
-        $expenseAcct   = $this->requireAccount($expenseCode);
+        $interest = round($principal * $facility->monthly_rate, 2);
+        $date ??= now()->endOfMonth()->toDateString();
+        $expenseCode = $facility->isShortTerm() ? '6720' : '6730';
+        $expenseAcct = $this->requireAccount($expenseCode);
 
         return $this->createJournalEntry([
             'date'        => $date,

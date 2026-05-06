@@ -5,14 +5,12 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
-use Centrex\Accounting\Concerns\HasTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AccountBalance extends Model
 {
     use AddTablePrefix;
-    use HasTenant;
 
     protected function getTableSuffix(): string
     {

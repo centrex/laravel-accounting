@@ -88,10 +88,10 @@ class BillDetails extends Component
             return;
         }
 
-        $cashAccount = Account::where('code', '1000')->where('is_active', true)->first();
+        $cashAccount = Account::where('code', config('accounting.accounts.cash', '1000'))->where('is_active', true)->first();
 
         if (!$cashAccount) {
-            $this->dispatch('notify', type: 'error', message: 'Cash account (1000) not found.');
+            $this->dispatch('notify', type: 'error', message: 'Cash account not found. Please run the accounting seeder.');
 
             return;
         }

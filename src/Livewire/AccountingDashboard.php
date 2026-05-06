@@ -98,7 +98,7 @@ class AccountingDashboard extends Component
         $connection = config('accounting.drivers.database.connection', config('database.default'));
         $year = now()->year;
 
-        $cashAccount = Account::where('code', '1000')->where('is_active', true)->first();
+        $cashAccount = Account::where('code', config('accounting.accounts.cash', '1000'))->where('is_active', true)->first();
 
         if (!$cashAccount) {
             return ['series' => [], 'categories' => []];
