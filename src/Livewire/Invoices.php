@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
 use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem};
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -14,6 +14,7 @@ use Livewire\{Component, WithPagination};
 class Invoices extends Component
 {
     use WithCurrency;
+    use ShowsAuditTrail;
     use WithPagination;
 
     public string $search = '';

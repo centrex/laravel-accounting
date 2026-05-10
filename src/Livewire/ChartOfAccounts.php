@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
+use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\Account;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,7 @@ use Livewire\{Component, WithPagination};
 
 class ChartOfAccounts extends Component
 {
+    use ShowsAuditTrail;
     use WithPagination;
 
     public $search = '';

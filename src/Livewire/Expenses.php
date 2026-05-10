@@ -5,12 +5,14 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Expense, ExpenseItem};
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 
 class Expenses extends Component
 {
+    use ShowsAuditTrail;
     use WithPagination;
 
     public string $search = '';

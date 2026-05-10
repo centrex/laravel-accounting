@@ -100,6 +100,7 @@
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="viewEntry({{ $entry->id }})" icon="o-eye" class="btn-ghost btn-xs" />
+                                <x-tallui-button wire:click="openAuditTrail(@js($entry::class), {{ $entry->getKey() }}, @js($entry->entry_number))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($statusVal === 'draft')
                                     <x-tallui-button wire:click="openEditModal({{ $entry->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                     <x-tallui-button
@@ -301,4 +302,5 @@
         <x-tallui-button wire:click="closeDetailModal" class="btn-ghost">Close</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>

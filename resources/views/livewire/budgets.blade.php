@@ -66,6 +66,7 @@
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="openDetail({{ $budget->id }})"
                                     class="btn-ghost btn-xs" icon="o-eye">View</x-tallui-button>
+                                <x-tallui-button wire:click="openAuditTrail(@js($budget::class), {{ $budget->getKey() }}, @js($budget->name))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($budget->status === 'draft')
                                     <x-tallui-button wire:click="approveBudget({{ $budget->id }})"
                                         wire:confirm="Approve budget {{ $budget->budget_number }}?"
@@ -248,4 +249,5 @@
         </x-tallui-modal>
     @endif
 @endif
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>

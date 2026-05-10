@@ -4,11 +4,13 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
+use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Customer, Invoice};
 use Livewire\{Component, WithPagination};
 
 class Customers extends Component
 {
+    use ShowsAuditTrail;
     use WithPagination;
 
     public string $search = '';

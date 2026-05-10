@@ -54,6 +54,7 @@
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button :link="route('accounting.vendors.ledger', $vendor->id)" icon="o-book-open" class="btn-ghost btn-xs" title="Ledger" />
+                                <x-tallui-button wire:click="openAuditTrail(@js($vendor::class), {{ $vendor->getKey() }}, @js($vendor->name))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 <x-tallui-button wire:click="openModal({{ $vendor->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                 <x-tallui-button wire:click="toggleStatus({{ $vendor->id }})" icon="{{ $vendor->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
@@ -131,4 +132,5 @@
         </x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>

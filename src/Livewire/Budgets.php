@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
 use Centrex\Accounting\Models\{Account, Budget, BudgetItem, FiscalYear};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -14,6 +14,7 @@ use Livewire\{Component, WithPagination};
 class Budgets extends Component
 {
     use WithCurrency;
+    use ShowsAuditTrail;
     use WithPagination;
 
     public string $search = '';

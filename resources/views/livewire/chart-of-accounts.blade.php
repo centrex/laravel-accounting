@@ -87,6 +87,7 @@
                             </button>
                         </td>
                         <td class="pr-5 text-right">
+                            <x-tallui-button wire:click="openAuditTrail(@js($account::class), {{ $account->getKey() }}, @js($account->code . ' - ' . $account->name))" icon="o-clock" class="btn-ghost btn-sm" title="Audit trail" />
                             <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-sm" />
                         </td>
                     </tr>
@@ -181,6 +182,7 @@
         </x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 
 <script>
     document.addEventListener('livewire:init', () => {

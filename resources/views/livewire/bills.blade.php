@@ -85,6 +85,7 @@
                                 <a href="{{ route('accounting.bills.show', $bill) }}" class="btn btn-ghost btn-xs">
                                     View
                                 </a>
+                                <x-tallui-button wire:click="openAuditTrail(@js($bill::class), {{ $bill->getKey() }}, @js($bill->bill_number))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @php $status = $bill->status->value ?? $bill->status; @endphp
                                 @if($status === 'draft')
                                     <x-tallui-button wire:click="postBill({{ $bill->id }})"
@@ -233,4 +234,5 @@
         <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-warning">Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>

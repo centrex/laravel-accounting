@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
+use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Bill, BillItem, Vendor};
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -12,6 +13,7 @@ use Livewire\{Component, WithPagination};
 
 class Bills extends Component
 {
+    use ShowsAuditTrail;
     use WithPagination;
 
     public string $search = '';

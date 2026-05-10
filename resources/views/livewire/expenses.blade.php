@@ -80,6 +80,7 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
+                                <x-tallui-button wire:click="openAuditTrail(@js($expense::class), {{ $expense->getKey() }}, @js($expense->reference ?: ('Expense #' . $expense->getKey())))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($expense->status === 'draft')
                                     <x-tallui-button wire:click="postExpense({{ $expense->id }})"
                                         wire:confirm="Post expense {{ $expense->expense_number }}?"
@@ -234,4 +235,5 @@
         <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-warning">Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>

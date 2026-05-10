@@ -87,6 +87,7 @@
                                 <a href="{{ route('accounting.invoices.show', $invoice) }}" class="btn btn-ghost btn-xs">
                                     View
                                 </a>
+                                <x-tallui-button wire:click="openAuditTrail(@js($invoice::class), {{ $invoice->getKey() }}, @js($invoice->invoice_number))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @php $status = $invoice->status->value ?? $invoice->status; @endphp
                                 @if($status === 'draft')
                                     <x-tallui-button wire:click="postInvoice({{ $invoice->id }})"
@@ -240,4 +241,5 @@
         <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-success">Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
+@include('accounting::livewire.partials.audit-trail-modal')
 </div>
