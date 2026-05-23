@@ -6,12 +6,17 @@ namespace Centrex\Accounting\Http\Controllers\Api;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Models\Account;
+use Centrex\Accounting\QuickBooks\{QuickBooksAccountTypeMapper, QuickBooksReportFormatter};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 
 class ReportController extends Controller
 {
-    public function __construct(private readonly Accounting $accounting) {}
+    public function __construct(
+        private readonly Accounting $accounting,
+        private readonly QuickBooksReportFormatter $qboFormatter,
+        private readonly QuickBooksAccountTypeMapper $qboMapper,
+    ) {}
 
     public function trialBalance(Request $request): JsonResponse
     {
@@ -147,6 +152,58 @@ class ReportController extends Controller
                     ])->values(),
                 ],
             ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Aging reports (A/R & A/P) — QuickBooks-compatible buckets
+    // -----------------------------------------------------------------------
+
+    public function arAging(Request $request): JsonResponse
+    {
+        $request->validate([
+            'as_of_date' => ['nullable', 'date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
+            'format'     => ['nullable', 'string', 'in:raw,qbo'],
+        ]);
+
+        try {
+            $data = $this->accounting->getArAging(
+                $request->input('as_of_date'),
+                $request->string('sbu_code')->toString() ?: null,
+            );
+
+            $payload = $request->input('format') === 'qbo'
+                ? $this->qboFormatter->arAging($data)
+                : $data;
+
+            return response()->json(['data' => $payload]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function apAging(Request $request): JsonResponse
+    {
+        $request->validate([
+            'as_of_date' => ['nullable', 'date'],
+            'sbu_code'   => ['nullable', 'string', 'max:50'],
+            'format'     => ['nullable', 'string', 'in:raw,qbo'],
+        ]);
+
+        try {
+            $data = $this->accounting->getApAging(
+                $request->input('as_of_date'),
+                $request->string('sbu_code')->toString() ?: null,
+            );
+
+            $payload = $request->input('format') === 'qbo'
+                ? $this->qboFormatter->apAging($data)
+                : $data;
+
+            return response()->json(['data' => $payload]);
         } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }

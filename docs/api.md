@@ -36,6 +36,8 @@ All routes are prefixed with `web_prefix` (default `accounting`) and protected b
 | `accounting.vendors.ledger` | GET | `/accounting/vendors/{vendor}/ledger` | `VendorLedger` |
 | `accounting.expenses` | GET | `/accounting/expenses` | `Expenses` |
 | `accounting.period-close` | GET | `/accounting/period-close` | `PeriodClose` |
+| `accounting.qbo.connect` | GET | `/accounting/qbo/connect` | OAuth2 connect to QBO |
+| `accounting.qbo.callback` | GET | `/accounting/qbo/callback` | OAuth2 callback (Intuit redirect) |
 
 ---
 
@@ -128,6 +130,10 @@ All report endpoints accept optional query parameters: `start_date`, `end_date`,
 | GET | `/api/accounting/reports/income-statement` | Income statement (P&L) |
 | GET | `/api/accounting/reports/cash-flow` | Cash flow statement |
 | GET | `/api/accounting/reports/general-ledger` | General ledger (per-account) |
+| GET | `/api/accounting/reports/ar-aging` | A/R aging (QBO-compatible buckets); `?format=qbo` for QBO structure |
+| GET | `/api/accounting/reports/ap-aging` | A/P aging (QBO-compatible buckets); `?format=qbo` for QBO structure |
+
+Report query parameters: `start_date`, `end_date`, `date`, `as_of_date`, `sbu_code`, `format` (`raw` or `qbo`).
 
 ### Budgets
 
@@ -140,3 +146,15 @@ All report endpoints accept optional query parameters: `start_date`, `end_date`,
 | POST | `/api/accounting/budgets/{id}/approve` | Approve budget |
 | GET | `/api/accounting/budgets/{id}/vs-actual` | Budget variance report |
 | DELETE | `/api/accounting/budgets/{id}` | Delete budget |
+
+### QuickBooks Online
+
+Requires `accounting.qbo.connect` or `accounting.qbo.sync` gate (see [QuickBooks integration](quickbooks.md)).
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| GET | `/api/accounting/qbo/status` | Connection status and token expiry |
+| POST | `/api/accounting/qbo/sync` | Push entities to QBO (`entities`, `realm_id`, `since`) |
+| POST | `/api/accounting/qbo/disconnect` | Revoke QBO access and remove stored token |
+| GET | `/api/accounting/qbo/reports/{report}` | Pull a named report from QBO |
+| POST | `/api/accounting/qbo/webhook` | QBO webhook receiver (HMAC-verified, no auth middleware) |

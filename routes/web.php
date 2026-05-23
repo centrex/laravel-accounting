@@ -2,6 +2,7 @@
 
 declare(strict_types = 1);
 
+use Centrex\Accounting\Http\Controllers\Api\QuickBooksController;
 use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, VendorLedger, VendorLedgerIndex, Vendors};
 use Illuminate\Support\Facades\Route;
 
@@ -27,4 +28,8 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/vendors/{vendor}/ledger', VendorLedger::class)->name('vendors.ledger');
         Route::get('/expenses', Expenses::class)->name('expenses');
         Route::get('/period-close', PeriodClose::class)->name('period-close');
+
+        // QuickBooks Online OAuth2 flow
+        Route::get('/qbo/connect', [QuickBooksController::class, 'connect'])->name('qbo.connect');
+        Route::get('/qbo/callback', [QuickBooksController::class, 'callback'])->name('qbo.callback');
     });

@@ -151,6 +151,76 @@ The SBU is auto-applied by the ERP bridge when inventory financing/loan entries 
 
 ---
 
+## A/R Aging
+
+Receivables aging using QBO-compatible buckets: **current** (not yet due), **1–30**, **31–60**, **61–90**, **91+** days past due.
+
+Included invoice statuses: `sent`, `issued`, `partially_settled`, `overdue`.
+
+```php
+$aging = Accounting::getArAging(
+    asOfDate: '2026-04-30',  // null = today
+    sbuCode:  null,
+);
+
+// [
+//   'as_of_date' => '2026-04-30',
+//   'sbu_code'   => null,
+//   'rows' => [
+//     [
+//       'name'    => 'Acme Corp',
+//       'current' => 5000.00,
+//       '1_30'    => 1200.00,
+//       '31_60'   => 0.00,
+//       '61_90'   => 800.00,
+//       'over_90' => 0.00,
+//       'total'   => 7000.00,
+//     ],
+//   ],
+//   'totals' => ['current' => 5000.00, '1_30' => 1200.00, '31_60' => 0.00, '61_90' => 800.00, 'over_90' => 0.00, 'total' => 7000.00],
+// ]
+```
+
+Get the QBO-structured variant:
+
+```php
+use Centrex\Accounting\QuickBooks\QuickBooksReportFormatter;
+
+$qboAging = app(QuickBooksReportFormatter::class)->arAging($aging);
+```
+
+Via REST API (`?format=qbo` for QBO structure):
+
+```http
+GET /api/accounting/reports/ar-aging?as_of_date=2026-04-30
+GET /api/accounting/reports/ar-aging?as_of_date=2026-04-30&format=qbo&sbu_code=NORTH
+```
+
+---
+
+## A/P Aging
+
+Payables aging with the same buckets. Included bill statuses: `issued`, `partially_settled`, `overdue`.
+
+```php
+$aging = Accounting::getApAging(
+    asOfDate: '2026-04-30',
+    sbuCode:  null,
+);
+// Same structure as A/R Aging above (rows keyed by vendor name)
+
+$qboAging = app(QuickBooksReportFormatter::class)->apAging($aging);
+```
+
+Via REST API:
+
+```http
+GET /api/accounting/reports/ap-aging?as_of_date=2026-04-30
+GET /api/accounting/reports/ap-aging?as_of_date=2026-04-30&format=qbo
+```
+
+---
+
 ## Chart of Accounts queries
 
 ```php

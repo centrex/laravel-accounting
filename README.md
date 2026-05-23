@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/centrex/laravel-accounting/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/centrex/laravel-accounting/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/centrex/laravel-accounting?style=flat-square)](https://packagist.org/packages/centrex/laravel-accounting)
 
-Full double-entry accounting system for Laravel. Includes a chart of accounts, journal entries with two-step approval workflow, invoices, bills, expenses, customer/vendor ledgers, financial reports, month-end period closing with inventory reconciliation, fiscal year closing, budgets, and a Livewire UI with a complete REST API layer.
+Full double-entry accounting system for Laravel. Includes a chart of accounts, journal entries with two-step approval workflow, invoices, bills, expenses, customer/vendor ledgers, financial reports (including A/R and A/P aging), month-end period closing with inventory reconciliation, fiscal year closing, budgets, QuickBooks Online two-way sync, and a Livewire UI with a complete REST API layer.
 
 Developer architecture notes live in [docs/developer-architecture.md](docs/developer-architecture.md).
 
@@ -36,6 +36,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Web UI Routes](#web-ui-routes)
 - [REST API](#rest-api)
 - [Artisan Commands](#artisan-commands)
+- [QuickBooks Online Integration](#quickbooks-online-integration)
 - [Testing](#testing)
 
 ---
@@ -76,6 +77,16 @@ ACCOUNTING_FISCAL_START_MONTH=1         # 1 = January
 ACCOUNTING_FISCAL_AUTO_CREATE=true      # auto-create fiscal periods
 ACCOUNTING_ENFORCE_PERIOD_LOCK=true     # block posting to closed periods
 ACCOUNTING_ROUNDING_TOLERANCE=0.005     # max debit/credit mismatch allowed
+ACCOUNTING_ADMIN_ROLES=administrator,admin,superadmin
+ACCOUNTING_ADMIN_ROLE_ATTRIBUTE=        # fallback role attribute name
+
+# QuickBooks Online integration (optional)
+QBO_CLIENT_ID=
+QBO_CLIENT_SECRET=
+QBO_REDIRECT_URI=https://yourapp.com/accounting/qbo/callback
+QBO_ENVIRONMENT=sandbox                 # sandbox | production
+QBO_REALM_ID=                           # QBO Company ID (filled after first OAuth connect)
+QBO_WEBHOOK_VERIFIER_TOKEN=             # required only if using QBO webhooks
 ```
 
 ---
@@ -739,6 +750,19 @@ $cf = Accounting::getCashFlowStatement('2026-04-01', '2026-04-30');
 //   'financing_activities'  => 0.00,
 //   'net_change'            => 230000.00,
 // ]
+
+// A/R Aging — QBO-compatible buckets (current, 1-30, 31-60, 61-90, 91+)
+$arAging = Accounting::getArAging('2026-04-30');
+// [
+//   'as_of_date' => '2026-04-30',
+//   'rows' => [
+//     ['name' => 'Acme Corp', 'current' => 5000.00, '1_30' => 1200.00, '31_60' => 0.00, '61_90' => 800.00, 'over_90' => 0.00, 'total' => 7000.00],
+//   ],
+//   'totals' => ['current' => 5000.00, '1_30' => 1200.00, '31_60' => 0.00, '61_90' => 800.00, 'over_90' => 0.00, 'total' => 7000.00],
+// ]
+
+// A/P Aging
+$apAging = Accounting::getApAging('2026-04-30');
 ```
 
 ---
@@ -1598,6 +1622,8 @@ Available gates:
 | `accounting.budget.manage` | Create/edit budgets |
 | `accounting.budget.approve` | Approve budgets |
 | `accounting.fiscal-year.close` | Close fiscal year |
+| `accounting.qbo.connect` | Initiate QBO OAuth2 connect / disconnect |
+| `accounting.qbo.sync` | Trigger push sync to QBO or pull QBO reports |
 
 ---
 
@@ -1625,6 +1651,8 @@ All routes are protected by `web_middleware` (default `['web', 'auth']`) under `
 | `accounting.reports` | `/accounting/reports` | Financial reports (trial balance, P&L, balance sheet, cash flow) |
 | `accounting.budgets` | `/accounting/budgets` | Budget management |
 | `accounting.period-close` | `/accounting/period-close` | Month-end period close wizard |
+| `accounting.qbo.connect` | `/accounting/qbo/connect` | Initiate QuickBooks OAuth2 flow |
+| `accounting.qbo.callback` | `/accounting/qbo/callback` | OAuth2 callback (Intuit redirect) |
 
 ---
 
@@ -1702,6 +1730,18 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | `GET` | `/api/accounting/reports/income-statement` | P&L (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/cash-flow` | Cash flow (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/general-ledger` | General ledger (`?account_id=&start=&end=&sbu=`) |
+| `GET` | `/api/accounting/reports/ar-aging` | A/R aging (`?as_of_date=&sbu_code=&format=qbo`) |
+| `GET` | `/api/accounting/reports/ap-aging` | A/P aging (`?as_of_date=&sbu_code=&format=qbo`) |
+
+### QuickBooks Online
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| `GET` | `/api/accounting/qbo/status` | Connection status and token expiry |
+| `POST` | `/api/accounting/qbo/sync` | Push entities to QBO (`entities[]`, `realm_id`, `since`) |
+| `POST` | `/api/accounting/qbo/disconnect` | Revoke QBO access and remove stored token |
+| `GET` | `/api/accounting/qbo/reports/{report}` | Pull a named report from QBO |
+| `POST` | `/api/accounting/qbo/webhook` | QBO webhook receiver (HMAC-verified, no auth middleware) |
 
 ---
 
@@ -1729,6 +1769,57 @@ php artisan accounting:report all --start=2026-01-01 --end=2026-12-31 --format=c
 Available types: `all` (default) | `trial-balance` | `balance-sheet` | `income-statement` | `cash-flow`
 
 Available formats: `table` | `csv` | `json`
+
+### QBO sync
+
+```bash
+# Push all entities to QuickBooks Online
+php artisan accounting:qbo-sync
+
+# Push specific entities only
+php artisan accounting:qbo-sync --entity=accounts --entity=customers --entity=invoices
+
+# Push with a date filter (only records modified since this date)
+php artisan accounting:qbo-sync --entity=invoices --since=2026-05-01
+
+# Target a specific QBO company (overrides QBO_REALM_ID)
+php artisan accounting:qbo-sync --realm=123456789
+
+# Pull a named report from QBO and dump JSON
+php artisan accounting:qbo-sync --pull=profit-and-loss --start=2026-01-01 --end=2026-04-30
+php artisan accounting:qbo-sync --pull=balance-sheet   --start=2026-04-30
+php artisan accounting:qbo-sync --pull=aged-receivables
+```
+
+Available `--pull` slugs: `profit-and-loss`, `balance-sheet`, `cash-flow`, `trial-balance`, `aged-receivables`, `aged-payables`, `general-ledger`, `transaction-list`
+
+---
+
+## QuickBooks Online Integration
+
+Two-way sync with QuickBooks Online via the v3 REST API and OAuth 2.0.
+
+**Push** your local data to QBO — Chart of Accounts, Customers, Vendors, Invoices, Bills, Journal Entries.
+
+**Pull** QBO-native reports back into your app.
+
+**Format** your local reports (P&L, Balance Sheet, Cash Flow, Trial Balance, A/R Aging, A/P Aging) in QBO-compatible structure using `QuickBooksReportFormatter`.
+
+```php
+use Centrex\Accounting\QuickBooks\{QuickBooksSyncService, QuickBooksReportFormatter};
+
+// Push all accounts to QBO
+$result = app(QuickBooksSyncService::class)->syncAccounts(config('accounting.quickbooks.default_realm_id'));
+// ['created' => 5, 'updated' => 12, 'skipped' => 3, 'errors' => []]
+
+// Get local P&L in QBO section structure
+use Centrex\Accounting\Facades\Accounting;
+$pl     = Accounting::getIncomeStatement('2026-01-01', '2026-04-30');
+$qboFmt = app(QuickBooksReportFormatter::class)->profitAndLoss($pl);
+// ['income' => [...], 'cost_of_goods_sold' => [...], 'gross_profit' => x, 'expenses' => [...], 'net_income' => x]
+```
+
+See [docs/quickbooks.md](docs/quickbooks.md) for the full setup guide, OAuth flow, account type mapping reference, and webhook documentation.
 
 ---
 

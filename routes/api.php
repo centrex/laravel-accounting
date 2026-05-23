@@ -10,6 +10,7 @@ use Centrex\Accounting\Http\Controllers\Api\{
     ExpenseController,
     InvoiceController,
     JournalEntryController,
+    QuickBooksController,
     ReportController,
     VendorController
 };
@@ -72,6 +73,21 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         Route::get('reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
+        Route::get('reports/ar-aging', [ReportController::class, 'arAging'])->name('reports.ar-aging');
+        Route::get('reports/ap-aging', [ReportController::class, 'apAging'])->name('reports.ap-aging');
+
+        // QuickBooks Online — status, sync, pull reports
+        Route::prefix('qbo')->name('qbo.')->group(function (): void {
+            Route::get('status', [QuickBooksController::class, 'status'])->name('status');
+            Route::post('sync', [QuickBooksController::class, 'sync'])->name('sync');
+            Route::post('disconnect', [QuickBooksController::class, 'disconnect'])->name('disconnect');
+            Route::get('reports/{report}', [QuickBooksController::class, 'pullReport'])->name('reports');
+        });
+
+        // QBO Webhook (no auth — verified by HMAC signature in controller)
+        Route::post('qbo/webhook', [QuickBooksController::class, 'webhook'])
+            ->withoutMiddleware(config('accounting.api_middleware', []))
+            ->name('qbo.webhook');
 
         // Expenses
         Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
