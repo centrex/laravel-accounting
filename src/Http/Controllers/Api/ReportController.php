@@ -6,7 +6,6 @@ namespace Centrex\Accounting\Http\Controllers\Api;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Models\Account;
-use Centrex\Accounting\QuickBooks\{QuickBooksAccountTypeMapper, QuickBooksReportFormatter};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 
@@ -14,8 +13,6 @@ class ReportController extends Controller
 {
     public function __construct(
         private readonly Accounting $accounting,
-        private readonly QuickBooksReportFormatter $qboFormatter,
-        private readonly QuickBooksAccountTypeMapper $qboMapper,
     ) {}
 
     public function trialBalance(Request $request): JsonResponse
@@ -176,7 +173,7 @@ class ReportController extends Controller
             );
 
             $payload = $request->input('format') === 'qbo'
-                ? $this->qboFormatter->arAging($data)
+                ? $this->applyQboFormat('arAging', $data)
                 : $data;
 
             return response()->json(['data' => $payload]);
@@ -200,13 +197,25 @@ class ReportController extends Controller
             );
 
             $payload = $request->input('format') === 'qbo'
-                ? $this->qboFormatter->apAging($data)
+                ? $this->applyQboFormat('apAging', $data)
                 : $data;
 
             return response()->json(['data' => $payload]);
         } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
+    }
+
+    /** Delegate QBO formatting to the pro package's formatter when installed. */
+    private function applyQboFormat(string $method, array $data): array
+    {
+        $formatterClass = 'Centrex\\AccountingPro\\QuickBooks\\QuickBooksReportFormatter';
+
+        if (!class_exists($formatterClass)) {
+            return $data;
+        }
+
+        return app($formatterClass)->{$method}($data);
     }
 
     /** Serialize account groups (replacing model objects with plain arrays) */
