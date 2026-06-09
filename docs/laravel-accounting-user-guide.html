@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Accounting System — User Guide</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 22mm 16mm;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.65;
+  color: #1e2433;
+  background: #fff;
+}
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── Cover ── */
+.cover {
+  page-break-after: always;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0f3460;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.cover-accent {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #e94560 0%, #f7b731 50%, #e94560 100%);
+}
+.cover-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px 56px;
+}
+.cover-eyebrow {
+  font-size: 8pt;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 20px;
+}
+.cover h1 {
+  font-size: 34pt;
+  font-weight: 900;
+  line-height: 1.05;
+  margin-bottom: 14px;
+  color: #fff;
+}
+.cover h1 em {
+  font-style: normal;
+  color: #f7b731;
+}
+.cover-sub {
+  font-size: 13pt;
+  color: rgba(255,255,255,0.65);
+  font-weight: 300;
+  margin-bottom: 48px;
+  max-width: 420px;
+}
+.cover-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+.cover-pill {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.8);
+  font-size: 8pt;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.cover-footer {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 20px 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8pt;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── TOC ── */
+.toc-page { page-break-after: always; padding: 8px 0 40px; }
+.toc-page h2 {
+  font-size: 17pt; font-weight: 800; color: #0f3460;
+  border-bottom: 3px solid #e94560;
+  padding-bottom: 10px; margin-bottom: 24px;
+}
+.toc-ch {
+  display: flex; align-items: baseline;
+  border-bottom: 1px dotted #ddd;
+  padding: 5px 0;
+  text-decoration: none; color: #1e2433;
+}
+.toc-ch:hover { color: #e94560; }
+.toc-num { color: #e94560; font-weight: 700; min-width: 28px; font-size: 10pt; }
+.toc-label { flex: 1; font-size: 10pt; }
+.toc-sub { padding-left: 28px; }
+.toc-sub .toc-label { font-size: 9pt; color: #555; }
+.toc-dot { flex: 1; border-bottom: 1px dotted #ccc; margin: 0 6px; position: relative; top: -3px; }
+
+/* ── Chapter strip ── */
+.chapter {
+  page-break-before: always;
+  padding: 0 0 32px;
+}
+.chapter:first-of-type { page-break-before: avoid; }
+.ch-banner {
+  background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+  border-radius: 8px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.ch-num {
+  font-size: 24pt; font-weight: 900;
+  color: #f7b731; line-height: 1; min-width: 36px;
+}
+.ch-meta h2 {
+  font-size: 13pt; font-weight: 700; color: #fff;
+  margin: 0; border: none; padding: 0;
+}
+.ch-meta p {
+  font-size: 8.5pt; color: rgba(255,255,255,0.5);
+  margin: 2px 0 0;
+}
+
+/* ── Headings ── */
+h3 {
+  font-size: 11pt; font-weight: 700; color: #0f3460;
+  margin: 22px 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid #f7b731;
+  page-break-after: avoid;
+}
+h4 {
+  font-size: 10pt; font-weight: 700; color: #1e2433;
+  margin: 14px 0 6px;
+  page-break-after: avoid;
+}
+
+/* ── Paragraphs / Lists ── */
+p { margin-bottom: 9px; }
+ul, ol { padding-left: 20px; margin-bottom: 10px; }
+li { margin-bottom: 3px; }
+
+/* ── Tables ── */
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 10px 0 14px; font-size: 9pt;
+  page-break-inside: avoid;
+}
+thead tr { background: #0f3460; color: #fff; }
+thead th {
+  padding: 8px 10px; text-align: left;
+  font-weight: 600; font-size: 8.5pt;
+}
+tbody tr:nth-child(even) { background: #f7f9fc; }
+tbody tr:nth-child(odd)  { background: #fff; }
+tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #e8ecf0;
+  vertical-align: top;
+}
+
+/* ── Step boxes ── */
+.steps { counter-reset: step; margin: 12px 0 16px; }
+.step {
+  counter-increment: step;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: 10px;
+  page-break-inside: avoid;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  background: #0f3460; color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9pt; font-weight: 700;
+  content: counter(step);
+}
+.step-num::after { content: counter(step); }
+.step-body { flex: 1; padding-top: 3px; }
+.step-body strong { display: block; margin-bottom: 2px; color: #0f3460; }
+
+/* ── Callouts ── */
+.callout {
+  border-radius: 6px; padding: 11px 14px;
+  margin: 12px 0; page-break-inside: avoid;
+  border-left: 4px solid;
+  font-size: 9.5pt;
+}
+.tip    { background: #f0fdf4; border-color: #22c55e; }
+.note   { background: #eff6ff; border-color: #3b82f6; }
+.warn   { background: #fffbeb; border-color: #f59e0b; }
+.danger { background: #fff1f2; border-color: #e94560; }
+.callout .label {
+  font-weight: 700; font-size: 8.5pt;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.tip   .label { color: #15803d; }
+.note  .label { color: #1d4ed8; }
+.warn  .label { color: #b45309; }
+.danger .label { color: #be123c; }
+
+/* ── Status badges ── */
+.badge {
+  display: inline-block;
+  padding: 2px 9px; border-radius: 12px;
+  font-size: 8pt; font-weight: 600;
+  margin: 1px;
+}
+.b-draft    { background: #f1f5f9; color: #475569; }
+.b-sent     { background: #dbeafe; color: #1d4ed8; }
+.b-issued   { background: #dbeafe; color: #1d4ed8; }
+.b-partial  { background: #fef9c3; color: #854d0e; }
+.b-settled  { background: #dcfce7; color: #166534; }
+.b-paid     { background: #dcfce7; color: #166534; }
+.b-overdue  { background: #fee2e2; color: #991b1b; }
+.b-void     { background: #f1f5f9; color: #64748b; text-decoration: line-through; }
+.b-approved { background: #dbeafe; color: #1d4ed8; }
+.b-posted   { background: #dcfce7; color: #166534; }
+
+/* ── Field reference box ── */
+.fields {
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  overflow: hidden; margin: 10px 0 14px;
+  page-break-inside: avoid;
+}
+.fields-head {
+  background: #f8fafc; padding: 7px 12px;
+  font-size: 8.5pt; font-weight: 700; color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.field-row {
+  display: flex; border-bottom: 1px solid #f1f5f9;
+  font-size: 9pt;
+}
+.field-row:last-child { border-bottom: none; }
+.field-name {
+  background: #fafbfc;
+  padding: 6px 12px;
+  min-width: 150px; max-width: 150px;
+  font-weight: 600; color: #1d4ed8;
+  border-right: 1px solid #f1f5f9;
+  font-size: 8.5pt;
+  display: flex; align-items: flex-start;
+}
+.field-req {
+  color: #e94560; font-weight: 700; margin-left: 2px;
+}
+.field-desc { padding: 6px 12px; flex: 1; }
+
+/* ── Flow diagram ── */
+.flow {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 4px; margin: 10px 0 14px;
+}
+.flow-box {
+  background: #0f3460; color: #fff;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 8.5pt; font-weight: 600;
+}
+.flow-arrow { color: #e94560; font-size: 13pt; font-weight: 700; }
+.flow-note { font-size: 8pt; color: #64748b; font-style: italic; }
+
+/* ── Two-col grid ── */
+.two-col {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px; margin: 12px 0;
+}
+.box {
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 12px 14px; background: #fafbfc;
+  page-break-inside: avoid;
+}
+.box h4 { margin-top: 0; color: #0f3460; }
+
+/* ── Screen mock ── */
+.screen {
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  overflow: hidden; margin: 12px 0;
+  page-break-inside: avoid;
+  font-size: 8.5pt;
+}
+.screen-bar {
+  background: #f8fafc; padding: 7px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex; align-items: center; gap: 8px;
+}
+.screen-bar .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block;
+}
+.screen-bar .url {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 4px; padding: 2px 10px;
+  font-size: 7.5pt; color: #64748b; flex: 1;
+}
+.screen-body {
+  background: #fff; padding: 12px 14px;
+}
+
+/* ── Inline UI elements ── */
+.btn-ui {
+  display: inline-block;
+  background: #0f3460; color: #fff;
+  font-size: 8pt; font-weight: 600;
+  padding: 2px 9px; border-radius: 4px;
+  vertical-align: middle;
+}
+.btn-ghost-ui {
+  display: inline-block;
+  border: 1px solid #cbd5e1; color: #475569;
+  font-size: 8pt; font-weight: 600;
+  padding: 2px 9px; border-radius: 4px;
+  vertical-align: middle;
+}
+.btn-success-ui {
+  display: inline-block;
+  background: #16a34a; color: #fff;
+  font-size: 8pt; font-weight: 600;
+  padding: 2px 9px; border-radius: 4px;
+  vertical-align: middle;
+}
+.btn-warn-ui {
+  display: inline-block;
+  background: #d97706; color: #fff;
+  font-size: 8pt; font-weight: 600;
+  padding: 2px 9px; border-radius: 4px;
+  vertical-align: middle;
+}
+.btn-danger-ui {
+  display: inline-block;
+  background: #e94560; color: #fff;
+  font-size: 8pt; font-weight: 600;
+  padding: 2px 9px; border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* ── Nav path ── */
+.navpath {
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 4px; padding: 4px 10px;
+  font-size: 8pt; color: #475569;
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-bottom: 10px;
+}
+.navpath span { color: #94a3b8; }
+
+/* ── Summary cards ── */
+.kpi-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 10px; margin: 12px 0;
+}
+.kpi {
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 10px 12px; background: #fafbfc;
+  text-align: center;
+  page-break-inside: avoid;
+}
+.kpi .kpi-label {
+  font-size: 7.5pt; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.kpi .kpi-value {
+  font-size: 14pt; font-weight: 800; color: #0f3460;
+}
+.kpi.green .kpi-value { color: #16a34a; }
+.kpi.red   .kpi-value { color: #e94560; }
+.kpi.yellow .kpi-value { color: #d97706; }
+
+/* ── Footer ── */
+.doc-footer {
+  margin-top: 50px; padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center; color: #94a3b8; font-size: 8pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════ COVER ════════════════════════ -->
+<div class="cover">
+  <div class="cover-accent"></div>
+  <div class="cover-body">
+    <div class="cover-eyebrow">User Guide &nbsp;·&nbsp; Version 1.0</div>
+    <h1>Accounting<br><em>System</em></h1>
+    <p class="cover-sub">Complete guide to managing your company's finances — invoices, bills, expenses, budgets, and financial reports.</p>
+    <div class="cover-pills">
+      <span class="cover-pill">Dashboard</span>
+      <span class="cover-pill">Invoices</span>
+      <span class="cover-pill">Bills</span>
+      <span class="cover-pill">Expenses</span>
+      <span class="cover-pill">Budgets</span>
+      <span class="cover-pill">Financial Reports</span>
+      <span class="cover-pill">Journal Entries</span>
+      <span class="cover-pill">Period Closing</span>
+      <span class="cover-pill">Customers &amp; Vendors</span>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <span>Centrex Accounting System</span>
+    <span>June 2026 &nbsp;·&nbsp; For internal use</span>
+  </div>
+</div>
+
+<!-- ════════════════════════ TOC ════════════════════════ -->
+<div class="toc-page">
+  <h2>Contents</h2>
+
+  <a class="toc-ch" href="#ch1"><span class="toc-num">1</span><span class="toc-label">Getting Started</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#overview"><span class="toc-num"></span><span class="toc-label">System overview &amp; navigation</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#statuses"><span class="toc-num"></span><span class="toc-label">Understanding document statuses</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch2"><span class="toc-num">2</span><span class="toc-label">Dashboard</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch3"><span class="toc-num">3</span><span class="toc-label">Customers</span><span class="toc-dot"></span></a>
+  <a class="toc-ch" href="#ch4"><span class="toc-num">4</span><span class="toc-label">Vendors</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch5"><span class="toc-num">5</span><span class="toc-label">Invoices</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#create-invoice"><span class="toc-num"></span><span class="toc-label">Creating a new invoice</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#post-invoice"><span class="toc-num"></span><span class="toc-label">Posting an invoice to the ledger</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#record-payment"><span class="toc-num"></span><span class="toc-label">Recording a customer payment</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#charges-discounts"><span class="toc-num"></span><span class="toc-label">Adding charges &amp; discounts</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch6"><span class="toc-num">6</span><span class="toc-label">Bills (Vendor Invoices)</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#create-bill"><span class="toc-num"></span><span class="toc-label">Creating a new bill</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#approve-bill"><span class="toc-num"></span><span class="toc-label">Approving &amp; paying a bill</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch7"><span class="toc-num">7</span><span class="toc-label">Expenses</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch8"><span class="toc-num">8</span><span class="toc-label">Budgets</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch9"><span class="toc-num">9</span><span class="toc-label">Financial Reports</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#trial-balance"><span class="toc-num"></span><span class="toc-label">Trial Balance</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#balance-sheet"><span class="toc-num"></span><span class="toc-label">Balance Sheet</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#income-statement"><span class="toc-num"></span><span class="toc-label">Income Statement (P&amp;L)</span><span class="toc-dot"></span></a>
+  <a class="toc-ch toc-sub" href="#cash-flow"><span class="toc-num"></span><span class="toc-label">Cash Flow Statement</span><span class="toc-dot"></span></a>
+
+  <a class="toc-ch" href="#ch10"><span class="toc-num">10</span><span class="toc-label">General Ledger</span><span class="toc-dot"></span></a>
+  <a class="toc-ch" href="#ch11"><span class="toc-num">11</span><span class="toc-label">Journal Entries (Accountants)</span><span class="toc-dot"></span></a>
+  <a class="toc-ch" href="#ch12"><span class="toc-num">12</span><span class="toc-label">Chart of Accounts</span><span class="toc-dot"></span></a>
+  <a class="toc-ch" href="#ch13"><span class="toc-num">13</span><span class="toc-label">Period Closing</span><span class="toc-dot"></span></a>
+  <a class="toc-ch" href="#ch14"><span class="toc-num">14</span><span class="toc-label">Frequently Asked Questions</span><span class="toc-dot"></span></a>
+</div>
+
+<!-- ════════════════════════ CH 1 — GETTING STARTED ════════════════════════ -->
+<div id="ch1" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">1</div>
+    <div class="ch-meta">
+      <h2>Getting Started</h2>
+      <p>Navigation, layout, and document status overview</p>
+    </div>
+  </div>
+
+  <div id="overview">
+    <h3>System Overview &amp; Navigation</h3>
+    <p>The Accounting System is accessed through your web browser. After logging in, the navigation menu gives you access to every module. The main sections are:</p>
+
+    <table>
+      <thead><tr><th>Menu Item</th><th>What You Can Do There</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Dashboard</strong></td><td>See your financial overview — revenue, expenses, unpaid invoices, and overdue bills at a glance</td></tr>
+        <tr><td><strong>Invoices</strong></td><td>Create and manage customer invoices; record payments received</td></tr>
+        <tr><td><strong>Bills</strong></td><td>Record and pay vendor bills (supplier invoices)</td></tr>
+        <tr><td><strong>Expenses</strong></td><td>Log company spending such as office costs, travel, or utilities</td></tr>
+        <tr><td><strong>Customers</strong></td><td>Manage your customer list and view each customer's full payment ledger</td></tr>
+        <tr><td><strong>Vendors</strong></td><td>Manage your vendor/supplier list and view each vendor's ledger</td></tr>
+        <tr><td><strong>Budgets</strong></td><td>Create spending plans and compare them to actual figures</td></tr>
+        <tr><td><strong>Financial Reports</strong></td><td>Generate Trial Balance, Balance Sheet, Income Statement, and Cash Flow reports</td></tr>
+        <tr><td><strong>General Ledger</strong></td><td>See every transaction posted to any account</td></tr>
+        <tr><td><strong>Journal Entries</strong></td><td><em>(Accountants only)</em> Create custom double-entry transactions</td></tr>
+        <tr><td><strong>Chart of Accounts</strong></td><td><em>(Accountants only)</em> Manage the list of financial accounts</td></tr>
+        <tr><td><strong>Period Close</strong></td><td><em>(Accountants only)</em> Lock a completed month so no further changes are allowed</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout note">
+      <div class="label">Navigation tip</div>
+      Every page has a <strong>breadcrumb</strong> at the top showing where you are, and a <strong>Back</strong> button to return to the list. The page title area also shows quick-action buttons such as <span class="btn-ui">New Invoice</span> or <span class="btn-ui">New Entry</span>.
+    </div>
+  </div>
+
+  <div id="statuses">
+    <h3>Understanding Document Statuses</h3>
+    <p>Every invoice, bill, and expense has a coloured status badge that tells you where it is in its lifecycle.</p>
+
+    <h4>Invoice &amp; Bill Statuses</h4>
+    <table>
+      <thead><tr><th>Status</th><th>What It Means</th><th>What You Can Do Next</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge b-draft">Draft</span></td>
+          <td>Created but not yet sent to the ledger. No accounting impact yet.</td>
+          <td>Edit the document, then click <strong>Post</strong> (invoices) or <strong>Approve</strong> (bills)</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-sent">Sent</span></td>
+          <td>Invoice has been sent to the customer but not yet formally posted.</td>
+          <td>Post the invoice to record it in the accounting ledger</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-issued">Issued</span></td>
+          <td>Posted to the ledger. Customer owes the full amount.</td>
+          <td>Record a payment when money is received</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-partial">Partially Settled</span></td>
+          <td>Some payment has been received; an outstanding balance remains.</td>
+          <td>Record additional payments until fully settled</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-settled">Settled</span></td>
+          <td>Fully paid. Balance is zero.</td>
+          <td>No further action needed</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-overdue">Overdue</span></td>
+          <td>Past the due date with an unpaid balance.</td>
+          <td>Record a payment or follow up with the customer/vendor</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-void">Void</span></td>
+          <td>Cancelled. Excluded from all reports.</td>
+          <td>Create a new document if needed</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Expense Statuses</h4>
+    <table>
+      <thead><tr><th>Status</th><th>What It Means</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-draft">Draft</span></td><td>Not yet posted to accounting. Click <strong>Post</strong> to record it.</td></tr>
+        <tr><td><span class="badge b-approved">Approved</span></td><td>Posted as a credit (to be paid later). Click <strong>Pay</strong> when you settle it.</td></tr>
+        <tr><td><span class="badge b-partial">Partial</span></td><td>Partially paid.</td></tr>
+        <tr><td><span class="badge b-paid">Paid</span></td><td>Fully paid. Cash was paid immediately when posted.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Journal Entry Statuses</h4>
+    <table>
+      <thead><tr><th>Status</th><th>What It Means</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-draft">Draft</span></td><td>Being prepared. Not yet in the ledger.</td></tr>
+        <tr><td><span class="badge b-partial">Pending Approval</span></td><td>Submitted for review by a senior accountant.</td></tr>
+        <tr><td><span class="badge b-posted">Posted</span></td><td>Finalised and recorded in the General Ledger. Affects all reports.</td></tr>
+        <tr><td><span class="badge b-void">Void</span></td><td>Cancelled.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <div class="label">Important</div>
+      Only <strong>posted</strong> transactions affect your financial reports and account balances. A draft invoice or expense has no impact until it is posted or approved.
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 2 — DASHBOARD ════════════════════════ -->
+<div id="ch2" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">2</div>
+    <div class="ch-meta">
+      <h2>Dashboard</h2>
+      <p>Your financial overview at a glance</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Dashboard</span></div>
+
+  <p>The Dashboard is the first page you see when you open the Accounting System. It gives you an instant snapshot of your business finances for any time period you choose.</p>
+
+  <h3>Date Range Selector</h3>
+  <p>In the top-right corner of the dashboard, use the dropdown to change the reporting period:</p>
+  <table>
+    <thead><tr><th>Option</th><th>Shows figures for…</th></tr></thead>
+    <tbody>
+      <tr><td>Today</td><td>Transactions created today only</td></tr>
+      <tr><td>This Week</td><td>Monday to today</td></tr>
+      <tr><td>This Month</td><td>1st of the current month to today</td></tr>
+      <tr><td>This Quarter</td><td>Start of the current quarter to today</td></tr>
+      <tr><td>This Year</td><td>January 1st to today</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Key Performance Indicators (KPIs)</h3>
+  <p>The large stat cards across the top show the most important numbers for the selected period:</p>
+
+  <div class="kpi-row">
+    <div class="kpi green"><div class="kpi-label">Revenue</div><div class="kpi-value">↑</div></div>
+    <div class="kpi red"><div class="kpi-label">Expenses</div><div class="kpi-value">↓</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Receivables</div><div class="kpi-value">AR</div></div>
+    <div class="kpi"><div class="kpi-label">Payables</div><div class="kpi-value">AP</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>KPI Card</th><th>What It Shows</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Revenue</strong></td><td>Total sales income posted in the period</td></tr>
+      <tr><td><strong>Expenses</strong></td><td>Total costs and expenses posted in the period</td></tr>
+      <tr><td><strong>Receivables (AR)</strong></td><td>Total outstanding balance owed to you by customers</td></tr>
+      <tr><td><strong>Payables (AP)</strong></td><td>Total outstanding balance you owe to vendors</td></tr>
+      <tr><td><strong>Net Income</strong></td><td>Revenue minus Expenses — your profit/loss</td></tr>
+      <tr><td><strong>Cash Balance</strong></td><td>Current balance in your cash and bank accounts</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Quick Action Buttons</h3>
+  <p>The top-right action area has shortcuts to the most common tasks:</p>
+  <ul>
+    <li><span class="btn-ui">New Invoice</span> — Jump straight to creating a new customer invoice</li>
+    <li><span class="btn-ghost-ui">New Entry</span> — Create a manual journal entry (accountants)</li>
+    <li><span class="btn-ghost-ui">Ledger</span> — Open the General Ledger</li>
+  </ul>
+
+  <h3>Charts and Activity</h3>
+  <p>Below the KPI cards you will see bar or line charts showing revenue and expense trends over the selected period, plus a recent activity list of the latest invoices and bills requiring your attention.</p>
+
+  <div class="callout tip">
+    <div class="label">Tip</div>
+    Overdue invoices (highlighted in <strong style="color:#e94560">red</strong> on the due date column) appear prominently on the dashboard so you can take action quickly.
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 3 — CUSTOMERS ════════════════════════ -->
+<div id="ch3" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">3</div>
+    <div class="ch-meta">
+      <h2>Customers</h2>
+      <p>Managing your customer list and viewing customer ledgers</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Customers</span></div>
+
+  <p>The Customers page lists all customers in the system. You can search by name or email, and see a summary of each customer's outstanding balance.</p>
+
+  <h3>Adding a New Customer</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Customer</span></strong> in the top-right corner.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Fill in the customer details</strong> using the form fields below.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong> to create the customer.</div></div>
+  </div>
+
+  <div class="fields">
+    <div class="fields-head">Customer Form Fields</div>
+    <div class="field-row"><div class="field-name">Name <span class="field-req">*</span></div><div class="field-desc">Full name or company name of the customer</div></div>
+    <div class="field-row"><div class="field-name">Email</div><div class="field-desc">Customer's email address (used for contact and reference)</div></div>
+    <div class="field-row"><div class="field-name">Phone</div><div class="field-desc">Customer's contact number</div></div>
+    <div class="field-row"><div class="field-name">Address</div><div class="field-desc">Billing address</div></div>
+    <div class="field-row"><div class="field-name">Currency</div><div class="field-desc">The currency this customer is invoiced in (e.g. BDT, USD)</div></div>
+  </div>
+
+  <h3>Viewing a Customer's Ledger</h3>
+  <p>Click <span class="btn-ghost-ui">View Ledger</span> next to any customer to see their complete transaction history — every invoice, payment, charge, and discount — along with the running outstanding balance.</p>
+
+  <div class="callout note">
+    <div class="label">Note</div>
+    The customer ledger shows the <strong>net balance</strong> at each point in time. Use it to answer questions like "how much does this customer owe right now?" or "when did they last pay?"
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 4 — VENDORS ════════════════════════ -->
+<div id="ch4" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">4</div>
+    <div class="ch-meta">
+      <h2>Vendors</h2>
+      <p>Managing your supplier list and viewing vendor ledgers</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Vendors</span></div>
+
+  <p>Vendors (also called suppliers) are companies or individuals that you purchase goods or services from. Their bills appear in the Bills section.</p>
+
+  <h3>Adding a New Vendor</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Vendor</span></strong> in the top-right corner.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Fill in the vendor details</strong> — name, email, phone, and address.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong>.</div></div>
+  </div>
+
+  <h3>Viewing a Vendor's Ledger</h3>
+  <p>Click <span class="btn-ghost-ui">View Ledger</span> next to any vendor to see all bills, payments, freight charges, and discounts recorded for that vendor, along with your outstanding balance.</p>
+</div>
+
+<!-- ════════════════════════ CH 5 — INVOICES ════════════════════════ -->
+<div id="ch5" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">5</div>
+    <div class="ch-meta">
+      <h2>Invoices</h2>
+      <p>Creating customer invoices, posting them, and recording payments</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Invoices</span></div>
+
+  <h3>Invoice Lifecycle</h3>
+  <div class="flow">
+    <div class="flow-box">Draft</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Post</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Issued</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Record Payment</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Settled</div>
+  </div>
+
+  <h3>Finding Invoices</h3>
+  <p>The invoice list shows all invoices with filters at the top:</p>
+  <ul>
+    <li><strong>Search box</strong> — type an invoice number or customer name to narrow the list</li>
+    <li><strong>Status filter</strong> — show only Draft, Sent, Partial, Paid, Overdue, or Void invoices</li>
+    <li><strong>Date range</strong> — filter by invoice date using From and To date pickers</li>
+  </ul>
+  <p>The list shows each invoice's number, customer, dates, total amount, remaining balance, and current status. Overdue due dates appear in <strong style="color:#e94560">red</strong>.</p>
+
+  <div id="create-invoice">
+    <h3>Creating a New Invoice</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Invoice</span></strong> — a form panel slides open.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Select a Customer</strong> from the dropdown. If the customer does not appear, add them in the Customers section first.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Invoice Date and Due Date.</strong> The due date is when payment is expected.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Currency</strong> (e.g. BDT). Leave as default if your customer pays in the base currency.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Add line items.</strong> Click <span class="btn-ghost-ui">Add Item</span> for each product or service. Fill in Description, Quantity, Unit Price, and Tax %.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Review the totals</strong> — Subtotal, Tax, and Total are calculated automatically.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Add Notes</strong> (optional) — any extra information for the customer.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Create Invoice</span></strong>. The invoice is saved with status <span class="badge b-draft">Draft</span>.</div></div>
+    </div>
+
+    <div class="fields">
+      <div class="fields-head">Invoice Form Fields</div>
+      <div class="field-row"><div class="field-name">Customer <span class="field-req">*</span></div><div class="field-desc">The customer being invoiced. Must exist in the Customers list.</div></div>
+      <div class="field-row"><div class="field-name">Currency</div><div class="field-desc">Currency for this invoice (e.g. BDT, USD). Defaults to base currency.</div></div>
+      <div class="field-row"><div class="field-name">Invoice Date <span class="field-req">*</span></div><div class="field-desc">The date the invoice is issued. Usually today's date.</div></div>
+      <div class="field-row"><div class="field-name">Due Date <span class="field-req">*</span></div><div class="field-desc">The deadline for payment. The system will mark the invoice Overdue after this date.</div></div>
+      <div class="field-row"><div class="field-name">Line Items</div><div class="field-desc">Each row is one product or service: Description, Quantity, Unit Price, Tax %.</div></div>
+      <div class="field-row"><div class="field-name">Notes</div><div class="field-desc">Optional internal or customer-facing notes.</div></div>
+    </div>
+  </div>
+
+  <div id="post-invoice">
+    <h3>Posting an Invoice to the Ledger</h3>
+    <p>Creating an invoice saves it as a Draft. To record it in the accounting ledger (so it affects your AR balance and reports), you must <strong>post</strong> it.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Find the invoice</strong> in the list. It will show <span class="badge b-draft">Draft</span> status.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-warn-ui">Post</span></strong> in the Actions column. A confirmation prompt appears.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Confirm.</strong> The invoice status changes to <span class="badge b-issued">Issued</span> and a journal entry is automatically created: the customer's Accounts Receivable increases by the invoice total.</div></div>
+    </div>
+
+    <div class="callout warn">
+      <div class="label">Before you post</div>
+      Double-check all amounts and the customer name. Once posted, the invoice amounts cannot be edited. If you made a mistake, void the invoice and create a new one.
+    </div>
+  </div>
+
+  <div id="record-payment">
+    <h3>Recording a Customer Payment</h3>
+    <p>When a customer pays their invoice (or part of it), record the payment here.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Find the invoice</strong> — it should have status <span class="badge b-issued">Issued</span>, <span class="badge b-partial">Partial</span>, or <span class="badge b-overdue">Overdue</span>.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-success-ui">Record Payment</span></strong>. A payment form appears.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Fill in the payment details</strong> (see field guide below).</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-success-ui">Record Payment</span></strong>. The invoice status updates automatically: partial payment → <span class="badge b-partial">Partially Settled</span>; full payment → <span class="badge b-settled">Settled</span>.</div></div>
+    </div>
+
+    <div class="fields">
+      <div class="fields-head">Payment Form Fields</div>
+      <div class="field-row"><div class="field-name">Payment Date <span class="field-req">*</span></div><div class="field-desc">The date the money was received. Usually today's date.</div></div>
+      <div class="field-row"><div class="field-name">Amount <span class="field-req">*</span></div><div class="field-desc">How much was received. Cannot exceed the remaining balance.</div></div>
+      <div class="field-row"><div class="field-name">Payment Method <span class="field-req">*</span></div><div class="field-desc">How payment was made: Cash, Bank Transfer, Check, Card, Mobile Banking, or Other.</div></div>
+      <div class="field-row"><div class="field-name">Account <span class="field-req">*</span></div><div class="field-desc">Which bank or cash account the money was deposited into. Select from your active accounts.</div></div>
+      <div class="field-row"><div class="field-name">Reference</div><div class="field-desc">Optional — transaction ID, cheque number, or any external reference for reconciliation.</div></div>
+      <div class="field-row"><div class="field-name">Notes</div><div class="field-desc">Any additional notes about this payment.</div></div>
+    </div>
+
+    <div class="callout tip">
+      <div class="label">Partial payments</div>
+      You can record multiple partial payments against the same invoice. Each payment is stored separately with its own date and method. The invoice status will be <span class="badge b-partial">Partially Settled</span> until the balance reaches zero.
+    </div>
+  </div>
+
+  <div id="charges-discounts">
+    <h3>Adding Charges &amp; Discounts to an Invoice</h3>
+    <p>Open an invoice by clicking <span class="btn-ghost-ui">View</span>, then use the buttons in the top-right of the invoice detail page.</p>
+
+    <div class="two-col">
+      <div class="box">
+        <h4>Record Charge</h4>
+        <p>Use this to add an extra cost associated with the invoice — for example, a delivery fee, courier charge, or return handling fee.</p>
+        <p><strong>Effect:</strong> Creates an expense entry in your books. Does <em>not</em> increase the invoice amount owed by the customer.</p>
+        <p><strong>Examples:</strong> Courier charge (6310), Shipping (6320), Local Delivery (6330), Return Charge (6340)</p>
+      </div>
+      <div class="box">
+        <h4>Record Discount</h4>
+        <p>Use this to apply a discount or credit to the invoice — for example, a loyalty discount or goodwill adjustment.</p>
+        <p><strong>Effect:</strong> Reduces the amount the customer owes. The outstanding balance is updated immediately.</p>
+        <p><strong>Guard:</strong> The total of payments plus discounts cannot exceed the original invoice total.</p>
+      </div>
+    </div>
+
+    <h4>Invoice Detail Page</h4>
+    <p>Click <span class="btn-ghost-ui">View</span> on any invoice to open its detail page. Here you will see:</p>
+    <ul>
+      <li><strong>Invoice summary card</strong> — customer name, dates, currency, and status badge</li>
+      <li><strong>Totals card</strong> — subtotal, tax, discount, total, amount paid, and remaining balance</li>
+      <li><strong>Line Items table</strong> — the individual products/services with quantities and prices</li>
+      <li><strong>Payments panel</strong> — every payment recorded, with date, method, and amount</li>
+      <li><strong>Journal Entries panel</strong> — the accounting transactions automatically created when the invoice was posted and when payments were received</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 6 — BILLS ════════════════════════ -->
+<div id="ch6" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">6</div>
+    <div class="ch-meta">
+      <h2>Bills (Vendor Invoices)</h2>
+      <p>Recording and paying invoices received from your suppliers</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Bills</span></div>
+
+  <p>A Bill is a purchase invoice you receive from a supplier. When you record a bill, the system tracks what you owe and creates the matching accounting entries when approved.</p>
+
+  <h3>Bill Lifecycle</h3>
+  <div class="flow">
+    <div class="flow-box">Draft</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Approve</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Issued</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Pay</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Settled</div>
+  </div>
+
+  <div id="create-bill">
+    <h3>Creating a New Bill</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Bill</span></strong>.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Select the Vendor</strong> from the dropdown. Add the vendor first if they are not listed.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Bill Date and Due Date.</strong></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Enter the Bill Reference</strong> — the supplier's own invoice number (so you can match it to the paper/PDF invoice you received).</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Add line items</strong> — each purchased product or service with Quantity, Unit Price, and Tax %.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong>. The bill is saved as <span class="badge b-draft">Draft</span>.</div></div>
+    </div>
+  </div>
+
+  <div id="approve-bill">
+    <h3>Approving a Bill</h3>
+    <p>Approving a bill records it in your accounting ledger. Your Accounts Payable balance will increase by the bill total.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Find the bill</strong> in the list — status <span class="badge b-draft">Draft</span>.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-warn-ui">Approve</span></strong> and confirm. Status changes to <span class="badge b-approved">Approved</span>.</div></div>
+    </div>
+
+    <h3>Paying a Bill</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Find an Approved or Partial bill</strong>.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-success-ui">Pay</span></strong>. Fill in the payment form.</div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-success-ui">Record Payment</span></strong>. The system records a journal entry reducing your Accounts Payable.</div></div>
+    </div>
+
+    <div class="fields">
+      <div class="fields-head">Bill Payment Form Fields</div>
+      <div class="field-row"><div class="field-name">Payment Date <span class="field-req">*</span></div><div class="field-desc">The date you paid the vendor</div></div>
+      <div class="field-row"><div class="field-name">Amount <span class="field-req">*</span></div><div class="field-desc">Amount paid. Can be less than the total (partial payment)</div></div>
+      <div class="field-row"><div class="field-name">Payment Method <span class="field-req">*</span></div><div class="field-desc">Cash, Bank Transfer, Check, Card, Mobile Banking, or Other</div></div>
+      <div class="field-row"><div class="field-name">Account <span class="field-req">*</span></div><div class="field-desc">Which bank or cash account the payment came from</div></div>
+      <div class="field-row"><div class="field-name">Reference</div><div class="field-desc">Your transaction reference, cheque number, or bank transfer ID</div></div>
+    </div>
+
+    <h3>Bill Charges &amp; Discounts</h3>
+    <p>Open a bill by clicking <span class="btn-ghost-ui">View</span>, then use the action buttons:</p>
+    <ul>
+      <li><strong>Record Charge</strong> — add a freight, shipping, or handling cost associated with the purchase. This records an expense but does not change what you owe to the vendor.</li>
+      <li><strong>Record Discount</strong> — apply a vendor discount or rebate, which reduces the outstanding AP balance.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 7 — EXPENSES ════════════════════════ -->
+<div id="ch7" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">7</div>
+    <div class="ch-meta">
+      <h2>Expenses</h2>
+      <p>Recording and tracking all company spending</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Expenses</span></div>
+
+  <p>Use Expenses to record any company spending that is not tied to a specific vendor bill — for example, office supplies, utility payments, staff travel reimbursements, or software subscriptions.</p>
+
+  <h3>Creating a New Expense</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Expense</span></strong>.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Fill in the expense details</strong> using the form below.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Choose the Payment Method</strong> — this determines what happens when you post the expense.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong>. Status is <span class="badge b-draft">Draft</span>.</div></div>
+  </div>
+
+  <div class="fields">
+    <div class="fields-head">Expense Form Fields</div>
+    <div class="field-row"><div class="field-name">Expense Date <span class="field-req">*</span></div><div class="field-desc">The date the cost was incurred</div></div>
+    <div class="field-row"><div class="field-name">Account <span class="field-req">*</span></div><div class="field-desc">Which expense account to record this against (e.g. Office Supplies, Travel, Utilities)</div></div>
+    <div class="field-row"><div class="field-name">Subtotal <span class="field-req">*</span></div><div class="field-desc">Amount before tax</div></div>
+    <div class="field-row"><div class="field-name">Tax Amount</div><div class="field-desc">VAT or tax on the expense, if applicable</div></div>
+    <div class="field-row"><div class="field-name">Total <span class="field-req">*</span></div><div class="field-desc">Total amount including tax</div></div>
+    <div class="field-row"><div class="field-name">Payment Method <span class="field-req">*</span></div><div class="field-desc"><strong>Cash</strong> = paid immediately when posted (status → Paid). <strong>Credit</strong> = to be paid later (status → Approved, then pay separately).</div></div>
+    <div class="field-row"><div class="field-name">Vendor Name</div><div class="field-desc">Optional — who you paid (e.g. "Grameen Phone", "Office Depot")</div></div>
+    <div class="field-row"><div class="field-name">Description</div><div class="field-desc">What this expense was for</div></div>
+    <div class="field-row"><div class="field-name">Line Items</div><div class="field-desc">Optional — break the expense into individual items for detail</div></div>
+  </div>
+
+  <h3>Posting an Expense</h3>
+  <p>Click <span class="btn-warn-ui">Post</span> next to a Draft expense to record it in the ledger.</p>
+  <ul>
+    <li>If payment method is <strong>Cash</strong>: recorded as paid immediately. Status → <span class="badge b-paid">Paid</span>.</li>
+    <li>If payment method is <strong>Credit</strong>: recorded as a payable. Status → <span class="badge b-approved">Approved</span>. Click <span class="btn-success-ui">Pay</span> later when you settle it.</li>
+  </ul>
+
+  <div class="callout tip">
+    <div class="label">Tip</div>
+    Use <strong>Cash</strong> for expenses you paid out of pocket right away (e.g. buying office stationery with petty cash). Use <strong>Credit</strong> for expenses on a company credit card or that you will settle at month-end.
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 8 — BUDGETS ════════════════════════ -->
+<div id="ch8" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">8</div>
+    <div class="ch-meta">
+      <h2>Budgets</h2>
+      <p>Planning expenditure and tracking actuals against your plan</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Budgets</span></div>
+
+  <p>Budgets let you set spending targets for specific expense accounts over a time period. Once approved, the system compares actual spending against your budget and shows you the variance.</p>
+
+  <h3>Creating a New Budget</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Budget</span></strong>.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Give the budget a name</strong> — e.g. "Q1 2026 Operating Budget".</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Period</strong> — the start and end dates this budget covers.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Add budget lines</strong> — one line per account (e.g. Rent, Utilities, Salaries). For each line set the account and the budgeted amount for the period.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong>. Status is <span class="badge b-draft">Draft</span>.</div></div>
+  </div>
+
+  <h3>Approving a Budget</h3>
+  <p>A budget must be approved before it is used in variance reporting. Find the Draft budget and click <span class="btn-warn-ui">Approve</span>. Once approved, the budget cannot be deleted — create a new revised budget instead.</p>
+
+  <h3>Viewing Budget vs Actual</h3>
+  <p>Click <span class="btn-ghost-ui">View</span> on any approved budget to open the variance report. For each budget line you will see:</p>
+  <table>
+    <thead><tr><th>Column</th><th>What It Shows</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Account</strong></td><td>The expense account this line covers</td></tr>
+      <tr><td><strong>Budgeted</strong></td><td>The amount you planned to spend</td></tr>
+      <tr><td><strong>Actual</strong></td><td>How much has actually been spent (based on posted transactions)</td></tr>
+      <tr><td><strong>Variance</strong></td><td>The difference (positive = under budget, negative = over budget)</td></tr>
+      <tr><td><strong>Variance %</strong></td><td>The percentage over or under</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout note">
+    <div class="label">Note</div>
+    Actual figures only include <strong>posted</strong> transactions within the budget's date range. Draft expenses and unposted journal entries are not counted.
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 9 — REPORTS ════════════════════════ -->
+<div id="ch9" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">9</div>
+    <div class="ch-meta">
+      <h2>Financial Reports</h2>
+      <p>Generating and understanding your financial statements</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Financial Reports</span></div>
+
+  <p>The Financial Reports page lets you generate four standard accounting reports for any date range. All reports only include <strong>posted</strong> transactions.</p>
+
+  <h3>How to Generate a Report</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Select the Report Type</strong> from the dropdown (see options below).</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Start Date and End Date</strong> for the reporting period.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>SBU Code (optional)</strong> — leave blank to include all business units, or type a code (e.g. DHAKA) to filter to one unit.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Generate</span></strong>. The report appears below.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ghost-ui">Export PDF</span></strong> to download the report as a PDF file.</div></div>
+  </div>
+
+  <div id="trial-balance">
+    <h3>Trial Balance</h3>
+    <p>A Trial Balance lists every account with its total debits and credits for the selected period. It is used to verify that the books are in balance — total debits must equal total credits.</p>
+    <p>Use it to: spot unusual account activity, verify period-end balances before closing, or prepare for an audit.</p>
+  </div>
+
+  <div id="balance-sheet">
+    <h3>Balance Sheet</h3>
+    <p>The Balance Sheet shows the financial position of your company <strong>at a single point in time</strong> (the End Date you select). It is divided into three sections:</p>
+    <table>
+      <thead><tr><th>Section</th><th>What It Includes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Assets</strong></td><td>What the company owns — cash, bank balances, money owed by customers (AR), inventory</td></tr>
+        <tr><td><strong>Liabilities</strong></td><td>What the company owes — vendor bills (AP), taxes payable, loans</td></tr>
+        <tr><td><strong>Equity</strong></td><td>The owners' stake — share capital plus retained earnings</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Assets = Liabilities + Equity</strong> — if these don't balance, there is an error in the books.</p>
+  </div>
+
+  <div id="income-statement">
+    <h3>Income Statement (Profit &amp; Loss)</h3>
+    <p>The Income Statement shows how much money the company made and spent over a <strong>date range</strong>. It tells you whether the business was profitable in that period.</p>
+    <table>
+      <thead><tr><th>Section</th><th>What It Includes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Revenue</strong></td><td>All income earned (sales revenue)</td></tr>
+        <tr><td><strong>Expenses</strong></td><td>All costs incurred (COGS, operating expenses, interest)</td></tr>
+        <tr><td><strong>Gross Profit</strong></td><td>Revenue minus Cost of Goods Sold</td></tr>
+        <tr><td><strong>Net Income</strong></td><td>Revenue minus all expenses — the bottom line. Positive = profit; negative = loss.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="cash-flow">
+    <h3>Cash Flow Statement</h3>
+    <p>The Cash Flow Statement shows where cash came from and where it went during the period. It is divided into three activities:</p>
+    <table>
+      <thead><tr><th>Activity</th><th>What It Tracks</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Operating</strong></td><td>Cash from day-to-day business operations (collecting payments, paying suppliers)</td></tr>
+        <tr><td><strong>Investing</strong></td><td>Cash spent on or received from long-term assets (equipment, property)</td></tr>
+        <tr><td><strong>Financing</strong></td><td>Cash from borrowing or repaying loans, or from investors</td></tr>
+      </tbody>
+    </table>
+    <p>The <strong>Net Change</strong> at the bottom shows whether your cash position improved or declined.</p>
+
+    <div class="callout tip">
+      <div class="label">Which report to use?</div>
+      <ul style="margin:0">
+        <li>Check if books are balanced → <strong>Trial Balance</strong></li>
+        <li>Check what the company owns and owes right now → <strong>Balance Sheet</strong></li>
+        <li>Check if the company made a profit → <strong>Income Statement</strong></li>
+        <li>Check if cash is healthy despite showing a profit → <strong>Cash Flow</strong></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 10 — GENERAL LEDGER ════════════════════════ -->
+<div id="ch10" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">10</div>
+    <div class="ch-meta">
+      <h2>General Ledger</h2>
+      <p>Viewing every transaction posted to any account</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>General Ledger</span></div>
+
+  <p>The General Ledger is the complete record of every financial transaction in the system. For any account you select, you can see each individual debit and credit entry, the date, the source document, and the running balance.</p>
+
+  <h3>How to Use the General Ledger</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Select an account</strong> from the account picker, or leave it blank to view all accounts.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the date range</strong> using Start Date and End Date.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click Generate.</strong> You will see each transaction line with: date, journal entry number, description, debit amount, credit amount, and running balance.</div></div>
+  </div>
+
+  <p>Key figures shown per account:</p>
+  <table>
+    <thead><tr><th>Figure</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Opening Balance</strong></td><td>The account balance at the start of the selected period</td></tr>
+      <tr><td><strong>Period Debits</strong></td><td>Total debits during the period</td></tr>
+      <tr><td><strong>Period Credits</strong></td><td>Total credits during the period</td></tr>
+      <tr><td><strong>Closing Balance</strong></td><td>The account balance at the end of the selected period</td></tr>
+      <tr><td><strong>Running Balance</strong></td><td>The account balance after each individual transaction</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout note">
+    <div class="label">Common use</div>
+    Use the General Ledger to investigate a specific account — for example, to see all cash movements, or to verify why your Accounts Receivable balance is what it is.
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 11 — JOURNAL ENTRIES ════════════════════════ -->
+<div id="ch11" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">11</div>
+    <div class="ch-meta">
+      <h2>Journal Entries</h2>
+      <p>For accountants: manually recording double-entry transactions</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Journal Entries</span></div>
+
+  <div class="callout warn">
+    <div class="label">Accountants Only</div>
+    Journal entries are for trained accountants who need to manually record transactions that don't fit the standard invoice/bill/expense workflow (e.g. depreciation, opening balances, adjustments, accruals).
+  </div>
+
+  <h3>Journal Entry Concepts</h3>
+  <p>Every journal entry must follow the <strong>double-entry rule</strong>: the total of all debit lines must exactly equal the total of all credit lines. The system will not allow you to save an unbalanced entry.</p>
+
+  <div class="two-col">
+    <div class="box">
+      <h4>Debit</h4>
+      <p>Increases an <strong>asset</strong> or <strong>expense</strong> account.<br>Decreases a <strong>liability</strong>, <strong>equity</strong>, or <strong>revenue</strong> account.</p>
+      <p><em>Example: recording cash received → debit Cash</em></p>
+    </div>
+    <div class="box">
+      <h4>Credit</h4>
+      <p>Increases a <strong>liability</strong>, <strong>equity</strong>, or <strong>revenue</strong> account.<br>Decreases an <strong>asset</strong> or <strong>expense</strong> account.</p>
+      <p><em>Example: recording sales income → credit Revenue</em></p>
+    </div>
+  </div>
+
+  <h3>Creating a Journal Entry</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">New Entry</span></strong>.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Set the Entry Date, Type, Reference, and Description.</strong></div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Add debit and credit lines</strong> — for each line select the account, choose Debit or Credit, and enter the amount. Add as many lines as needed.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Check the balance.</strong> The running debit and credit totals are shown. They must be equal.</div></div>
+    <div class="step"><div class="step-num"></div><div class="step-body"><strong>Click <span class="btn-ui">Save</span></strong> — saved as Draft. Then click <span class="btn-warn-ui">Post</span> to record it in the ledger.</div></div>
+  </div>
+
+  <div class="fields">
+    <div class="fields-head">Journal Entry Fields</div>
+    <div class="field-row"><div class="field-name">Entry Date <span class="field-req">*</span></div><div class="field-desc">The accounting date for this transaction</div></div>
+    <div class="field-row"><div class="field-name">Type</div><div class="field-desc">General (default), Closing (fiscal year close), or Adjustment</div></div>
+    <div class="field-row"><div class="field-name">Reference</div><div class="field-desc">Optional external document reference</div></div>
+    <div class="field-row"><div class="field-name">Description</div><div class="field-desc">Explanation of what this entry records</div></div>
+    <div class="field-row"><div class="field-name">Currency</div><div class="field-desc">Currency of the amounts. All amounts are stored in base currency.</div></div>
+  </div>
+
+  <h3>Approval Workflow</h3>
+  <p>Depending on your organisation's settings, journal entries may require approval before posting:</p>
+  <div class="flow">
+    <div class="flow-box">Draft</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Submit</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Pending Approval</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Post</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Posted</div>
+  </div>
+  <p>A reviewer can also <strong>Return to Draft</strong> with a note if corrections are needed.</p>
+
+  <h3>Voiding a Journal Entry</h3>
+  <p>To cancel a posted journal entry, click <span class="btn-danger-ui">Void</span>. This marks the entry as void and removes it from reports. It does <em>not</em> automatically create a reversing entry — if needed, create a new journal entry with the lines reversed.</p>
+</div>
+
+<!-- ════════════════════════ CH 12 — CHART OF ACCOUNTS ════════════════════════ -->
+<div id="ch12" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">12</div>
+    <div class="ch-meta">
+      <h2>Chart of Accounts</h2>
+      <p>Managing the list of financial accounts</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Chart of Accounts</span></div>
+
+  <div class="callout warn">
+    <div class="label">Accountants Only</div>
+    Changes to the Chart of Accounts affect all financial reports. Only make changes with guidance from your accountant or finance manager.
+  </div>
+
+  <p>The Chart of Accounts is the master list of every account used to categorise financial transactions. Each account has a code number, a name, and a type.</p>
+
+  <h3>Account Types</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Examples</th><th>Normal Balance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Asset</strong></td><td>Cash (1000), Bank (1100), Accounts Receivable (1200), Inventory (1300)</td><td>Debit</td></tr>
+      <tr><td><strong>Liability</strong></td><td>Accounts Payable (2000), Tax Payable (2300), Loans</td><td>Credit</td></tr>
+      <tr><td><strong>Equity</strong></td><td>Retained Earnings (3100), Share Capital</td><td>Credit</td></tr>
+      <tr><td><strong>Revenue</strong></td><td>Sales Revenue (4000)</td><td>Credit</td></tr>
+      <tr><td><strong>Expense</strong></td><td>COGS (5000), Rent, Salaries, Interest Expense (6710)</td><td>Debit</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout danger">
+    <div class="label">Do not deactivate system accounts</div>
+    The accounts used for automatic journal entries (Cash 1000, AR 1200, AP 2000, etc.) must remain active. Deactivating them will prevent invoices, bills, and payments from being posted.
+  </div>
+</div>
+
+<!-- ════════════════════════ CH 13 — PERIOD CLOSE ════════════════════════ -->
+<div id="ch13" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">13</div>
+    <div class="ch-meta">
+      <h2>Period Closing</h2>
+      <p>Locking a completed month to prevent further changes</p>
+    </div>
+  </div>
+
+  <div class="navpath">Accounting → <span>Period Close</span></div>
+
+  <div class="callout danger">
+    <div class="label">Irreversible Action</div>
+    Closing a period is permanent. Once a period is closed, no transactions can be posted to dates within that period. Only perform this action at month-end after all transactions have been reviewed and approved.
+  </div>
+
+  <p>Closing a period takes a snapshot of all account balances and locks the period. This ensures historical figures cannot be altered after the month has been reported.</p>
+
+  <h3>Step-by-Step Period Close Process</h3>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Navigate to Period Close</strong> and select the period to close from the dropdown (e.g. "March 2026").
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Click <span class="btn-ghost-ui">Run Pre-Close Checks</span></strong>. The system checks for any issues that must be resolved before closing.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Review the check results:</strong>
+        <ul>
+          <li><strong>Unposted Journal Entries</strong> — shown in red. These <em>must</em> be posted or deleted before closing.</li>
+          <li><strong>Open Invoices</strong> — shown in yellow. These are warnings only; you can close the period with open invoices.</li>
+          <li><strong>Open Bills</strong> — shown in yellow. Same as above — warnings only.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Resolve all blockers</strong> (red items). Go to Journal Entries and post or delete any unposted entries within the period.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Inventory Snapshot (optional)</strong> — if the Inventory System is connected, tick the checkbox to also snapshot inventory quantities and WAC values at period-end.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Click <span class="btn-danger-ui">Close Period</span></strong> and confirm. The period is now locked. A ✓ marker appears next to it in the dropdown.
+      </div>
+    </div>
+  </div>
+
+  <h3>After Closing</h3>
+  <ul>
+    <li>All account balances are snapshotted in the database for historical reporting.</li>
+    <li>Any attempt to post a transaction dated within the closed period will be rejected by the system.</li>
+    <li>You can still <em>view</em> all transactions from the closed period — they are not deleted.</li>
+    <li>If you need to make a correction to a closed period, contact your system administrator to discuss options.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════ CH 14 — FAQ ════════════════════════ -->
+<div id="ch14" class="chapter">
+  <div class="ch-banner">
+    <div class="ch-num">14</div>
+    <div class="ch-meta">
+      <h2>Frequently Asked Questions</h2>
+      <p>Common questions and how to handle them</p>
+    </div>
+  </div>
+
+  <h3>I created an invoice with the wrong amount. What do I do?</h3>
+  <p>If the invoice is still in <span class="badge b-draft">Draft</span> status, you can edit it. If it has already been <span class="badge b-issued">Posted</span>, you must void it and create a new one. Go to the invoice detail page, scroll down to find a <span class="btn-ghost-ui">Void</span> option (available to accountants), or ask your accountant to void it for you.</p>
+
+  <h3>I recorded a payment twice by mistake. What should I do?</h3>
+  <p>Contact your accountant. The system prevents exact duplicate payments (same amount, same date, same method), but if two slightly different entries were made, the accountant can investigate through the audit trail and journal entries and post a correcting entry.</p>
+
+  <h3>An invoice shows "Overdue" but the customer has already paid. Why?</h3>
+  <p>The payment has not been recorded in the system yet. Find the invoice and click <span class="btn-success-ui">Record Payment</span> to enter the payment details. Once saved, the status will update to <span class="badge b-settled">Settled</span>.</p>
+
+  <h3>I can't find a customer in the dropdown when creating an invoice.</h3>
+  <p>The customer must be added to the system first. Go to <strong>Accounting → Customers</strong>, click <span class="btn-ui">New Customer</span>, fill in their details, and save. They will then appear in the invoice form.</p>
+
+  <h3>Can I export reports to Excel?</h3>
+  <p>Reports can be exported to PDF using the <span class="btn-ghost-ui">Export PDF</span> button. For Excel/CSV export, ask your system administrator — this may be available depending on your configuration.</p>
+
+  <h3>What is the difference between a Bill and an Expense?</h3>
+  <table>
+    <thead><tr><th></th><th>Bill</th><th>Expense</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Purpose</strong></td><td>A formal vendor invoice you receive</td><td>Any company cost not tied to a vendor invoice</td></tr>
+      <tr><td><strong>Vendor</strong></td><td>Must select a registered vendor</td><td>Vendor is optional (free-text name)</td></tr>
+      <tr><td><strong>Accounting</strong></td><td>Increases Accounts Payable</td><td>Reduces Cash (cash) or increases AP (credit)</td></tr>
+      <tr><td><strong>Examples</strong></td><td>Supplier invoice for goods purchased</td><td>Office supplies, travel, utility bills</td></tr>
+    </tbody>
+  </table>
+
+  <h3>How do I see the history of changes to a record?</h3>
+  <p>Every record has an <strong>audit trail</strong>. Click the clock icon <span class="btn-ghost-ui">🕐</span> next to any invoice, bill, expense, or budget to see every change that was made — who made it, what changed, and when.</p>
+
+  <h3>What does "SBU Code" mean on the Reports page?</h3>
+  <p>SBU stands for <strong>Strategic Business Unit</strong>. If your organisation tracks transactions by location or department (e.g. DHAKA branch, CHITTAGONG branch), you can filter reports to one unit by typing its code. Leave it blank to see figures for the whole company.</p>
+
+  <h3>The dashboard shows a different figure than the Income Statement. Why?</h3>
+  <p>Check the date ranges. The dashboard uses the period selected in its dropdown (e.g. This Month), while the Income Statement uses the Start Date and End Date you enter manually. Make sure both cover the same period to compare figures.</p>
+
+  <div class="doc-footer">
+    <p><strong>Accounting System — User Guide</strong> &nbsp;·&nbsp; For questions, contact your Finance Manager or System Administrator</p>
+    <p>June 2026 &nbsp;·&nbsp; Internal Use Only</p>
+  </div>
+</div>
+
+</body>
+</html>

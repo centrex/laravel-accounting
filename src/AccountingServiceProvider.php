@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
-use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand, QuickBooksSyncCommand};
-use Centrex\Accounting\QuickBooks\{QuickBooksAccountTypeMapper, QuickBooksClient, QuickBooksReportFormatter, QuickBooksSyncService};
+use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
 use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, VendorLedger, VendorLedgerIndex, Vendors};
@@ -90,7 +89,6 @@ class AccountingServiceProvider extends ServiceProvider
             $this->commands([
                 AccountingReportCommand::class,
                 AccountingDemoCommand::class,
-                QuickBooksSyncCommand::class,
             ]);
         }
     }
@@ -153,10 +151,6 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.budget.view',
             'accounting.budget.manage',
             'accounting.budget.approve',
-
-            // QuickBooks Online integration
-            'accounting.qbo.connect',
-            'accounting.qbo.sync',
         ];
 
         foreach ($abilities as $ability) {
@@ -188,21 +182,5 @@ class AccountingServiceProvider extends ServiceProvider
 
         $this->app->singleton('accounting', fn (): Accounting => new Accounting());
 
-        // QuickBooks Online singletons
-        $this->app->singleton(QuickBooksAccountTypeMapper::class);
-        $this->app->singleton(QuickBooksReportFormatter::class);
-
-        $this->app->singleton(QuickBooksClient::class, static function (): QuickBooksClient {
-            $cfg = config('accounting.quickbooks', []);
-
-            return new QuickBooksClient(
-                clientId:     (string) ($cfg['client_id'] ?? ''),
-                clientSecret: (string) ($cfg['client_secret'] ?? ''),
-                redirectUri:  (string) ($cfg['redirect_uri'] ?? ''),
-                sandbox:      ($cfg['environment'] ?? 'sandbox') !== 'production',
-            );
-        });
-
-        $this->app->singleton(QuickBooksSyncService::class);
     }
 }
