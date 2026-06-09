@@ -6,44 +6,68 @@
     title="Accounting Dashboard"
     subtitle="Financial overview · {{ \Carbon\Carbon::parse($startDate)->format('M d') }} – {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}"
     icon="o-chart-bar-square"
+    :separator="true"
 >
+    <x-slot:breadcrumbs>
+        <x-tallui-breadcrumb :links="[['label' => 'Accounting'], ['label' => 'Dashboard']]" />
+    </x-slot:breadcrumbs>
+
     <x-slot:actions>
-        <x-tallui-select wire:model.live="dateRange" class="select-sm w-36">
+        <select wire:model.live="dateRange" class="select select-bordered select-sm w-40">
             <option value="today">Today</option>
             <option value="this_week">This Week</option>
             <option value="this_month">This Month</option>
             <option value="this_quarter">This Quarter</option>
             <option value="this_year">This Year</option>
-        </x-tallui-select>
-        <x-tallui-button
-            label="New Invoice"
-            icon="o-plus"
-            :link="route('accounting.invoices')"
-            class="btn-primary btn-sm"
-        />
-        <x-tallui-button
-            label="New Entry"
-            icon="o-pencil-square"
-            :link="route('accounting.journal')"
-            class="btn-ghost btn-sm"
-        />
-        <x-tallui-button
-            label="Ledger"
-            icon="o-book-open"
-            :link="route('accounting.ledger')"
-            class="btn-ghost btn-sm"
-        />
+        </select>
+        <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-primary btn-sm gap-1">
+            <x-tallui-icon name="o-plus" size="w-4 h-4" /> New Invoice
+        </a>
+        <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
+            <x-tallui-icon name="o-pencil-square" size="w-4 h-4" /> Journal
+        </a>
+        <a href="{{ route('accounting.general-ledger') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
+            <x-tallui-icon name="o-book-open" size="w-4 h-4" /> Ledger
+        </a>
     </x-slot:actions>
 </x-tallui-page-header>
 
-{{-- ── Primary KPI Stats ────────────────────────────────────────────────── --}}
+<div class="px-4 md:px-6 space-y-6">
+
+{{-- ── Alerts ───────────────────────────────────────────────────────────── --}}
+@if($openPeriod && \Carbon\Carbon::parse($openPeriod->end_date)->isPast())
+    <x-tallui-alert type="warning" title="Fiscal Period Overdue for Closing" :dismissible="true">
+        Period <strong>{{ $openPeriod->name }}</strong> ended
+        {{ \Carbon\Carbon::parse($openPeriod->end_date)->format('M d, Y') }} and has not been closed.
+        <a href="{{ route('accounting.period-close') }}" wire:navigate class="link link-warning font-semibold ml-1">Close now →</a>
+    </x-tallui-alert>
+@endif
+
+@if($invoiceStats['overdue_count'] > 0 || $billStats['overdue_count'] > 0)
+    <div class="flex flex-col sm:flex-row gap-3">
+        @if($invoiceStats['overdue_count'] > 0)
+            <x-tallui-alert type="error" title="{{ $invoiceStats['overdue_count'] }} Invoice{{ $invoiceStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
+                {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }} outstanding.
+                <a href="{{ route('accounting.invoices') }}" wire:navigate class="link link-error font-semibold ml-1">Review →</a>
+            </x-tallui-alert>
+        @endif
+        @if($billStats['overdue_count'] > 0)
+            <x-tallui-alert type="warning" title="{{ $billStats['overdue_count'] }} Bill{{ $billStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
+                {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }} due.
+                <a href="{{ route('accounting.bills') }}" wire:navigate class="link link-warning font-semibold ml-1">Review →</a>
+            </x-tallui-alert>
+        @endif
+    </div>
+@endif
+
+{{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
 <div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full bg-base-100 border border-base-200 rounded-2xl overflow-x-auto">
     <x-tallui-stat
         title="Revenue"
         :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
         icon="o-arrow-trending-up"
         icon-color="text-success"
-        :desc="'Period: ' . \Carbon\Carbon::parse($startDate)->format('M d') . ' – ' . \Carbon\Carbon::parse($endDate)->format('M d')"
+        :desc="\Carbon\Carbon::parse($startDate)->format('M d') . ' – ' . \Carbon\Carbon::parse($endDate)->format('M d')"
     />
     <x-tallui-stat
         title="Expenses"
@@ -82,12 +106,11 @@
     />
 </div>
 
-{{-- ── AR / AP / Customer / Vendor cards ───────────────────────────────── --}}
+{{-- ── AR / AP / Entity Summary Cards ──────────────────────────────────── --}}
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
 
-    {{-- Outstanding AR --}}
-    <a href="{{ route('accounting.invoices') }}" class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-success/40 transition-all rounded-2xl">
+    <a href="{{ route('accounting.invoices') }}" wire:navigate class="group">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-success/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Receivables</span>
@@ -96,7 +119,7 @@
                     </div>
                 </div>
                 <div class="text-xl font-bold mt-1">{{ $currency }} {{ number_format($invoiceStats['outstanding_ar'], 2) }}</div>
-                <div class="flex items-center gap-2 flex-wrap mt-1">
+                <div class="flex items-center gap-1.5 flex-wrap mt-1">
                     @if($invoiceStats['overdue_count'] > 0)
                         <x-tallui-badge type="error" size="sm">{{ $invoiceStats['overdue_count'] }} overdue</x-tallui-badge>
                     @endif
@@ -106,14 +129,16 @@
                     @if($invoiceStats['partial_count'] > 0)
                         <x-tallui-badge type="warning" size="sm">{{ $invoiceStats['partial_count'] }} partial</x-tallui-badge>
                     @endif
+                    @if(!$invoiceStats['overdue_count'] && !$invoiceStats['sent_count'] && !$invoiceStats['partial_count'])
+                        <span class="text-xs text-base-content/40">All clear</span>
+                    @endif
                 </div>
             </div>
         </div>
     </a>
 
-    {{-- Outstanding AP --}}
-    <a href="{{ route('accounting.bills') }}" class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-warning/40 transition-all rounded-2xl">
+    <a href="{{ route('accounting.bills') }}" wire:navigate class="group">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-warning/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Payables</span>
@@ -122,7 +147,7 @@
                     </div>
                 </div>
                 <div class="text-xl font-bold mt-1">{{ $currency }} {{ number_format($billStats['outstanding_ap'], 2) }}</div>
-                <div class="flex items-center gap-2 flex-wrap mt-1">
+                <div class="flex items-center gap-1.5 flex-wrap mt-1">
                     @if($billStats['overdue_count'] > 0)
                         <x-tallui-badge type="error" size="sm">{{ $billStats['overdue_count'] }} overdue</x-tallui-badge>
                     @endif
@@ -132,14 +157,16 @@
                     @if($billStats['partial_count'] > 0)
                         <x-tallui-badge type="warning" size="sm">{{ $billStats['partial_count'] }} partial</x-tallui-badge>
                     @endif
+                    @if(!$billStats['overdue_count'] && !$billStats['sent_count'] && !$billStats['partial_count'])
+                        <span class="text-xs text-base-content/40">All clear</span>
+                    @endif
                 </div>
             </div>
         </div>
     </a>
 
-    {{-- Customers --}}
-    <a href="{{ route('accounting.customers') }}" class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-primary/40 transition-all rounded-2xl">
+    <a href="{{ route('accounting.customers') }}" wire:navigate class="group">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-primary/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Customers</span>
@@ -153,9 +180,8 @@
         </div>
     </a>
 
-    {{-- Vendors --}}
-    <a href="{{ route('accounting.vendors') }}" class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-secondary/40 transition-all rounded-2xl">
+    <a href="{{ route('accounting.vendors') }}" wire:navigate class="group">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-secondary/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Vendors</span>
@@ -169,27 +195,23 @@
         </div>
     </a>
 
-    {{-- Ledger --}}
-    <a href="{{ route('accounting.ledger') }}" class="group col-span-2 lg:col-span-1">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-accent/40 transition-all rounded-2xl">
+    <a href="{{ route('accounting.journal') }}" wire:navigate class="group col-span-2 lg:col-span-1">
+        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-accent/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Ledger</span>
+                    <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Journal</span>
                     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
                         <x-tallui-icon name="o-book-open" class="w-4 h-4 text-accent" />
                     </div>
                 </div>
                 <div class="text-xl font-bold mt-1">{{ number_format($ledgerStats['posted_count']) }}</div>
-                <div class="text-xs text-base-content/50 mt-1">Posted entries in selected period</div>
-                <div class="flex items-center gap-2 flex-wrap mt-1">
+                <div class="text-xs text-base-content/50 mt-1">Posted entries in period</div>
+                <div class="flex items-center gap-1.5 flex-wrap mt-1">
                     @if($ledgerStats['submitted_count'] > 0)
                         <x-tallui-badge type="info" size="sm">{{ $ledgerStats['submitted_count'] }} pending</x-tallui-badge>
                     @endif
                     @if($ledgerStats['draft_count'] > 0)
                         <x-tallui-badge type="warning" size="sm">{{ $ledgerStats['draft_count'] }} draft</x-tallui-badge>
-                    @endif
-                    @if($ledgerStats['void_count'] > 0)
-                        <x-tallui-badge type="error" size="sm">{{ $ledgerStats['void_count'] }} void</x-tallui-badge>
                     @endif
                 </div>
             </div>
@@ -197,75 +219,69 @@
     </a>
 </div>
 
-{{-- ── Action Alerts: Pending Approvals + Period Status ──────────────── --}}
+{{-- ── Pending Approvals + Period Status ───────────────────────────────── --}}
 @if($ledgerStats['submitted_count'] > 0 || $openPeriod)
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-    {{-- Pending Approvals --}}
     @if($ledgerStats['submitted_count'] > 0)
     <x-tallui-card padding="none">
         <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <x-tallui-icon name="o-clock" class="w-5 h-5 text-info" />
-                <h3 class="font-semibold text-sm">Pending Approval</h3>
-                <span class="badge badge-info badge-sm">{{ $ledgerStats['submitted_count'] }}</span>
+                <span class="font-semibold text-sm">Pending Approval</span>
+                <x-tallui-badge type="info" size="sm">{{ $ledgerStats['submitted_count'] }}</x-tallui-badge>
             </div>
-            <x-tallui-button
-                label="Review All"
-                :link="route('accounting.journal') . '?statusFilter=submitted'"
-                class="btn-ghost btn-xs"
-            />
+            <a href="{{ route('accounting.journal') }}?statusFilter=submitted" wire:navigate
+                class="btn btn-ghost btn-xs">Review All</a>
         </div>
         <div class="divide-y divide-base-200">
-            @forelse($pendingJournals as $pj)
-                <div class="px-5 py-3 flex items-center justify-between hover:bg-base-200/40">
-                    <div>
-                        <div class="text-sm font-mono font-medium text-primary">{{ $pj->entry_number }}</div>
-                        <div class="text-xs text-base-content/60 truncate max-w-[220px]">{{ $pj->description }}</div>
+            @foreach($pendingJournals as $pj)
+                <a href="{{ route('accounting.journal') }}" wire:navigate
+                    class="flex items-center justify-between px-5 py-3 hover:bg-base-200/50 transition-colors">
+                    <div class="min-w-0">
+                        <div class="text-sm font-mono font-semibold text-primary">{{ $pj->entry_number }}</div>
+                        <div class="text-xs text-base-content/60 truncate max-w-[240px]">{{ $pj->description ?? '—' }}</div>
                         <div class="text-xs text-base-content/40 mt-0.5">
-                            by {{ $pj->submitter?->name ?? 'Unknown' }}
+                            {{ $pj->submitter?->name ?? 'Unknown' }}
                             · {{ $pj->submitted_at?->diffForHumans() ?? '' }}
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3 shrink-0">
                         <span class="font-mono text-sm font-semibold">
                             {{ $currency }} {{ number_format($pj->lines->where('type', 'debit')->sum('amount'), 2) }}
                         </span>
-                        <a href="{{ route('accounting.journal') }}" class="btn btn-success btn-xs">Approve</a>
+                        <span class="btn btn-success btn-xs pointer-events-none">Approve</span>
                     </div>
-                </div>
-            @empty
-            @endforelse
+                </a>
+            @endforeach
         </div>
     </x-tallui-card>
     @endif
 
-    {{-- Current Period Status --}}
     @if($openPeriod)
     <x-tallui-card>
-        <div class="flex items-center gap-3 mb-3">
-            <x-tallui-icon name="o-calendar-days" class="w-5 h-5 text-secondary" />
-            <h3 class="font-semibold text-sm">Current Accounting Period</h3>
-        </div>
-        <div class="space-y-2">
-            <div class="flex justify-between text-sm">
-                <span class="text-base-content/60">Period</span>
-                <span class="font-medium">{{ $openPeriod->name }}</span>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center">
+                <x-tallui-icon name="o-calendar-days" class="w-5 h-5 text-secondary" />
             </div>
+            <div>
+                <h3 class="font-semibold text-sm">Current Accounting Period</h3>
+                <p class="text-xs text-base-content/50">{{ $openPeriod->name }}</p>
+            </div>
+        </div>
+        <div class="space-y-2.5">
             <div class="flex justify-between text-sm">
                 <span class="text-base-content/60">From</span>
-                <span class="font-mono">{{ \Carbon\Carbon::parse($openPeriod->start_date)->format('M d, Y') }}</span>
+                <span class="font-mono text-sm">{{ \Carbon\Carbon::parse($openPeriod->start_date)->format('M d, Y') }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-base-content/60">Ends</span>
-                <span class="font-mono {{ now()->gt($openPeriod->end_date) ? 'text-error font-semibold' : '' }}">
+                <span class="font-mono text-sm {{ now()->gt($openPeriod->end_date) ? 'text-error font-bold' : '' }}">
                     {{ \Carbon\Carbon::parse($openPeriod->end_date)->format('M d, Y') }}
                     @if(now()->gt($openPeriod->end_date))
-                        <span class="badge badge-error badge-xs ml-1">Overdue</span>
+                        <x-tallui-badge type="error" size="sm" class="ml-1">Overdue</x-tallui-badge>
                     @else
-                        <span class="text-xs text-base-content/40 ml-1">
-                            ({{ \Carbon\Carbon::parse($openPeriod->end_date)->diffForHumans() }})
-                        </span>
+                        <span class="text-xs text-base-content/40 ml-1">({{ \Carbon\Carbon::parse($openPeriod->end_date)->diffForHumans() }})</span>
                     @endif
                 </span>
             </div>
@@ -275,12 +291,11 @@
             </div>
         </div>
         <div class="mt-4 pt-3 border-t border-base-200">
-            <x-tallui-button
-                label="Close Period"
-                icon="o-lock-closed"
-                :link="route('accounting.period-close')"
-                class="btn-outline btn-sm w-full"
-            />
+            <a href="{{ route('accounting.period-close') }}" wire:navigate
+                class="btn btn-outline btn-sm w-full gap-2">
+                <x-tallui-icon name="o-lock-closed" size="w-4 h-4" />
+                Close Period
+            </a>
         </div>
     </x-tallui-card>
     @endif
@@ -288,10 +303,9 @@
 </div>
 @endif
 
-{{-- ── Charts ──────────────────────────────────────────────────────────── --}}
+{{-- ── Charts ────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-    {{-- Revenue vs Expenses — bar chart (2/3 width) --}}
     <x-tallui-card
         title="Revenue vs Expenses"
         subtitle="{{ now()->year }} monthly breakdown"
@@ -299,115 +313,101 @@
         class="xl:col-span-2"
     >
         <x-slot:actions>
-            <x-tallui-button
-                label="P&L Report"
-                icon="o-arrow-top-right-on-square"
-                :link="route('accounting.reports')"
-                class="btn-ghost btn-xs"
-            />
+            <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
+                P&amp;L Report <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
+            </a>
         </x-slot:actions>
-
-        <livewire:tallui-bar-chart
-            :series="$revenueExpensesChart['series']"
-            :categories="$revenueExpensesChart['categories']"
-            :height="260"
-        />
+        @if(!empty($revenueExpensesChart['categories']))
+            <livewire:tallui-bar-chart
+                :series="$revenueExpensesChart['series']"
+                :categories="$revenueExpensesChart['categories']"
+                :height="260"
+            />
+        @else
+            <x-tallui-empty-state title="No data yet" description="Post journal entries to see monthly trends." size="sm" />
+        @endif
     </x-tallui-card>
 
-    {{-- Financial snapshot — donut (1/3 width) --}}
     <x-tallui-card title="Balance Snapshot" icon="o-chart-pie">
         <x-slot:actions>
-            <x-tallui-button
-                label="Balance Sheet"
-                icon="o-arrow-top-right-on-square"
-                :link="route('accounting.reports')"
-                class="btn-ghost btn-xs"
-            />
+            <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
+                Balance Sheet <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
+            </a>
         </x-slot:actions>
-
-        <livewire:tallui-pie-chart
-            :series="$balanceChart['series']"
-            :categories="$balanceChart['categories']"
-            :height="230"
-            :donut="true"
-        />
-
+        @if($balanceChart['series'][0] > 0 || $balanceChart['series'][1] > 0 || $balanceChart['series'][2] > 0)
+            <livewire:tallui-pie-chart
+                :series="$balanceChart['series']"
+                :categories="$balanceChart['categories']"
+                :height="200"
+                :donut="true"
+            />
+        @endif
         <div class="divide-y divide-base-200 mt-2">
-            <div class="flex justify-between py-2 text-sm">
+            @foreach([
+                ['label' => 'Assets',      'key' => 'total_assets',      'color' => 'bg-info'],
+                ['label' => 'Liabilities', 'key' => 'total_liabilities', 'color' => 'bg-warning'],
+                ['label' => 'Equity',      'key' => 'total_equity',      'color' => 'bg-secondary'],
+            ] as $row)
+            <div class="flex justify-between items-center py-2 text-sm">
                 <span class="text-base-content/60 flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-info inline-block"></span>Assets
+                    <span class="w-2.5 h-2.5 rounded-full {{ $row['color'] }} inline-block"></span>
+                    {{ $row['label'] }}
                 </span>
-                <span class="font-semibold">{{ $currency }} {{ number_format($metrics['total_assets'], 2) }}</span>
+                <span class="font-semibold font-mono text-xs">{{ $currency }} {{ number_format($metrics[$row['key']], 2) }}</span>
             </div>
-            <div class="flex justify-between py-2 text-sm">
-                <span class="text-base-content/60 flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-warning inline-block"></span>Liabilities
-                </span>
-                <span class="font-semibold">{{ $currency }} {{ number_format($metrics['total_liabilities'], 2) }}</span>
-            </div>
-            <div class="flex justify-between py-2 text-sm">
-                <span class="text-base-content/60 flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-secondary inline-block"></span>Equity
-                </span>
-                <span class="font-semibold">{{ $currency }} {{ number_format($metrics['total_equity'], 2) }}</span>
-            </div>
+            @endforeach
         </div>
     </x-tallui-card>
 </div>
 
-{{-- ── Cash Flow ─────────────────────────────────────────────────────────── --}}
+{{-- ── Cash Flow ──────────────────────────────────────────────────────────── --}}
 <x-tallui-card
     title="Cash Flow"
     subtitle="{{ now()->year }} monthly cash movements"
     icon="o-arrow-path"
 >
     <x-slot:actions>
-        <x-tallui-button
-            label="Full Report"
-            icon="o-arrow-top-right-on-square"
-            :link="route('accounting.reports')"
-            class="btn-ghost btn-xs"
-        />
+        <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
+            Full Report <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
+        </a>
     </x-slot:actions>
 
-    {{-- Summary mini-stats --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         @foreach([
-            ['label' => 'Operating',  'value' => $cashFlow['operating_activities'] ?? 0, 'icon' => 'o-cog-6-tooth',       'color' => 'info'],
-            ['label' => 'Investing',  'value' => $cashFlow['investing_activities'] ?? 0, 'icon' => 'o-building-office',    'color' => 'secondary'],
-            ['label' => 'Financing',  'value' => $cashFlow['financing_activities'] ?? 0, 'icon' => 'o-banknotes',          'color' => 'accent'],
-            ['label' => 'Net Change', 'value' => $cashFlow['net_change']           ?? 0, 'icon' => 'o-arrow-trending-up',  'color' => ($cashFlow['net_change'] ?? 0) >= 0 ? 'success' : 'error'],
+            ['label' => 'Operating',  'key' => 'operating_activities', 'icon' => 'o-cog-6-tooth',    'positive' => 'text-info'],
+            ['label' => 'Investing',  'key' => 'investing_activities', 'icon' => 'o-building-office', 'positive' => 'text-secondary'],
+            ['label' => 'Financing',  'key' => 'financing_activities', 'icon' => 'o-banknotes',       'positive' => 'text-accent'],
+            ['label' => 'Net Change', 'key' => 'net_change',           'icon' => 'o-arrow-trending-up','positive' => 'text-success'],
         ] as $cf)
+            @php $val = (float)($cashFlow[$cf['key']] ?? 0) @endphp
             <div class="rounded-xl border border-base-200 bg-base-100 p-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-{{ $cf['color'] }}/10 flex items-center justify-center shrink-0">
-                    <x-tallui-icon :name="$cf['icon']" class="w-4 h-4 text-{{ $cf['color'] }}" />
+                <div class="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center shrink-0">
+                    <x-tallui-icon :name="$cf['icon']" class="w-4 h-4 text-base-content/60" />
                 </div>
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/50">{{ $cf['label'] }}</div>
-                    <div @class([
-                        'text-sm font-bold truncate',
-                        'text-success' => $cf['value'] >= 0,
-                        'text-error'   => $cf['value'] < 0,
-                    ])>
-                        {{ $cf['value'] >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($cf['value']), 2) }}
+                    <div class="text-sm font-bold truncate {{ $val >= 0 ? $cf['positive'] : 'text-error' }}">
+                        {{ $val < 0 ? '−' : '' }}{{ $currency }} {{ number_format(abs($val), 2) }}
                     </div>
                 </div>
             </div>
         @endforeach
     </div>
 
-    {{-- Monthly area chart --}}
-    <livewire:tallui-area-chart
-        :series="$cashFlowChart['series']"
-        :categories="$cashFlowChart['categories']"
-        :height="220"
-    />
+    @if(!empty($cashFlowChart['categories']))
+        <livewire:tallui-area-chart
+            :series="$cashFlowChart['series']"
+            :categories="$cashFlowChart['categories']"
+            :height="220"
+        />
+    @endif
 </x-tallui-card>
 
-{{-- ── Forecasted Cash Flow ─────────────────────────────────────────────── --}}
+{{-- ── Cash Flow Forecast ──────────────────────────────────────────────────── --}}
+@if(!empty($forecastChart['categories']))
 <x-tallui-card
     title="Cash Flow Forecast"
-    subtitle="{{ now()->year }} · linear trend projection for remaining months"
+    subtitle="{{ now()->year }} · linear trend projection"
     icon="o-arrow-trending-up"
 >
     <x-slot:actions>
@@ -420,118 +420,93 @@
         :height="240"
     />
 
-    @if (data_get($inventoryForecast, 'available'))
+    @if(data_get($inventoryForecast, 'available'))
         <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
             @foreach([
-                ['label' => 'Inventory Cash In', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_in', 0), 'color' => 'success'],
-                ['label' => 'Inventory Cash Out', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_out', 0), 'color' => 'warning'],
-                ['label' => 'Inventory Net', 'value' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0), 'color' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0) >= 0 ? 'info' : 'error'],
-                ['label' => 'Replenishment Cost', 'value' => data_get($inventoryForecast, 'summary.required_procurement_cost', 0), 'color' => 'secondary'],
-            ] as $metric)
+                ['label' => 'Forecast Cash In',      'path' => 'summary.forecast_cash_in',            'color' => 'text-success'],
+                ['label' => 'Forecast Cash Out',     'path' => 'summary.forecast_cash_out',           'color' => 'text-warning'],
+                ['label' => 'Inventory Net',         'path' => 'summary.forecast_cash_net',           'color' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0) >= 0 ? 'text-info' : 'text-error'],
+                ['label' => 'Replenishment Cost',    'path' => 'summary.required_procurement_cost',   'color' => 'text-secondary'],
+            ] as $m)
                 <div class="rounded-xl border border-base-200 bg-base-100 p-3">
-                    <div class="text-xs text-base-content/50">{{ $metric['label'] }}</div>
-                    <div @class([
-                        'mt-1 text-sm font-bold',
-                        'text-success' => $metric['color'] === 'success',
-                        'text-warning' => $metric['color'] === 'warning',
-                        'text-info' => $metric['color'] === 'info',
-                        'text-error' => $metric['color'] === 'error',
-                        'text-secondary' => $metric['color'] === 'secondary',
-                    ])>
-                        {{ $currency }} {{ number_format((float) $metric['value'], 2) }}
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="mt-4 space-y-2">
-            @foreach (data_get($inventoryForecast, 'timeline.categories', []) as $index => $month)
-                <div class="rounded-xl border border-base-200 bg-base-100 px-4 py-3 text-sm">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="font-medium">{{ $month }}</div>
-                        <div class="text-xs text-base-content/50">
-                            {{ number_format((float) data_get($inventoryForecast, "timeline.series.0.data.$index", 0), 2) }} qty
-                        </div>
-                    </div>
-                    <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
-                        <div><span class="text-base-content/50">Cash In</span><div class="font-semibold text-success">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.2.data.$index", 0), 2) }}</div></div>
-                        <div><span class="text-base-content/50">Cash Out</span><div class="font-semibold">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.3.data.$index", 0), 2) }}</div></div>
-                        <div><span class="text-base-content/50">Net</span><div class="font-semibold {{ (float) data_get($inventoryForecast, "timeline.series.4.data.$index", 0) >= 0 ? 'text-success' : 'text-error' }}">{{ $currency }} {{ number_format((float) data_get($inventoryForecast, "timeline.series.4.data.$index", 0), 2) }}</div></div>
+                    <div class="text-xs text-base-content/50 mb-1">{{ $m['label'] }}</div>
+                    <div class="text-sm font-bold {{ $m['color'] }}">
+                        {{ $currency }} {{ number_format((float)data_get($inventoryForecast, $m['path'], 0), 2) }}
                     </div>
                 </div>
             @endforeach
         </div>
     @endif
 </x-tallui-card>
+@endif
 
-{{-- ── Quick Actions ────────────────────────────────────────────────────── --}}
+{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
     @foreach([
-        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',      'color' => 'primary',   'route' => 'accounting.journal'],
-        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',          'color' => 'accent',    'route' => 'accounting.ledger'],
-        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',       'color' => 'success',   'route' => 'accounting.invoices'],
-        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',       'color' => 'warning',   'route' => 'accounting.bills'],
-        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',               'color' => 'info',      'route' => 'accounting.customers'],
-        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront', 'color' => 'secondary', 'route' => 'accounting.vendors'],
-        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',         'color' => 'accent',    'route' => 'accounting.accounts'],
-        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',           'color' => 'neutral',   'route' => 'accounting.reports'],
+        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
+        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.general-ledger'],
+        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
+        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
+        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
+        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
+        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
+        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
     ] as $action)
-        <a href="{{ route($action['route']) }}" class="group">
-            <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-{{ $action['color'] }}/30 transition-all rounded-2xl">
-                <div class="card-body items-center text-center p-3 gap-2">
-                    <div class="w-10 h-10 rounded-xl bg-{{ $action['color'] }}/10 flex items-center justify-center group-hover:bg-{{ $action['color'] }}/20 transition-colors">
-                        <x-tallui-icon :name="$action['icon']" class="w-5 h-5 text-{{ $action['color'] }}" />
-                    </div>
-                    <div>
-                        <div class="font-semibold text-xs leading-tight">{{ $action['label'] }}</div>
-                        <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
-                    </div>
-                </div>
+        <a href="{{ route($action['route']) }}" wire:navigate
+            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
+            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
+            <div>
+                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
+                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
             </div>
         </a>
     @endforeach
 </div>
 
-{{-- ── Recent Invoices & Bills ─────────────────────────────────────────── --}}
+{{-- ── Recent Invoices & Bills ──────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-    {{-- Recent Invoices --}}
-    <x-tallui-card title="Recent Invoices" icon="o-document-text">
+    <x-tallui-card title="Recent Invoices" icon="o-document-text" padding="none">
         <x-slot:actions>
-            <x-tallui-button label="View All" icon="o-arrow-right" :link="route('accounting.invoices')" class="btn-ghost btn-xs" />
+            <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
         </x-slot:actions>
-
         @if($recentInvoices->isEmpty())
-            <x-tallui-empty-state title="No invoices yet" icon="o-document-text" size="sm" />
+            <div class="p-6">
+                <x-tallui-empty-state title="No invoices yet" icon="o-document-text" size="sm">
+                    <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-primary btn-sm">Create Invoice</a>
+                </x-tallui-empty-state>
+            </div>
         @else
-            <div class="overflow-x-auto -mx-4 px-4">
+            <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
                         <tr class="text-xs text-base-content/40 uppercase">
-                            <th>Invoice</th>
+                            <th class="pl-5">Invoice</th>
                             <th>Customer</th>
                             <th class="text-right">Total</th>
-                            <th>Status</th>
+                            <th class="pr-5">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($recentInvoices as $invoice)
-                            <tr class="hover:bg-base-200/50">
-                                <td class="font-mono text-xs text-primary font-medium">{{ $invoice->invoice_number }}</td>
+                            <tr class="hover:bg-base-200/50 cursor-pointer"
+                                onclick="window.location='{{ route('accounting.invoices.show', $invoice->id) }}'">
+                                <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">
+                                    {{ $invoice->invoice_number }}
+                                </td>
                                 <td class="text-sm max-w-[120px] truncate">{{ $invoice->customer?->name ?? '—' }}</td>
                                 <td class="text-right text-sm font-medium whitespace-nowrap">
                                     {{ $invoice->base_currency }} {{ number_format($invoice->base_total, 2) }}
                                 </td>
-                                <td>
-                                    <x-tallui-badge size="sm" :type="match($invoice->status->value ?? '') {
-                                        'settled'            => 'success',
-                                        'partially_settled'  => 'warning',
-                                        'overdue'            => 'error',
-                                        'sent', 'issued'     => 'info',
-                                        default              => 'neutral',
-                                    }">
-                                        {{ ucfirst(str_replace('_', ' ', $invoice->status->value ?? $invoice->status)) }}
-                                    </x-tallui-badge>
+                                <td class="pr-5">
+                                    @php $s = $invoice->status->value ?? $invoice->status @endphp
+                                    <x-tallui-badge size="sm" :type="match($s) {
+                                        'settled'           => 'success',
+                                        'partially_settled' => 'warning',
+                                        'overdue'           => 'error',
+                                        'sent', 'issued'    => 'info',
+                                        default             => 'neutral',
+                                    }">{{ ucfirst(str_replace('_', ' ', $s)) }}</x-tallui-badge>
                                 </td>
                             </tr>
                         @endforeach
@@ -539,56 +514,59 @@
                 </table>
             </div>
         @endif
-
         <x-slot:footer>
             @if($invoiceStats['overdue_count'] > 0)
-                <div class="flex items-center gap-2 text-xs text-error">
-                    <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5" />
-                    {{ $invoiceStats['overdue_count'] }} invoice(s) overdue totalling {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }}
+                <div class="flex items-center gap-2 text-xs text-error font-medium">
+                    <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5 shrink-0" />
+                    {{ $invoiceStats['overdue_count'] }} overdue — {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }}
                 </div>
             @else
-                <div class="text-xs text-base-content/40">No overdue invoices</div>
+                <span class="text-xs text-base-content/40">No overdue invoices</span>
             @endif
         </x-slot:footer>
     </x-tallui-card>
 
-    {{-- Recent Bills --}}
-    <x-tallui-card title="Recent Bills" icon="o-shopping-cart">
+    <x-tallui-card title="Recent Bills" icon="o-shopping-cart" padding="none">
         <x-slot:actions>
-            <x-tallui-button label="View All" icon="o-arrow-right" :link="route('accounting.bills')" class="btn-ghost btn-xs" />
+            <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
         </x-slot:actions>
-
         @if($recentBills->isEmpty())
-            <x-tallui-empty-state title="No bills yet" icon="o-shopping-cart" size="sm" />
+            <div class="p-6">
+                <x-tallui-empty-state title="No bills yet" icon="o-shopping-cart" size="sm">
+                    <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-primary btn-sm">Add Bill</a>
+                </x-tallui-empty-state>
+            </div>
         @else
-            <div class="overflow-x-auto -mx-4 px-4">
+            <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
                         <tr class="text-xs text-base-content/40 uppercase">
-                            <th>Bill</th>
+                            <th class="pl-5">Bill</th>
                             <th>Vendor</th>
                             <th class="text-right">Total</th>
-                            <th>Status</th>
+                            <th class="pr-5">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($recentBills as $bill)
-                            <tr class="hover:bg-base-200/50">
-                                <td class="font-mono text-xs text-primary font-medium">{{ $bill->bill_number }}</td>
+                            <tr class="hover:bg-base-200/50 cursor-pointer"
+                                onclick="window.location='{{ route('accounting.bills.show', $bill->id) }}'">
+                                <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">
+                                    {{ $bill->bill_number }}
+                                </td>
                                 <td class="text-sm max-w-[120px] truncate">{{ $bill->vendor?->name ?? '—' }}</td>
                                 <td class="text-right text-sm font-medium whitespace-nowrap">
                                     {{ $bill->base_currency }} {{ number_format($bill->base_total, 2) }}
                                 </td>
-                                <td>
-                                    <x-tallui-badge size="sm" :type="match($bill->status->value ?? '') {
-                                        'settled'            => 'success',
-                                        'partially_settled'  => 'warning',
-                                        'overdue'            => 'error',
-                                        'sent', 'issued'     => 'info',
-                                        default              => 'neutral',
-                                    }">
-                                        {{ ucfirst(str_replace('_', ' ', $bill->status->value ?? $bill->status)) }}
-                                    </x-tallui-badge>
+                                <td class="pr-5">
+                                    @php $s = $bill->status->value ?? $bill->status @endphp
+                                    <x-tallui-badge size="sm" :type="match($s) {
+                                        'settled'           => 'success',
+                                        'partially_settled' => 'warning',
+                                        'overdue'           => 'error',
+                                        'sent', 'issued'    => 'info',
+                                        default             => 'neutral',
+                                    }">{{ ucfirst(str_replace('_', ' ', $s)) }}</x-tallui-badge>
                                 </td>
                             </tr>
                         @endforeach
@@ -596,67 +574,71 @@
                 </table>
             </div>
         @endif
-
         <x-slot:footer>
             @if($billStats['overdue_count'] > 0)
-                <div class="flex items-center gap-2 text-xs text-error">
-                    <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5" />
-                    {{ $billStats['overdue_count'] }} bill(s) overdue totalling {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }}
+                <div class="flex items-center gap-2 text-xs text-error font-medium">
+                    <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5 shrink-0" />
+                    {{ $billStats['overdue_count'] }} overdue — {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }}
                 </div>
             @else
-                <div class="text-xs text-base-content/40">No overdue bills</div>
+                <span class="text-xs text-base-content/40">No overdue bills</span>
             @endif
         </x-slot:footer>
     </x-tallui-card>
 </div>
 
-{{-- ── Recent Journal Entries ───────────────────────────────────────────── --}}
-<x-tallui-card title="Recent Journal Entries" icon="o-clock">
+{{-- ── Recent Journal Entries ────────────────────────────────────────────── --}}
+<x-tallui-card title="Recent Journal Entries" icon="o-clock" padding="none">
     <x-slot:actions>
-        <x-tallui-button label="Ledger" icon="o-book-open" :link="route('accounting.ledger')" class="btn-ghost btn-xs" />
-        <x-tallui-button label="View All" icon="o-arrow-right" :link="route('accounting.journal')" class="btn-ghost btn-xs" />
-        <x-tallui-button label="New Entry" icon="o-plus" :link="route('accounting.journal')" class="btn-primary btn-xs" />
+        <a href="{{ route('accounting.general-ledger') }}" wire:navigate class="btn btn-ghost btn-xs">Ledger</a>
+        <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
+        <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-primary btn-xs gap-1">
+            <x-tallui-icon name="o-plus" size="w-3 h-3" /> New Entry
+        </a>
     </x-slot:actions>
 
     @if($recentEntries->isEmpty())
-        <x-tallui-empty-state
-            title="No journal entries yet"
-            description="Create your first journal entry to get started."
-            icon="o-document-text"
-            size="sm"
-        />
+        <div class="p-6">
+            <x-tallui-empty-state
+                title="No journal entries yet"
+                description="Create your first journal entry to get started."
+                icon="o-document-text"
+                size="sm"
+            >
+                <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-primary btn-sm">New Entry</a>
+            </x-tallui-empty-state>
+        </div>
     @else
-        <div class="overflow-x-auto -mx-4 px-4">
+        <div class="overflow-x-auto">
             <table class="table table-sm w-full">
                 <thead>
                     <tr class="text-xs text-base-content/40 uppercase">
-                        <th>Entry #</th>
+                        <th class="pl-5">Entry #</th>
                         <th>Date</th>
                         <th>Description</th>
                         <th>Type</th>
                         <th class="text-right">Amount</th>
-                        <th>Status</th>
+                        <th class="pr-5">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($recentEntries as $entry)
                         <tr class="hover:bg-base-200/50">
-                            <td class="font-mono text-xs text-primary font-medium whitespace-nowrap">{{ $entry->entry_number }}</td>
+                            <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">{{ $entry->entry_number }}</td>
                             <td class="text-xs text-base-content/60 whitespace-nowrap">{{ $entry->date->format('M d, Y') }}</td>
-                            <td class="text-sm max-w-[220px] truncate">{{ $entry->description ?? '—' }}</td>
-                            <td class="text-xs capitalize text-base-content/60">{{ $entry->type ?? 'general' }}</td>
-                            <td class="text-right text-sm font-medium whitespace-nowrap">
+                            <td class="text-sm max-w-[200px] truncate text-base-content/80">{{ $entry->description ?? '—' }}</td>
+                            <td class="text-xs capitalize text-base-content/50">{{ $entry->type ?? 'general' }}</td>
+                            <td class="text-right font-mono text-sm font-medium whitespace-nowrap">
                                 {{ number_format($entry->lines->where('type', 'debit')->sum('amount'), 2) }}
                             </td>
-                            <td>
-                                <x-tallui-badge size="sm" :type="match($entry->status->value ?? $entry->status) {
+                            <td class="pr-5">
+                                @php $s = $entry->status->value ?? $entry->status @endphp
+                                <x-tallui-badge size="sm" :type="match($s) {
                                     'posted'    => 'success',
                                     'submitted' => 'info',
                                     'void'      => 'error',
                                     default     => 'warning',
-                                }">
-                                    {{ ($entry->status->value ?? $entry->status) === 'submitted' ? 'Pending' : ucfirst($entry->status->value ?? $entry->status) }}
-                                </x-tallui-badge>
+                                }">{{ $s === 'submitted' ? 'Pending' : ucfirst($s) }}</x-tallui-badge>
                             </td>
                         </tr>
                     @endforeach
@@ -666,4 +648,5 @@
     @endif
 </x-tallui-card>
 
+</div>{{-- /px wrapper --}}
 </div>
