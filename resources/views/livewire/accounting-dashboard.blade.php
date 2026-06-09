@@ -26,7 +26,7 @@
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
             <x-tallui-icon name="o-pencil-square" size="w-4 h-4" /> Journal
         </a>
-        <a href="{{ route('accounting.general-ledger') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
+        <a href="{{ route('accounting.ledger') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
             <x-tallui-icon name="o-book-open" size="w-4 h-4" /> Ledger
         </a>
     </x-slot:actions>
@@ -444,7 +444,7 @@
 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
     @foreach([
         ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
-        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.general-ledger'],
+        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
         ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
         ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
         ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
@@ -590,7 +590,7 @@
 {{-- ── Recent Journal Entries ────────────────────────────────────────────── --}}
 <x-tallui-card title="Recent Journal Entries" icon="o-clock" padding="none">
     <x-slot:actions>
-        <a href="{{ route('accounting.general-ledger') }}" wire:navigate class="btn btn-ghost btn-xs">Ledger</a>
+        <a href="{{ route('accounting.ledger') }}" wire:navigate class="btn btn-ghost btn-xs">Ledger</a>
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-primary btn-xs gap-1">
             <x-tallui-icon name="o-plus" size="w-3 h-3" /> New Entry
