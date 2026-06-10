@@ -244,7 +244,7 @@ class Expenses extends Component
             ->orderBy('code')
             ->get();
 
-        $expenses->load('items');
+        $expenses->load(['items', 'account', 'chargeable']);
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'

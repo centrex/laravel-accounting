@@ -45,7 +45,10 @@
         <table class="table table-sm w-full">
             <thead>
                 <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
-                    <th class="pl-5">Expense #</th>
+                    <th class="pl-5 w-6"></th>
+                    <th>Expense #</th>
+                    <th>Document</th>
+                    <th>Account</th>
                     <th>Vendor</th>
                     <th>Date</th>
                     <th>Due Date</th>
@@ -57,8 +60,34 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($expenses as $expense)
-                    <tr class="hover:bg-base-50">
-                        <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $expense->expense_number }}</td>
+                    <tr x-data="{ open: false }" class="hover:bg-base-50">
+                        <td class="pl-5">
+                            @if($expense->items->isNotEmpty())
+                                <button @click="open = !open" class="btn btn-ghost btn-xs p-0">
+                                    <x-tallui-icon name="o-chevron-right" size="w-4 h-4" x-bind:class="open ? 'rotate-90' : ''" class="transition-transform" />
+                                </button>
+                            @endif
+                        </td>
+                        <td class="font-mono text-sm font-semibold">
+                            <a href="{{ route('accounting.expenses.show', $expense) }}" wire:navigate class="text-primary hover:underline">{{ $expense->expense_number }}</a>
+                        </td>
+                        <td class="text-sm font-mono">
+                            @if($expense->chargeable_type && $expense->chargeable)
+                                @php $isInvoice = str_contains($expense->chargeable_type, 'Invoice') @endphp
+                                @if($isInvoice)
+                                    <a href="{{ route('accounting.invoices.show', $expense->chargeable) }}" wire:navigate class="text-primary hover:underline">
+                                        {{ $expense->chargeable->invoice_number }}
+                                    </a>
+                                @else
+                                    <a href="{{ route('accounting.bills.show', $expense->chargeable) }}" wire:navigate class="text-primary hover:underline">
+                                        {{ $expense->chargeable->bill_number }}
+                                    </a>
+                                @endif
+                            @else
+                                <span class="text-base-content/30">—</span>
+                            @endif
+                        </td>
+                        <td class="text-sm text-base-content/70">{{ $expense->account?->code ? $expense->account->code . ' · ' . $expense->account->name : '—' }}</td>
                         <td class="text-sm font-medium">{{ $expense->vendor_name ?: '—' }}</td>
                         <td class="text-sm text-base-content/60">{{ $expense->expense_date->format('M d, Y') }}</td>
                         <td class="text-sm text-base-content/60">
@@ -92,9 +121,41 @@
                             </div>
                         </td>
                     </tr>
+                    @if($expense->items->isNotEmpty())
+                        <tr x-data x-show="$parent.open" x-cloak class="bg-base-50/60">
+                            <td></td>
+                            <td colspan="10" class="px-4 pb-3 pt-1">
+                                <table class="table table-xs w-full">
+                                    <thead>
+                                        <tr class="text-xs text-base-content/40 uppercase">
+                                            <th>Description</th>
+                                            <th class="text-right w-20">Qty</th>
+                                            <th class="text-right w-28">Unit Price</th>
+                                            <th class="text-right w-20">Tax %</th>
+                                            <th class="text-right w-28">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($expense->items as $item)
+                                            <tr>
+                                                <td class="text-sm">{{ $item->description }}</td>
+                                                <td class="text-right text-sm font-mono">{{ number_format($item->quantity, 2) }}</td>
+                                                <td class="text-right text-sm font-mono">{{ number_format($item->unit_price, 2) }}</td>
+                                                <td class="text-right text-sm font-mono">{{ number_format($item->tax_rate, 2) }}%</td>
+                                                <td class="text-right text-sm font-mono font-medium">{{ number_format($item->amount, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @if($expense->notes)
+                                    <p class="mt-2 text-xs text-base-content/50 italic">{{ $expense->notes }}</p>
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="11">
                             <x-tallui-empty-state title="No expenses found" description="Record your first expense" />
                         </td>
                     </tr>

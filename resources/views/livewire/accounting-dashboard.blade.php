@@ -219,6 +219,29 @@
     </a>
 </div>
 
+{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
+<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    @foreach([
+        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
+        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
+        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
+        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
+        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
+        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
+        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
+        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
+    ] as $action)
+        <a href="{{ route($action['route']) }}" wire:navigate
+            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
+            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
+            <div>
+                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
+                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
+            </div>
+        </a>
+    @endforeach
+</div>
+
 {{-- ── Pending Approvals + Period Status ───────────────────────────────── --}}
 @if($ledgerStats['submitted_count'] > 0 || $openPeriod)
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -439,29 +462,6 @@
     @endif
 </x-tallui-card>
 @endif
-
-{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-    @foreach([
-        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
-        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
-        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
-        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
-        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
-        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
-        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
-        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
-    ] as $action)
-        <a href="{{ route($action['route']) }}" wire:navigate
-            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
-            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
-            <div>
-                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
-                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
-            </div>
-        </a>
-    @endforeach
-</div>
 
 {{-- ── Recent Invoices & Bills ──────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
