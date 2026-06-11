@@ -271,6 +271,9 @@ class Invoices extends Component
     {
         $invoices = Invoice::query()
             ->with(['customer'])
+            // Agent B2B invoices are internal cost records visible only via the
+            // inventory-pro agent invoices page — exclude them from this list.
+            ->where(fn ($q) => $q->whereNull('source_type')->orWhere('source_type', '!=', 'agent_b2b'))
             ->when($this->search, fn ($q) => $q->where(function ($q): void {
                 $q->where('invoice_number', 'like', '%' . $this->search . '%')
                     ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'));
