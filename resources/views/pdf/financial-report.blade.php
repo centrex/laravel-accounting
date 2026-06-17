@@ -179,8 +179,10 @@
     @if($reportType === 'income_statement' && isset($reportData['revenue']))
         @foreach([
             ['key' => 'revenue', 'label' => 'Revenue'],
-            ['key' => 'expenses', 'label' => 'Expenses'],
+            ['key' => 'cogs', 'label' => 'Cost of Goods Sold'],
+            ['key' => 'expenses', 'label' => 'Operating Expenses'],
         ] as $section)
+            @if(!empty($reportData[$section['key']]['accounts']))
             <h2>{{ $section['label'] }}</h2>
             <table>
                 <thead>
@@ -207,6 +209,12 @@
             <div class="section-total">
                 Total {{ $section['label'] }}: {{ $currency }} {{ number_format($reportData[$section['key']]['total'] ?? 0, 2) }}
             </div>
+            @if($section['key'] === 'cogs')
+            <div class="section-total">
+                Gross Profit: {{ $currency }} {{ number_format($reportData['gross_profit'] ?? 0, 2) }}
+            </div>
+            @endif
+            @endif
         @endforeach
 
         <div class="section-total">

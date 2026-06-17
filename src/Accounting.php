@@ -915,14 +915,18 @@ class Accounting
     public function getIncomeStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
     {
         $revenue = $this->getAccountsByType('revenue', $endDate, $startDate, $sbuCode);
-        $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode);
+        $cogs = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, ['cost_of_goods_sold']);
+        $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, [], ['cost_of_goods_sold']);
+
+        $grossProfit = ($revenue['total'] ?? 0) - ($cogs['total'] ?? 0);
 
         return [
             'period'       => ['start' => $startDate, 'end' => $endDate],
             'revenue'      => $revenue,
+            'cogs'         => $cogs,
             'expenses'     => $expenses,
-            'gross_profit' => $revenue['total'] ?? 0,
-            'net_income'   => ($revenue['total'] ?? 0) - ($expenses['total'] ?? 0),
+            'gross_profit' => $grossProfit,
+            'net_income'   => $grossProfit - ($expenses['total'] ?? 0),
             'sbu_code'     => $this->normalizeSbuCode($sbuCode),
         ];
     }
@@ -2249,11 +2253,17 @@ class Accounting
     /**
      * Get accounts of a given type with their balances.
      * Uses the shared balance map — no per-account queries.
+     *
+     * @param  string[]  $onlySubtypes   restrict to these subtypes (empty = all)
+     * @param  string[]  $excludeSubtypes  exclude these subtypes
      */
-    protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null, ?string $sbuCode = null): array
+    protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null, ?string $sbuCode = null, array $onlySubtypes = [], array $excludeSubtypes = []): array
     {
         $tolerance = $this->tolerance();
-        $accounts = Account::where('type', $type)->where('is_active', true)->orderBy('code')->get();
+        $accounts = Account::where('type', $type)->where('is_active', true)
+            ->when($onlySubtypes !== [], fn ($q) => $q->whereIn('subtype', $onlySubtypes))
+            ->when($excludeSubtypes !== [], fn ($q) => $q->whereNotIn('subtype', $excludeSubtypes))
+            ->orderBy('code')->get();
         $balanceMap = $this->buildBalanceMap($startDate, $endDate, $sbuCode);
 
         $accountsData = [];

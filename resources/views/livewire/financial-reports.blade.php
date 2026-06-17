@@ -214,10 +214,51 @@
                     </div>
                 </div>
 
-                {{-- Expenses --}}
+                {{-- Cost of Goods Sold --}}
+                @if(!empty($reportData['cogs']['accounts']))
                 <div>
                     <div class="flex items-center gap-2 border-b border-base-300 pb-2 mb-3">
-                        <span class="text-xs font-bold tracking-widest uppercase text-error">EXPENSES</span>
+                        <span class="text-xs font-bold tracking-widest uppercase text-warning">COST OF GOODS SOLD</span>
+                    </div>
+                    <div class="divide-y divide-base-200">
+                        @foreach($reportData['cogs']['accounts'] as $item)
+                            <div class="flex justify-between py-2 px-2 hover:bg-base-200/40 rounded">
+                                <span class="text-sm text-base-content/70">
+                                    <span class="font-mono text-primary text-xs mr-1">{{ $item['account']->code }}</span>
+                                    {{ $item['account']->name }}
+                                </span>
+                                <span class="text-sm font-mono font-medium">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
+                            </div>
+                        @endforeach
+                        <div class="flex justify-between py-2.5 px-2 mt-1 bg-warning/10 rounded-lg font-bold">
+                            <span class="text-sm">Total COGS</span>
+                            <span class="text-sm font-mono">{{ $currency }} {{ number_format($reportData['cogs']['total'], 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Gross Profit --}}
+                <div class="border-t border-base-300 pt-2">
+                    <div @class([
+                        'flex justify-between py-2.5 px-4 rounded-lg font-bold',
+                        'bg-success/10' => $reportData['gross_profit'] >= 0,
+                        'bg-error/10'   => $reportData['gross_profit'] < 0,
+                    ])>
+                        <span class="text-sm">GROSS PROFIT</span>
+                        <span @class([
+                            'text-sm font-mono',
+                            'text-success' => $reportData['gross_profit'] >= 0,
+                            'text-error'   => $reportData['gross_profit'] < 0,
+                        ])>{{ $currency }} {{ number_format($reportData['gross_profit'], 2) }}</span>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Operating Expenses --}}
+                @if(!empty($reportData['expenses']['accounts']))
+                <div>
+                    <div class="flex items-center gap-2 border-b border-base-300 pb-2 mb-3">
+                        <span class="text-xs font-bold tracking-widest uppercase text-error">OPERATING EXPENSES</span>
                     </div>
                     <div class="divide-y divide-base-200">
                         @foreach($reportData['expenses']['accounts'] as $item)
@@ -230,11 +271,12 @@
                             </div>
                         @endforeach
                         <div class="flex justify-between py-2.5 px-2 mt-1 bg-error/10 rounded-lg font-bold">
-                            <span class="text-sm">Total Expenses</span>
+                            <span class="text-sm">Total Operating Expenses</span>
                             <span class="text-sm font-mono">{{ $currency }} {{ number_format($reportData['expenses']['total'], 2) }}</span>
                         </div>
                     </div>
                 </div>
+                @endif
 
                 {{-- Net --}}
                 <div class="border-t-2 border-base-300 pt-4">

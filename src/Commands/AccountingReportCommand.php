@@ -183,9 +183,19 @@ final class AccountingReportCommand extends Command
         }
         $rows[] = ['section' => '', 'code' => '', 'name' => '', 'amount' => ''];
 
-        foreach ($data['expenses']['accounts'] as $item) {
+        foreach (($data['cogs']['accounts'] ?? []) as $item) {
             $rows[] = [
-                'section' => 'EXPENSE',
+                'section' => 'COGS',
+                'code'    => $item['account']->code,
+                'name'    => $item['account']->name,
+                'amount'  => number_format($item['balance'], 2),
+            ];
+        }
+        $rows[] = ['section' => '', 'code' => '', 'name' => '', 'amount' => ''];
+
+        foreach (($data['expenses']['accounts'] ?? []) as $item) {
+            $rows[] = [
+                'section' => 'OPEX',
                 'code'    => $item['account']->code,
                 'name'    => $item['account']->name,
                 'amount'  => number_format($item['balance'], 2),
