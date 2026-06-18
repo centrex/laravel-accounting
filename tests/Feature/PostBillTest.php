@@ -230,9 +230,9 @@ class PostBillTest extends TestCase
     {
         $accounts = [
             ['code' => '1000', 'name' => 'Cash',              'type' => 'asset',     'subtype' => 'current_asset'],
+            ['code' => '1300', 'name' => 'Inventory Asset',   'type' => 'asset',     'subtype' => 'current_asset'],
             ['code' => '2000', 'name' => 'Accounts Payable',  'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2300', 'name' => 'Sales Tax Payable', 'type' => 'liability', 'subtype' => 'current_liability'],
-            ['code' => '5000', 'name' => 'COGS',              'type' => 'expense',   'subtype' => 'operating_expense'],
         ];
 
         foreach ($accounts as $data) {

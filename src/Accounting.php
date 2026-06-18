@@ -460,7 +460,7 @@ class Accounting
     // Bills
     // -------------------------------------------------------------------------
 
-    /** Post a bill: DR Expense + Tax / CR Accounts Payable. */
+    /** Post a bill: DR Inventory Asset + Tax / CR Accounts Payable. */
     public function postBill(Bill $bill): JournalEntry
     {
         if ($bill->journal_entry_id !== null) {
@@ -469,7 +469,7 @@ class Accounting
 
         return DB::transaction(function () use ($bill): JournalEntry {
             $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
-            $expenseAccount = $this->requireAccount($this->accountCode('cogs'));
+            $expenseAccount = $this->requireAccount($this->accountCode('inventory'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
 
             $entry = $this->createJournalEntry([
@@ -480,7 +480,7 @@ class Accounting
                 'exchange_rate' => $bill->exchange_rate ?? 1.0,
                 'sbu_code'      => $this->resolveBillSbuCode($bill),
                 'lines'         => [
-                    ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $bill->subtotal,   'description' => 'Expense'],
+                    ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $bill->subtotal,   'description' => 'Inventory'],
                     ['account_id' => $taxAccount->id,     'type' => 'debit',  'amount' => $bill->tax_amount, 'description' => 'Tax'],
                     ['account_id' => $apAccount->id,      'type' => 'credit', 'amount' => $bill->total,      'description' => 'Accounts Payable'],
                 ],
