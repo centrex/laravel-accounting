@@ -54,7 +54,7 @@
 
 {{-- ── Quick Actions (collapsible, preference saved to localStorage) ──────── --}}
 <div x-data="{
-    open: localStorage.getItem('acct_quick_actions') !== 'false',
+    open: localStorage.getItem('acct_quick_actions') === 'true',
     toggle() { this.open = !this.open; localStorage.setItem('acct_quick_actions', this.open ? 'true' : 'false'); }
 }">
     <div class="flex items-center justify-between mb-3">
