@@ -15,11 +15,12 @@
             <option value="this_quarter">This Quarter</option>
             <option value="this_year">This Year</option>
         </select>
+        <x-tallui-button label="Requisitions" icon="o-clipboard-document" :link="route('accounting.requisitions')" class="btn-outline btn-sm" />
         <x-tallui-button label="Invoice" icon="o-document-text" :link="route('accounting.invoices')" class="btn-outline btn-sm" />
         <x-tallui-button label="Bill" icon="o-inbox-arrow-down" :link="route('accounting.bills')" class="btn-outline btn-sm" />
         <x-tallui-button label="Expense" icon="o-credit-card" :link="route('accounting.expenses')" class="btn-outline btn-sm" />
         <x-tallui-button label="Journal" icon="o-pencil-square" :link="route('accounting.journal')" class="btn-outline btn-sm" />
-        <x-tallui-button label="Requisitions" icon="o-clipboard-document" :link="route('accounting.requisitions')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Ledger" icon="o-book-open" :link="route('accounting.ledger')" class="btn-outline btn-sm" />
         <x-tallui-button label="Reports" icon="o-chart-pie" :link="route('accounting.reports')" class="btn-outline btn-sm" />
         <x-tallui-button label="Period Close" icon="o-lock-closed" :link="route('accounting.period-close')" class="btn-primary btn-sm" />
     </x-slot:actions>
@@ -51,7 +52,20 @@
     </div>
 @endif
 
-{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
+{{-- ── Quick Actions (collapsible, preference saved to localStorage) ──────── --}}
+<div x-data="{
+    open: localStorage.getItem('acct_quick_actions') !== 'false',
+    toggle() { this.open = !this.open; localStorage.setItem('acct_quick_actions', this.open ? 'true' : 'false'); }
+}">
+    <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-widest">Quick Actions</span>
+        <button @click="toggle()" class="btn btn-ghost btn-xs gap-1 text-base-content/50 hover:text-base-content">
+            <span x-text="open ? 'Hide' : 'Show'"></span>
+            <x-heroicon-o-chevron-up x-show="open" class="w-3 h-3" x-cloak />
+            <x-heroicon-o-chevron-down x-show="!open" class="w-3 h-3" x-cloak />
+        </button>
+    </div>
+    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
     <a href="{{ route('accounting.journal') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
@@ -113,6 +127,8 @@
         <x-heroicon-o-chart-pie class="w-7 h-7 text-success" />
         <span class="text-sm font-medium">Reports</span>
     </a>
+</div>
+    </div>
 </div>
 
 {{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
