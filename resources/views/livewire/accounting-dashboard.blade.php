@@ -3,39 +3,27 @@
 
 {{-- ── Page Header ──────────────────────────────────────────────────────── --}}
 <x-tallui-page-header
-    title="Accounting Dashboard"
+    title="Accounting"
     subtitle="Financial overview · {{ \Carbon\Carbon::parse($startDate)->format('M d') }} – {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}"
     icon="o-chart-bar-square"
-    :separator="true"
 >
-    <x-slot:breadcrumbs>
-        <x-tallui-breadcrumb :links="[['label' => 'Accounting'], ['label' => 'Dashboard']]" />
-    </x-slot:breadcrumbs>
-
     <x-slot:actions>
-        <select wire:model.live="dateRange" class="select select-bordered select-sm w-40">
+        <select wire:model.live="dateRange" class="select select-bordered select-sm w-36">
             <option value="today">Today</option>
             <option value="this_week">This Week</option>
             <option value="this_month">This Month</option>
             <option value="this_quarter">This Quarter</option>
             <option value="this_year">This Year</option>
         </select>
-        <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-primary btn-sm gap-1">
-            <x-tallui-icon name="o-plus" size="w-4 h-4" /> New Invoice
-        </a>
-        <a href="{{ route('accounting.requisitions') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
-            <x-tallui-icon name="o-document-text" size="w-4 h-4" /> Requisitions
-        </a>
-        <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
-            <x-tallui-icon name="o-pencil-square" size="w-4 h-4" /> Journal
-        </a>
-        <a href="{{ route('accounting.ledger') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
-            <x-tallui-icon name="o-book-open" size="w-4 h-4" /> Ledger
-        </a>
+        <x-tallui-button label="Invoice" icon="o-document-text" :link="route('accounting.invoices')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Bill" icon="o-inbox-arrow-down" :link="route('accounting.bills')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Expense" icon="o-credit-card" :link="route('accounting.expenses')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Journal" icon="o-pencil-square" :link="route('accounting.journal')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Requisitions" icon="o-clipboard-document" :link="route('accounting.requisitions')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Reports" icon="o-chart-pie" :link="route('accounting.reports')" class="btn-outline btn-sm" />
+        <x-tallui-button label="Period Close" icon="o-lock-closed" :link="route('accounting.period-close')" class="btn-primary btn-sm" />
     </x-slot:actions>
 </x-tallui-page-header>
-
-<div class="px-4 md:px-6 space-y-6">
 
 {{-- ── Alerts ───────────────────────────────────────────────────────────── --}}
 @if($openPeriod && \Carbon\Carbon::parse($openPeriod->end_date)->isPast())
@@ -64,27 +52,67 @@
 @endif
 
 {{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-3">
-    @foreach([
-        ['label' => 'Journal',       'sub' => 'New entry',      'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
-        ['label' => 'Ledger',        'sub' => 'View balances',  'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
-        ['label' => 'Invoices',      'sub' => 'Manage AR',      'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
-        ['label' => 'Bills',         'sub' => 'Manage AP',      'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
-        ['label' => 'Requisitions',  'sub' => 'PRQ / ERQ',      'icon' => 'o-clipboard-document',   'route' => 'accounting.requisitions'],
-        ['label' => 'Customers',     'sub' => 'Manage',         'icon' => 'o-users',                'route' => 'accounting.customers'],
-        ['label' => 'Vendors',       'sub' => 'Manage',         'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
-        ['label' => 'Accounts',      'sub' => 'Chart',          'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
-        ['label' => 'Reports',       'sub' => 'Financial',      'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
-    ] as $action)
-        <a href="{{ route($action['route']) }}" wire:navigate
-            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
-            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
-            <div>
-                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
-                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
-            </div>
-        </a>
-    @endforeach
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <a href="{{ route('accounting.journal') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-pencil-square class="w-7 h-7 text-primary" />
+        <span class="text-sm font-medium">Journal</span>
+    </a>
+    <a href="{{ route('accounting.ledger') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-book-open class="w-7 h-7 text-info" />
+        <span class="text-sm font-medium">Ledger</span>
+    </a>
+    <a href="{{ route('accounting.invoices') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-document-text class="w-7 h-7 text-success" />
+        <span class="text-sm font-medium">Invoices</span>
+    </a>
+    <a href="{{ route('accounting.bills') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-inbox-arrow-down class="w-7 h-7 text-warning" />
+        <span class="text-sm font-medium">Bills</span>
+    </a>
+    <a href="{{ route('accounting.expenses') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-credit-card class="w-7 h-7 text-error" />
+        <span class="text-sm font-medium">Expenses</span>
+    </a>
+    <a href="{{ route('accounting.requisitions') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-clipboard-document class="w-7 h-7 text-secondary" />
+        <span class="text-sm font-medium">Requisitions</span>
+    </a>
+    <a href="{{ route('accounting.customers') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-users class="w-7 h-7 text-primary" />
+        <span class="text-sm font-medium">Customers</span>
+    </a>
+    <a href="{{ route('accounting.vendors') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-building-storefront class="w-7 h-7 text-secondary" />
+        <span class="text-sm font-medium">Vendors</span>
+    </a>
+    <a href="{{ route('accounting.accounts') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-list-bullet class="w-7 h-7 text-accent" />
+        <span class="text-sm font-medium">Accounts</span>
+    </a>
+    <a href="{{ route('accounting.budgets') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-calculator class="w-7 h-7 text-info" />
+        <span class="text-sm font-medium">Budgets</span>
+    </a>
+    <a href="{{ route('accounting.period-close') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-lock-closed class="w-7 h-7 text-warning" />
+        <span class="text-sm font-medium">Period Close</span>
+    </a>
+    <a href="{{ route('accounting.reports') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-chart-pie class="w-7 h-7 text-success" />
+        <span class="text-sm font-medium">Reports</span>
+    </a>
 </div>
 
 {{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
@@ -386,7 +414,6 @@
         </div>
     </x-tallui-card>
 
-    {{-- ── Current Assets ────────────────────────────────────────────────── --}}
     <x-tallui-card title="Current Assets" icon="o-banknotes" subtitle="Liquid assets available" class="xl:col-span-1">
         @if($currentAssets->isEmpty())
             <x-tallui-empty-state title="No accounts" icon="o-banknotes" size="sm" />
@@ -473,13 +500,13 @@
         </x-slot:footer>
     </x-tallui-card>
 
-    <x-tallui-card title="Recent Bills" icon="o-shopping-cart" padding="none">
+    <x-tallui-card title="Recent Bills" icon="o-inbox-arrow-down" padding="none">
         <x-slot:actions>
             <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
         </x-slot:actions>
         @if($recentBills->isEmpty())
             <div class="p-6">
-                <x-tallui-empty-state title="No bills yet" icon="o-shopping-cart" size="sm">
+                <x-tallui-empty-state title="No bills yet" icon="o-inbox-arrow-down" size="sm">
                     <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-primary btn-sm">Add Bill</a>
                 </x-tallui-empty-state>
             </div>
@@ -595,5 +622,4 @@
     @endif
 </x-tallui-card>
 
-</div>{{-- /px wrapper --}}
 </div>
