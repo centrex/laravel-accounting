@@ -95,16 +95,16 @@ class ReportController extends Controller
     public function cashFlow(Request $request): JsonResponse
     {
         $request->validate([
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date'],
             'sbu_code'   => ['nullable', 'string', 'max:50'],
         ]);
 
         try {
             $data = $this->accounting->getCashFlowStatement(
                 $request->start_date,
-                $request->end_date,
-                $request->string('sbu_code')->toString(),
+                $request->end_date ?? now()->toDateString(),
+                $request->string('sbu_code')->toString() ?: null,
             );
 
             return response()->json(['data' => $data]);

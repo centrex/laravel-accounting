@@ -92,129 +92,6 @@ class AccountingDashboard extends Component
         ];
     }
 
-    private function monthlyCashFlow(): array
-    {
-        $prefix = config('accounting.table_prefix') ?: 'acct_';
-        $connection = config('accounting.drivers.database.connection', config('database.default'));
-        $year = now()->year;
-
-        $cashAccount = Account::where('code', config('accounting.accounts.cash', '1000'))->where('is_active', true)->first();
-
-        if (!$cashAccount) {
-            return ['series' => [], 'categories' => []];
-        }
-
-        $rows = DB::connection($connection)
-            ->table("{$prefix}journal_entry_lines as l")
-            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
-            ->where('je.status', 'posted')->whereNull('je.deleted_at')->whereYear('je.date', $year)
-            ->where('l.account_id', $cashAccount->id)
-            ->selectRaw("MONTH(je.date) as month,
-                SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as inflow,
-                SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as outflow")
-            ->groupByRaw('MONTH(je.date)')->orderByRaw('MONTH(je.date)')
-            ->get()->keyBy('month');
-
-        $categories = [];
-        $inflow = [];
-        $outflow = [];
-        $net = [];
-
-        for ($m = 1; $m <= now()->month; $m++) {
-            $categories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-            $in = round((float) ($rows->get($m)?->inflow ?? 0), 2);
-            $out = round((float) ($rows->get($m)?->outflow ?? 0), 2);
-            $inflow[] = $in;
-            $outflow[] = $out;
-            $net[] = round($in - $out, 2);
-        }
-
-        return [
-            'series' => [
-                ['name' => 'Inflow', 'data' => $inflow],
-                ['name' => 'Outflow', 'data' => $outflow],
-                ['name' => 'Net', 'data' => $net],
-            ],
-            'categories' => $categories,
-        ];
-    }
-
-    private function cashFlowForecast(array $cashFlowData): array
-    {
-        $netSeries = collect($cashFlowData['series'])->firstWhere('name', 'Net');
-        $actual = $netSeries['data'] ?? [];
-        $n = count($actual);
-        $allMonths = 12;
-
-        $allCategories = [];
-
-        for ($m = 1; $m <= $allMonths; $m++) {
-            $allCategories[] = now()->startOfYear()->addMonths($m - 1)->format('M');
-        }
-
-        if ($n < 2) {
-            return [
-                'series' => [
-                    ['name' => 'Actual Net', 'type' => 'area', 'data' => array_pad($actual, $allMonths, null)],
-                    ['name' => 'Forecast',   'type' => 'line', 'data' => array_fill(0, $allMonths, null)],
-                ],
-                'categories' => $allCategories,
-            ];
-        }
-
-        $xSum = $ySum = $xySum = $xxSum = 0.0;
-
-        for ($i = 0; $i < $n; $i++) {
-            $x = $i + 1;
-            $xSum += $x;
-            $ySum += $actual[$i];
-            $xySum += $x * $actual[$i];
-            $xxSum += $x * $x;
-        }
-
-        $slope = ($n * $xySum - $xSum * $ySum) / ($n * $xxSum - $xSum * $xSum);
-        $intercept = ($ySum - $slope * $xSum) / $n;
-
-        $actualSeries = [];
-        $forecastSeries = [];
-
-        for ($m = 1; $m <= $allMonths; $m++) {
-            if ($m <= $n) {
-                $actualSeries[] = round((float) $actual[$m - 1], 2);
-                $forecastSeries[] = ($m === $n) ? round((float) $actual[$m - 1], 2) : null;
-            } else {
-                $actualSeries[] = null;
-                $forecastSeries[] = round($slope * $m + $intercept, 2);
-            }
-        }
-
-        return [
-            'series' => [
-                ['name' => 'Actual Net', 'type' => 'area', 'data' => $actualSeries],
-                ['name' => 'Forecast',   'type' => 'line', 'data' => $forecastSeries],
-            ],
-            'categories' => $allCategories,
-        ];
-    }
-
-    private function inventoryForecastCashflow(): array
-    {
-        $inventoryClass = config('accounting.integrations.inventory.forecast_service');
-
-        if (! is_string($inventoryClass) || !class_exists($inventoryClass)) {
-            return ['available' => false];
-        }
-
-        $forecast = app($inventoryClass)->salesForecast();
-
-        return [
-            'available' => true,
-            'summary'   => data_get($forecast, 'summary', []),
-            'timeline'  => data_get($forecast, 'timeline', []),
-            'window'    => data_get($forecast, 'window', []),
-        ];
-    }
-
     public function render(): \Illuminate\Contracts\View\View
     {
         $service = app(Accounting::class);
@@ -222,7 +99,6 @@ class AccountingDashboard extends Component
         // Period P&L + balance sheet
         $incomeStatement = $service->getIncomeStatement($this->startDate, $this->endDate);
         $balanceSheet = $service->getBalanceSheet($this->endDate);
-        $cashFlow = $service->getCashFlowStatement($this->startDate, $this->endDate);
 
         $metrics = [
             'revenue'           => $incomeStatement['revenue']['total'] ?? 0,
@@ -231,7 +107,6 @@ class AccountingDashboard extends Component
             'total_assets'      => $balanceSheet['assets']['total'] ?? 0,
             'total_liabilities' => $balanceSheet['liabilities']['total'] ?? 0,
             'total_equity'      => $balanceSheet['equity']['total_with_income'] ?? 0,
-            'operating_cf'      => $cashFlow['operating_activities'] ?? 0,
         ];
 
         // Invoice stats
@@ -294,10 +169,14 @@ class AccountingDashboard extends Component
         $recentEntries = JournalEntry::with(['lines.account'])
             ->latest('date')->limit(8)->get();
 
+        // Current assets: accounts with codes < 1500 (liquid assets — cash, bank, AR, inventory)
+        $currentAssets = collect($balanceSheet['assets']['accounts'] ?? [])
+            ->filter(fn ($item) => (int) ($item['account']->code ?? 9999) < 1500)
+            ->values();
+
+        $currentAssetTotal = $currentAssets->sum(fn ($item) => (float) ($item['balance'] ?? 0));
+
         $revenueExpensesChart = $this->monthlyRevenueExpenses();
-        $cashFlowChart = $this->monthlyCashFlow();
-        $forecastChart = $this->cashFlowForecast($cashFlowChart);
-        $inventoryForecast = $this->inventoryForecastCashflow();
         $balanceChart = [
             'series' => [
                 max(0, (float) $metrics['total_assets']),
@@ -313,7 +192,6 @@ class AccountingDashboard extends Component
 
         return view('accounting::livewire.accounting-dashboard', compact(
             'metrics',
-            'cashFlow',
             'invoiceStats',
             'billStats',
             'ledgerStats',
@@ -325,10 +203,9 @@ class AccountingDashboard extends Component
             'pendingJournals',
             'openPeriod',
             'revenueExpensesChart',
-            'cashFlowChart',
-            'forecastChart',
-            'inventoryForecast',
             'balanceChart',
+            'currentAssets',
+            'currentAssetTotal',
         ))->layout($layout, ['title' => __('Accounting Dashboard')]);
     }
 }

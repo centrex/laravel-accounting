@@ -17,7 +17,7 @@ final class AccountingReportCommand extends Command
         {--format=table : output format (table|csv|json)}
         {--output= : (optional) file path to save output; if omitted, prints to stdout}';
 
-    protected $description = 'Generate accounting reports (trial balance, balance sheet, income statement, cash flow).';
+    protected $description = 'Generate accounting reports (trial balance, balance sheet, income statement).';
 
     public function handle(Accounting $acct): int
     {
@@ -47,7 +47,7 @@ final class AccountingReportCommand extends Command
                     $this->line('<fg=cyan>--- Trial Balance ---</>');
                     $data = $acct->getTrialBalance($start, $end);
                     $results['trial_balance'] = $data;
-                    $this->renderTrialBalance($data, $format, $outputPath, $fileSuffix = 'trial_balance');
+                    $this->renderTrialBalance($data, $format, $outputPath, 'trial_balance');
 
                     break;
 
@@ -75,11 +75,11 @@ final class AccountingReportCommand extends Command
 
                 case 'cash-flow':
                     if (!$start || !$end) {
-                        $this->warn('Cash Flow requires --start and --end; skipping.');
+                        $this->warn('Cash Flow Statement requires --start and --end; skipping.');
 
                         break;
                     }
-                    $this->line("<fg=cyan>--- Cash Flow ({$start} → {$end}) ---</>");
+                    $this->line("<fg=cyan>--- Cash Flow Statement ({$start} → {$end}) ---</>");
                     $data = $acct->getCashFlowStatement($start, $end);
                     $results['cash_flow'] = $data;
                     $this->renderCashFlow($data, $format, $outputPath, 'cash_flow');
@@ -214,13 +214,13 @@ final class AccountingReportCommand extends Command
     private function renderCashFlow(array $data, string $format, ?string $outputPath = null, string $suffix = 'cash_flow'): void
     {
         $rows = [
-            ['category' => 'Operating Activities', 'amount' => number_format($data['operating_activities'], 2)],
-            ['category' => 'Investing Activities', 'amount' => number_format($data['investing_activities'], 2)],
-            ['category' => 'Financing Activities', 'amount' => number_format($data['financing_activities'], 2)],
-            ['category' => 'Net Change in Cash', 'amount' => number_format($data['net_change'], 2)],
+            ['section' => 'Operating Activities',  'amount' => number_format($data['operating_activities'] ?? 0, 2)],
+            ['section' => 'Investing Activities',   'amount' => number_format($data['investing_activities'] ?? 0, 2)],
+            ['section' => 'Financing Activities',   'amount' => number_format($data['financing_activities'] ?? 0, 2)],
+            ['section' => 'Net Change in Cash',     'amount' => number_format($data['net_change'] ?? 0, 2)],
         ];
 
-        $headers = ['Category', 'Amount'];
+        $headers = ['Section', 'Amount'];
 
         $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers): void {
             $this->table($headers, array_map('array_values', $rows));

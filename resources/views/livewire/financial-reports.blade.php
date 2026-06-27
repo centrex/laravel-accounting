@@ -63,10 +63,10 @@
         {{-- Report title & period --}}
         <div class="mb-6">
             <h3 class="text-xl font-bold">
-                @if($reportType === 'trial_balance')    Trial Balance
-                @elseif($reportType === 'balance_sheet') Balance Sheet
+                @if($reportType === 'trial_balance')        Trial Balance
+                @elseif($reportType === 'balance_sheet')    Balance Sheet
                 @elseif($reportType === 'income_statement') Income Statement
-                @elseif($reportType === 'cash_flow')   Cash Flow Statement
+                @elseif($reportType === 'cash_flow')        Cash Flow Statement
                 @endif
             </h3>
             <p class="text-sm text-base-content/50 mt-0.5">
@@ -349,6 +349,7 @@
                 </div>
             </div>
         @endif
+
     </x-tallui-card>
 @else
     <x-tallui-card>

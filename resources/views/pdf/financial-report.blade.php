@@ -247,11 +247,12 @@
             </tbody>
             <tfoot>
                 <tr class="totals">
-                    <td>Net Change</td>
+                    <td>Net Change in Cash</td>
                     <td class="text-right mono">{{ number_format($reportData['net_change'] ?? 0, 2) }}</td>
                 </tr>
             </tfoot>
         </table>
     @endif
+
 </body>
 </html>

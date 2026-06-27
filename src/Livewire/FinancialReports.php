@@ -118,11 +118,11 @@ class FinancialReports extends Component
     private function reportTitle(): string
     {
         return match ($this->reportType) {
-            'trial_balance' => 'Trial Balance',
-            'balance_sheet' => 'Balance Sheet',
+            'trial_balance'    => 'Trial Balance',
+            'balance_sheet'    => 'Balance Sheet',
             'income_statement' => 'Income Statement',
-            'cash_flow' => 'Cash Flow Statement',
-            default => 'Financial Report',
+            'cash_flow'        => 'Cash Flow Statement',
+            default            => 'Financial Report',
         };
     }
 

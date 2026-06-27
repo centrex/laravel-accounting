@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting;
 
 use Centrex\Accounting\Contracts\InventorySnapshotProvider;
-use Centrex\Accounting\Enums\AccountSubtype;
+use Centrex\Accounting\Enums\{AccountSubtype, RequisitionStatus, RequisitionType};
 use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
     DuplicatePaymentException,
@@ -26,10 +26,13 @@ use Centrex\Accounting\Models\{
     JournalEntry,
     LoanFacility,
     Payment,
-    PeriodInventorySnapshot
+    PeriodInventorySnapshot,
+    Requisition,
+    RequisitionItem
 };
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Database\QueryException;
+use Carbon\Carbon;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\DB;
 
@@ -932,71 +935,120 @@ class Accounting
     }
 
     /**
-     * Generate Cash Flow Statement.
-     * Eager-loads journalEntry.lines.account to avoid N+1 per transaction.
+     * Cash Flow Statement (indirect method).
+     *
+     * Operating = net income + working-capital adjustments (AR, AP, Inventory).
+     * Investing  = changes in non-current assets (codes ≥ 1500).
+     * Financing  = changes in long-term liabilities (codes ≥ 2500) + equity.
      */
-    public function getCashFlowStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
+    public function getCashFlowStatement(mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
     {
-        $cashAccount = Account::where('code', $this->accountCode('cash'))->where('is_active', true)->first();
+        $start = $startDate ? Carbon::parse($startDate) : now()->startOfYear();
+        $end   = $endDate   ? Carbon::parse($endDate)   : now();
 
-        if (!$cashAccount) {
-            return [
-                'period'               => ['start' => $startDate, 'end' => $endDate],
-                'operating_activities' => 0.0,
-                'investing_activities' => 0.0,
-                'financing_activities' => 0.0,
-                'net_change'           => 0.0,
-                'sbu_code'             => $this->normalizeSbuCode($sbuCode),
-            ];
+        $opening = $this->getBalanceSheet($start->copy()->subDay()->toDateString(), $sbuCode);
+        $closing = $this->getBalanceSheet($end->toDateString(), $sbuCode);
+
+        $income    = $this->getIncomeStatement($start->toDateString(), $end->toDateString(), $sbuCode);
+        $netIncome = (float) ($income['net_income'] ?? 0);
+
+        $balanceMap = static fn (array $section): array => collect($section['accounts'] ?? [])
+            ->keyBy(fn ($item) => (string) $item['account']->code)
+            ->map(fn ($item) => (float) ($item['balance'] ?? 0))
+            ->all();
+
+        $openAssets  = $balanceMap($opening['assets']      ?? []);
+        $closeAssets = $balanceMap($closing['assets']       ?? []);
+        $openLiab    = $balanceMap($opening['liabilities']  ?? []);
+        $closeLiab   = $balanceMap($closing['liabilities']  ?? []);
+        $openEquity  = $balanceMap($opening['equity']       ?? []);
+        $closeEquity = $balanceMap($closing['equity']       ?? []);
+
+        $operatingAdj        = 0.0;
+        $investingActivities = 0.0;
+        $financingActivities = 0.0;
+
+        // Collect account name lookups from both balance sheets for breakdown labels
+        $accountNames = [];
+        foreach (array_merge(
+            $opening['assets']['accounts']      ?? [],
+            $closing['assets']['accounts']      ?? [],
+            $opening['liabilities']['accounts'] ?? [],
+            $closing['liabilities']['accounts'] ?? [],
+            $opening['equity']['accounts']      ?? [],
+            $closing['equity']['accounts']      ?? [],
+        ) as $row) {
+            $accountNames[(string) $row['account']->code] = $row['account']->name;
         }
 
-        // Eager-load lines + accounts — eliminates N queries in the loop below
-        $transactions = $cashAccount->journalEntryLines()
-            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate, $sbuCode) {
-                $q->where('status', 'posted')->whereBetween('date', [$startDate, $endDate]);
-                $this->applySbuFilter($q, $sbuCode, $q->getModel()->getTable());
-            })
-            ->with(['journalEntry.lines.account'])
-            ->get();
+        $wcChanges           = [];
+        $investingDetails    = [];
+        $financingDetails    = [];
 
-        $operating = 0.0;
-        $investing = 0.0;
-        $financing = 0.0;
-
-        foreach ($transactions as $transaction) {
-            $amount = $transaction->type === 'debit'
-                ? (float) $transaction->amount
-                : -(float) $transaction->amount;
-
-            foreach ($transaction->journalEntry->lines as $line) {
-                if ($line->id === $transaction->id) {
-                    continue; // skip the cash line itself
+        foreach (array_unique(array_merge(array_keys($openAssets), array_keys($closeAssets))) as $code) {
+            $strCode = (string) $code;
+            $delta = ($closeAssets[$strCode] ?? 0.0) - ($openAssets[$strCode] ?? 0.0);
+            if ((int) $strCode < 1500) {
+                if ((int) $strCode >= 1200) {
+                    $adj = -$delta; // increase in AR/inventory = cash used
+                    $operatingAdj += $adj;
+                    if (abs($adj) > 0.001) {
+                        $wcChanges[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($adj, 2)];
+                    }
                 }
-
-                $accountType = $line->account?->type;
-                $accountSubtype = $line->account?->subtype;
-
-                // Enum or string comparison — handle both
-                $typeValue = $accountType instanceof \BackedEnum ? $accountType->value : (string) $accountType;
-                $subtypeValue = $accountSubtype instanceof \BackedEnum ? $accountSubtype->value : (string) $accountSubtype;
-
-                if (in_array($typeValue, ['revenue', 'expense'], true)) {
-                    $operating += $amount;
-                } elseif ($subtypeValue === AccountSubtype::FIXED_ASSET->value) {
-                    $investing += $amount;
-                } elseif (in_array($typeValue, ['liability', 'equity'], true)) {
-                    $financing += $amount;
+                // codes 1000–1199 (cash/bank) are intentionally excluded — they are what we're measuring
+            } else {
+                $adj = -$delta; // increase in fixed assets = cash used
+                $investingActivities += $adj;
+                if (abs($adj) > 0.001) {
+                    $investingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($adj, 2)];
                 }
             }
         }
 
+        foreach (array_unique(array_merge(array_keys($openLiab), array_keys($closeLiab))) as $code) {
+            $strCode = (string) $code;
+            $delta = ($closeLiab[$strCode] ?? 0.0) - ($openLiab[$strCode] ?? 0.0);
+            if ((int) $strCode < 2500) {
+                $operatingAdj += $delta; // increase in current liabilities = cash provided
+                if (abs($delta) > 0.001) {
+                    $wcChanges[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
+                }
+            } else {
+                $financingActivities += $delta; // increase in LT liabilities = financing
+                if (abs($delta) > 0.001) {
+                    $financingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
+                }
+            }
+        }
+
+        foreach (array_unique(array_merge(array_keys($openEquity), array_keys($closeEquity))) as $code) {
+            $strCode = (string) $code;
+            $delta = ($closeEquity[$strCode] ?? 0.0) - ($openEquity[$strCode] ?? 0.0);
+            $financingActivities += $delta;
+            if (abs($delta) > 0.001) {
+                $financingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
+            }
+        }
+
+        $operatingTotal = $netIncome + $operatingAdj;
+        $netChange      = $operatingTotal + $investingActivities + $financingActivities;
+
         return [
-            'period'               => ['start' => $startDate, 'end' => $endDate],
-            'operating_activities' => $operating,
-            'investing_activities' => $investing,
-            'financing_activities' => $financing,
-            'net_change'           => $operating + $investing + $financing,
+            'period'               => ['start' => $start->toDateString(), 'end' => $end->toDateString()],
+            'operating_activities' => round($operatingTotal, 2),
+            'investing_activities' => round($investingActivities, 2),
+            'financing_activities' => round($financingActivities, 2),
+            'net_change'           => round($netChange, 2),
             'sbu_code'             => $this->normalizeSbuCode($sbuCode),
+            // Breakdown — shows how invoice payments, AR changes, and other items contribute
+            'operating_breakdown'  => [
+                'net_income'                  => round($netIncome, 2),
+                'working_capital_adjustments' => round($operatingAdj, 2),
+                'changes_in_working_capital'  => $wcChanges,
+            ],
+            'investing_breakdown'  => $investingDetails,
+            'financing_breakdown'  => $financingDetails,
         ];
     }
 
@@ -1596,6 +1648,193 @@ class Accounting
         }
 
         return array_values($summary);
+    }
+
+    // -------------------------------------------------------------------------
+    // Requisitions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Create a new purchase or expense requisition with line items.
+     *
+     * @param  array{
+     *   type: 'purchase'|'expense',
+     *   title: string,
+     *   description?: string|null,
+     *   vendor_id?: int|null,
+     *   account_id?: int|null,
+     *   requested_by?: string|null,
+     *   requested_date: string,
+     *   required_date?: string|null,
+     *   currency?: string,
+     *   notes?: string|null,
+     *   items: array<array{description: string, quantity: float, unit_price: float}>,
+     * }  $data
+     */
+    public function createRequisition(array $data): Requisition
+    {
+        return DB::transaction(function () use ($data): Requisition {
+            $items = $data['items'] ?? [];
+            $total = collect($items)->sum(fn ($i) => (float) ($i['quantity'] ?? 1) * (float) ($i['unit_price'] ?? 0));
+
+            $req = Requisition::create([
+                'type'           => $data['type'],
+                'title'          => $data['title'],
+                'description'    => $data['description'] ?? null,
+                'vendor_id'      => $data['vendor_id'] ?? null,
+                'account_id'     => $data['account_id'] ?? null,
+                'requested_by'   => $data['requested_by'] ?? null,
+                'requested_date' => $data['requested_date'],
+                'required_date'  => $data['required_date'] ?? null,
+                'total_amount'   => $total,
+                'currency'       => strtoupper((string) ($data['currency'] ?? $this->baseCurrency())),
+                'notes'          => $data['notes'] ?? null,
+                'status'         => RequisitionStatus::DRAFT,
+            ]);
+
+            foreach ($items as $item) {
+                $qty   = (float) ($item['quantity'] ?? 1);
+                $price = (float) ($item['unit_price'] ?? 0);
+
+                RequisitionItem::create([
+                    'requisition_id' => $req->id,
+                    'description'    => $item['description'],
+                    'quantity'       => $qty,
+                    'unit_price'     => $price,
+                    'total'          => round($qty * $price, 2),
+                ]);
+            }
+
+            return $req->fresh('items');
+        });
+    }
+
+    /** Advance requisition from draft → submitted. */
+    public function submitRequisition(Requisition $requisition, ?int $userId = null): Requisition
+    {
+        if ($requisition->status !== RequisitionStatus::DRAFT) {
+            throw new InvalidStatusTransitionException(
+                "Cannot submit a requisition with status [{$requisition->status->value}]."
+            );
+        }
+
+        $requisition->submit($userId ?? auth()->id());
+
+        return $requisition->fresh();
+    }
+
+    /** Advance requisition from submitted → approved. */
+    public function approveRequisition(Requisition $requisition, ?int $userId = null): Requisition
+    {
+        if ($requisition->status !== RequisitionStatus::SUBMITTED) {
+            throw new InvalidStatusTransitionException(
+                "Cannot approve a requisition with status [{$requisition->status->value}]."
+            );
+        }
+
+        $requisition->approve($userId ?? auth()->id());
+
+        return $requisition->fresh();
+    }
+
+    /** Reject a submitted requisition. */
+    public function rejectRequisition(Requisition $requisition, string $reason, ?int $userId = null): Requisition
+    {
+        if ($requisition->status !== RequisitionStatus::SUBMITTED) {
+            throw new InvalidStatusTransitionException(
+                "Cannot reject a requisition with status [{$requisition->status->value}]."
+            );
+        }
+
+        $requisition->reject($reason, $userId ?? auth()->id());
+
+        return $requisition->fresh();
+    }
+
+    /**
+     * Convert an approved purchase requisition into a draft Bill.
+     * Items map 1-to-1 as bill line items (qty × unit_price).
+     */
+    public function convertRequisitionToBill(Requisition $requisition): Bill
+    {
+        if ($requisition->status !== RequisitionStatus::APPROVED) {
+            throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
+        }
+
+        if ($requisition->type !== RequisitionType::PURCHASE) {
+            throw new \InvalidArgumentException('convertRequisitionToBill requires a purchase-type requisition.');
+        }
+
+        return DB::transaction(function () use ($requisition): Bill {
+            $bill = Bill::create([
+                'vendor_id'   => $requisition->vendor_id,
+                'bill_date'   => now()->toDateString(),
+                'due_date'    => ($requisition->required_date ?? now()->addDays(30))->toDateString(),
+                'subtotal'    => $requisition->total_amount,
+                'tax_amount'  => 0,
+                'total'       => $requisition->total_amount,
+                'currency'    => $requisition->currency,
+                'notes'       => "Converted from requisition {$requisition->requisition_number}",
+                'status'      => 'draft',
+            ]);
+
+            foreach ($requisition->items as $item) {
+                $bill->items()->create([
+                    'description' => $item->description,
+                    'quantity'    => $item->quantity,
+                    'unit_price'  => $item->unit_price,
+                    'total'       => $item->total,
+                    'tax_amount'  => 0,
+                ]);
+            }
+
+            $requisition->markConverted(Bill::class, $bill->id);
+
+            return $bill->fresh('items');
+        });
+    }
+
+    /**
+     * Convert an approved expense requisition into a draft Expense.
+     * Total amount is placed on the requisition's linked account.
+     */
+    public function convertRequisitionToExpense(Requisition $requisition): Expense
+    {
+        if ($requisition->status !== RequisitionStatus::APPROVED) {
+            throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
+        }
+
+        if ($requisition->type !== RequisitionType::EXPENSE) {
+            throw new \InvalidArgumentException('convertRequisitionToExpense requires an expense-type requisition.');
+        }
+
+        return DB::transaction(function () use ($requisition): Expense {
+            $expense = Expense::create([
+                'account_id'     => $requisition->account_id,
+                'expense_date'   => now()->toDateString(),
+                'subtotal'       => $requisition->total_amount,
+                'tax_amount'     => 0,
+                'total'          => $requisition->total_amount,
+                'currency'       => $requisition->currency,
+                'description'    => $requisition->title,
+                'notes'          => "Converted from requisition {$requisition->requisition_number}",
+                'payment_method' => 'credit',
+                'status'         => 'draft',
+            ]);
+
+            foreach ($requisition->items as $item) {
+                $expense->items()->create([
+                    'description' => $item->description,
+                    'quantity'    => $item->quantity,
+                    'unit_price'  => $item->unit_price,
+                    'total'       => $item->total,
+                ]);
+            }
+
+            $requisition->markConverted(Expense::class, $expense->id);
+
+            return $expense->fresh('items');
+        });
     }
 
     // -------------------------------------------------------------------------

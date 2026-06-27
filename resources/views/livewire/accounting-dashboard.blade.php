@@ -60,6 +60,29 @@
     </div>
 @endif
 
+{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
+<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    @foreach([
+        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
+        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
+        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
+        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
+        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
+        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
+        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
+        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
+    ] as $action)
+        <a href="{{ route($action['route']) }}" wire:navigate
+            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
+            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
+            <div>
+                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
+                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
+            </div>
+        </a>
+    @endforeach
+</div>
+
 {{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
 <div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full bg-base-100 border border-base-200 rounded-2xl overflow-x-auto">
     <x-tallui-stat
@@ -219,29 +242,6 @@
     </a>
 </div>
 
-{{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-    @foreach([
-        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
-        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
-        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
-        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
-        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
-        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
-        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
-        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
-    ] as $action)
-        <a href="{{ route($action['route']) }}" wire:navigate
-            class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
-            <x-tallui-icon :name="$action['icon']" class="w-6 h-6 text-primary" />
-            <div>
-                <div class="text-xs font-semibold leading-tight">{{ $action['label'] }}</div>
-                <div class="text-xs text-base-content/40 leading-tight">{{ $action['sub'] }}</div>
-            </div>
-        </a>
-    @endforeach
-</div>
-
 {{-- ── Pending Approvals + Period Status ───────────────────────────────── --}}
 @if($ledgerStats['submitted_count'] > 0 || $openPeriod)
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -381,87 +381,30 @@
             @endforeach
         </div>
     </x-tallui-card>
-</div>
 
-{{-- ── Cash Flow ──────────────────────────────────────────────────────────── --}}
-<x-tallui-card
-    title="Cash Flow"
-    subtitle="{{ now()->year }} monthly cash movements"
-    icon="o-arrow-path"
->
-    <x-slot:actions>
-        <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
-            Full Report <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
-        </a>
-    </x-slot:actions>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        @foreach([
-            ['label' => 'Operating',  'key' => 'operating_activities', 'icon' => 'o-cog-6-tooth',    'positive' => 'text-info'],
-            ['label' => 'Investing',  'key' => 'investing_activities', 'icon' => 'o-building-office', 'positive' => 'text-secondary'],
-            ['label' => 'Financing',  'key' => 'financing_activities', 'icon' => 'o-banknotes',       'positive' => 'text-accent'],
-            ['label' => 'Net Change', 'key' => 'net_change',           'icon' => 'o-arrow-trending-up','positive' => 'text-success'],
-        ] as $cf)
-            @php $val = (float)($cashFlow[$cf['key']] ?? 0) @endphp
-            <div class="rounded-xl border border-base-200 bg-base-100 p-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center shrink-0">
-                    <x-tallui-icon :name="$cf['icon']" class="w-4 h-4 text-base-content/60" />
+    {{-- ── Current Assets ────────────────────────────────────────────────── --}}
+    <x-tallui-card title="Current Assets" icon="o-banknotes" subtitle="Liquid assets available" class="xl:col-span-1">
+        @if($currentAssets->isEmpty())
+            <x-tallui-empty-state title="No accounts" icon="o-banknotes" size="sm" />
+        @else
+            <div class="divide-y divide-base-200">
+                @foreach($currentAssets as $item)
+                <div class="flex justify-between items-center py-2 text-sm">
+                    <span class="text-base-content/70 flex items-center gap-1.5">
+                        <span class="font-mono text-primary text-xs">{{ $item['account']->code }}</span>
+                        {{ $item['account']->name }}
+                    </span>
+                    <span class="font-semibold font-mono text-xs">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
                 </div>
-                <div class="min-w-0">
-                    <div class="text-xs text-base-content/50">{{ $cf['label'] }}</div>
-                    <div class="text-sm font-bold truncate {{ $val >= 0 ? $cf['positive'] : 'text-error' }}">
-                        {{ $val < 0 ? '−' : '' }}{{ $currency }} {{ number_format(abs($val), 2) }}
-                    </div>
+                @endforeach
+                <div class="flex justify-between items-center py-2.5 mt-1 bg-info/10 rounded-lg px-2 font-bold text-sm">
+                    <span>Total</span>
+                    <span class="font-mono">{{ $currency }} {{ number_format($currentAssetTotal, 2) }}</span>
                 </div>
             </div>
-        @endforeach
-    </div>
-
-    @if(!empty($cashFlowChart['categories']))
-        <livewire:tallui-area-chart
-            :series="$cashFlowChart['series']"
-            :categories="$cashFlowChart['categories']"
-            :height="220"
-        />
-    @endif
-</x-tallui-card>
-
-{{-- ── Cash Flow Forecast ──────────────────────────────────────────────────── --}}
-@if(!empty($forecastChart['categories']))
-<x-tallui-card
-    title="Cash Flow Forecast"
-    subtitle="{{ now()->year }} · linear trend projection"
-    icon="o-arrow-trending-up"
->
-    <x-slot:actions>
-        <x-tallui-badge type="info" size="sm">Linear Regression</x-tallui-badge>
-    </x-slot:actions>
-
-    <livewire:tallui-mixed-chart
-        :series="$forecastChart['series']"
-        :categories="$forecastChart['categories']"
-        :height="240"
-    />
-
-    @if(data_get($inventoryForecast, 'available'))
-        <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-            @foreach([
-                ['label' => 'Forecast Cash In',      'path' => 'summary.forecast_cash_in',            'color' => 'text-success'],
-                ['label' => 'Forecast Cash Out',     'path' => 'summary.forecast_cash_out',           'color' => 'text-warning'],
-                ['label' => 'Inventory Net',         'path' => 'summary.forecast_cash_net',           'color' => data_get($inventoryForecast, 'summary.forecast_cash_net', 0) >= 0 ? 'text-info' : 'text-error'],
-                ['label' => 'Replenishment Cost',    'path' => 'summary.required_procurement_cost',   'color' => 'text-secondary'],
-            ] as $m)
-                <div class="rounded-xl border border-base-200 bg-base-100 p-3">
-                    <div class="text-xs text-base-content/50 mb-1">{{ $m['label'] }}</div>
-                    <div class="text-sm font-bold {{ $m['color'] }}">
-                        {{ $currency }} {{ number_format((float)data_get($inventoryForecast, $m['path'], 0), 2) }}
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    @endif
-</x-tallui-card>
-@endif
+        @endif
+    </x-tallui-card>
+</div>
 
 {{-- ── Recent Invoices & Bills ──────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
