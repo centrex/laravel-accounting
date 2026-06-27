@@ -23,6 +23,9 @@
         <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-primary btn-sm gap-1">
             <x-tallui-icon name="o-plus" size="w-4 h-4" /> New Invoice
         </a>
+        <a href="{{ route('accounting.requisitions') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
+            <x-tallui-icon name="o-document-text" size="w-4 h-4" /> Requisitions
+        </a>
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-sm gap-1">
             <x-tallui-icon name="o-pencil-square" size="w-4 h-4" /> Journal
         </a>
@@ -61,16 +64,17 @@
 @endif
 
 {{-- ── Quick Actions ─────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+<div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-3">
     @foreach([
-        ['label' => 'Journal',    'sub' => 'New entry',     'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
-        ['label' => 'Ledger',     'sub' => 'View balances', 'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
-        ['label' => 'Invoices',   'sub' => 'Manage AR',     'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
-        ['label' => 'Bills',      'sub' => 'Manage AP',     'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
-        ['label' => 'Customers',  'sub' => 'Manage',        'icon' => 'o-users',                'route' => 'accounting.customers'],
-        ['label' => 'Vendors',    'sub' => 'Manage',        'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
-        ['label' => 'Accounts',   'sub' => 'Chart',         'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
-        ['label' => 'Reports',    'sub' => 'Financial',     'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
+        ['label' => 'Journal',       'sub' => 'New entry',      'icon' => 'o-pencil-square',       'route' => 'accounting.journal'],
+        ['label' => 'Ledger',        'sub' => 'View balances',  'icon' => 'o-book-open',            'route' => 'accounting.ledger'],
+        ['label' => 'Invoices',      'sub' => 'Manage AR',      'icon' => 'o-document-text',        'route' => 'accounting.invoices'],
+        ['label' => 'Bills',         'sub' => 'Manage AP',      'icon' => 'o-shopping-cart',        'route' => 'accounting.bills'],
+        ['label' => 'Requisitions',  'sub' => 'PRQ / ERQ',      'icon' => 'o-clipboard-document',   'route' => 'accounting.requisitions'],
+        ['label' => 'Customers',     'sub' => 'Manage',         'icon' => 'o-users',                'route' => 'accounting.customers'],
+        ['label' => 'Vendors',       'sub' => 'Manage',         'icon' => 'o-building-storefront',  'route' => 'accounting.vendors'],
+        ['label' => 'Accounts',      'sub' => 'Chart',          'icon' => 'o-list-bullet',          'route' => 'accounting.accounts'],
+        ['label' => 'Reports',       'sub' => 'Financial',      'icon' => 'o-chart-pie',            'route' => 'accounting.reports'],
     ] as $action)
         <a href="{{ route($action['route']) }}" wire:navigate
             class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 hover:shadow-sm transition-all text-center">
