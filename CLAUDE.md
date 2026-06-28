@@ -81,7 +81,7 @@ ACCOUNTING_FISCAL_AUTO_CREATE=true
 - All DB tables use the prefix from `ACCOUNTING_TABLE_PREFIX` (default `acct_`)
 - Supports a dedicated DB connection for multi-tenant isolation
 - Every posted `JournalEntry` must balance (debits == credits within 0.01 tolerance)
-- Entry status flow: `draft → posted → void` (enforced, no skipping)
+- Entry status flow: `draft → submitted → posted → void` (enforced; submit step can be skipped by admins with the `accounting.journal.post` gate)
 - Invoice/Bill status auto-updates on payment: `partial` if part-paid, `paid` if fully paid
 
 ## Conventions

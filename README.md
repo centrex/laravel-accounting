@@ -22,6 +22,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Bills & Vendor Payments](#bills--vendor-payments)
 - [Invoice & Bill Charges / Discounts](#invoice--bill-charges--discounts)
 - [Expenses](#expenses)
+- [Requisitions](#requisitions)
 - [Customer & Vendor Ledger](#customer--vendor-ledger)
 - [General Ledger](#general-ledger)
 - [Financial Reports](#financial-reports)
@@ -598,6 +599,36 @@ The UI equivalent is the **Record Charge** and **Record Discount** buttons on th
 | Bill freight charge | Courier/Shipping `6310–6340` | Cash `1000` |
 | Bill purchase discount | AP `2000` | Purchase Discount `5500` |
 
+### Convenience Methods
+
+Instead of building the `Expense` + `JournalEntry` manually, you can call the facade helpers which create both in one atomic transaction and auto-post the journal entry:
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\{Invoice, Bill};
+
+// Record a delivery charge against an invoice (cash payment)
+$expense = Accounting::recordInvoiceExpense($invoice, [
+    'account_id'     => $chargeAccountId,  // e.g. Account::where('code','4210')->value('id')
+    'amount'         => 500,
+    'tax_amount'     => 0,
+    'payment_method' => 'cash',            // 'cash' → CR Cash 1000; 'credit' → CR AP 2000
+    'date'           => today(),
+    'description'    => 'Delivery Charge',
+    'reference'      => $invoice->invoice_number,
+]);
+
+// Record a freight charge against a bill (on credit / AP)
+$expense = Accounting::recordBillExpense($bill, [
+    'account_id'     => $freightAccountId, // e.g. Account::where('code','6320')->value('id')
+    'amount'         => 300,
+    'payment_method' => 'credit',
+    'date'           => today(),
+]);
+```
+
+Both methods return the persisted `Expense` model with `journal_entry_id` already set.
+
 ---
 
 ## Expenses
@@ -648,6 +679,91 @@ Accounting::recordExpensePayment($creditExpense, [
 
 ---
 
+## Requisitions
+
+A **requisition** is a pre-approval request to spend money, raised before a Bill or Expense is created. Two types exist:
+
+- `purchase` — becomes a **Bill** once approved (goods/services from a vendor)
+- `expense` — becomes a **Expense** once approved (internal cost on a GL account)
+
+### Lifecycle
+
+```text
+Draft ──► Submitted ──► Approved ──► Converted
+                  └──► Rejected ──► (closed)
+```
+
+### Create and Submit a Requisition
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+
+// Purchase requisition — routed to vendor as a bill
+$req = Accounting::createRequisition([
+    'type'           => 'purchase',
+    'title'          => 'Q3 Office Supplies',
+    'vendor_id'      => $vendor->id,
+    'requested_by'   => auth()->id(),
+    'requested_date' => today(),
+    'required_date'  => today()->addDays(7),
+    'currency'       => 'BDT',
+    'notes'          => 'Urgent: needed before staff training on July 5',
+    'items' => [
+        ['description' => 'A4 Paper — 20 reams',       'quantity' => 20, 'unit_price' => 300],
+        ['description' => 'Whiteboard Markers (set)',   'quantity' => 5,  'unit_price' => 250],
+    ],
+]);
+// $req->status === RequisitionStatus::DRAFT
+
+// Expense requisition — routed to GL account as an expense
+$expReq = Accounting::createRequisition([
+    'type'           => 'expense',
+    'title'          => 'Team lunch — Q2 close',
+    'account_id'     => $entertainmentAccountId,
+    'requested_by'   => auth()->id(),
+    'requested_date' => today(),
+    'currency'       => 'BDT',
+    'items' => [
+        ['description' => 'Team lunch at La Bella', 'quantity' => 1, 'unit_price' => 8500],
+    ],
+]);
+
+// Requester submits for manager approval
+Accounting::submitRequisition($req);
+// $req->status === RequisitionStatus::SUBMITTED
+```
+
+### Approve, Reject, or Convert
+
+```php
+// Manager approves
+Accounting::approveRequisition($req, auth()->id());
+// $req->status === RequisitionStatus::APPROVED
+
+// Manager rejects (sends back with reason)
+Accounting::rejectRequisition($req, 'Over budget — reduce to 10 reams of paper.', auth()->id());
+// $req->status === RequisitionStatus::REJECTED
+
+// Convert approved purchase requisition → Bill (items map 1-to-1)
+$bill = Accounting::convertRequisitionToBill($req);
+// $req->status → RequisitionStatus::CONVERTED
+// $bill->status === 'draft' — ready to post via Accounting::postBill($bill)
+
+// Convert approved expense requisition → Expense
+$expense = Accounting::convertRequisitionToExpense($expReq);
+// $expense->status === 'draft', payment_method = 'credit'
+// Ready to post via Accounting::postExpense($expense)
+```
+
+### Enums
+
+| Enum | Cases |
+| --- | --- |
+| `RequisitionStatus` | DRAFT, SUBMITTED, APPROVED, REJECTED, CONVERTED |
+| `RequisitionType` | PURCHASE (`purchase`), EXPENSE (`expense`) |
+
+---
+
 ## Customer & Vendor Ledger
 
 ### Per-Entity Ledger (Statement of Account)
@@ -667,7 +783,7 @@ $outstanding = $customer->total_outstanding; // float — sum of (total - paid_a
 
 ### Ledger Index (All Customers / Vendors)
 
-```
+```text
 GET /accounting/ledger/customers   — paginated list with outstanding per customer
 GET /accounting/ledger/vendors     — paginated list with outstanding per vendor
 ```
@@ -1646,13 +1762,13 @@ All routes are protected by `web_middleware` (default `['web', 'auth']`) under `
 | `accounting.bills` | `/accounting/bills` | Bill management |
 | `accounting.bills.show` | `/accounting/bills/{bill}` | Bill detail |
 | `accounting.expenses` | `/accounting/expenses` | Expense management |
+| `accounting.expenses.show` | `/accounting/expenses/{expense}` | Expense detail |
 | `accounting.customers` | `/accounting/customers` | Customer list |
 | `accounting.vendors` | `/accounting/vendors` | Vendor list |
+| `accounting.requisitions` | `/accounting/requisitions` | Purchase & expense requisitions |
 | `accounting.reports` | `/accounting/reports` | Financial reports (trial balance, P&L, balance sheet, cash flow) |
 | `accounting.budgets` | `/accounting/budgets` | Budget management |
 | `accounting.period-close` | `/accounting/period-close` | Month-end period close wizard |
-| `accounting.qbo.connect` | `/accounting/qbo/connect` | Initiate QuickBooks OAuth2 flow |
-| `accounting.qbo.callback` | `/accounting/qbo/callback` | OAuth2 callback (Intuit redirect) |
 
 ---
 
@@ -1664,9 +1780,9 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 
 | Method | Endpoint | Action |
 | --- | --- | --- |
-| `GET` | `/api/accounting/journal-entries` | List entries (filterable by status, date) |
+| `GET` | `/api/accounting/journal-entries` | List entries (filterable by status, date, search) |
 | `POST` | `/api/accounting/journal-entries` | Create entry |
-| `POST` | `/api/accounting/journal-entries/{id}/submit` | Submit entry for approval |
+| `GET` | `/api/accounting/journal-entries/{id}` | Get entry |
 | `POST` | `/api/accounting/journal-entries/{id}/post` | Post entry to GL |
 | `POST` | `/api/accounting/journal-entries/{id}/void` | Void entry |
 
@@ -1676,6 +1792,8 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/accounts` | List accounts |
 | `POST` | `/api/accounting/accounts` | Create account |
+| `GET` | `/api/accounting/accounts/{id}` | Get account |
+| `PUT` | `/api/accounting/accounts/{id}` | Update account |
 | `GET` | `/api/accounting/accounts/{id}/balance` | Current account balance |
 
 ### Invoices
@@ -1684,8 +1802,12 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/invoices` | List invoices |
 | `POST` | `/api/accounting/invoices` | Create invoice |
+| `GET` | `/api/accounting/invoices/{id}` | Get invoice |
+| `PUT` | `/api/accounting/invoices/{id}` | Update invoice |
+| `DELETE` | `/api/accounting/invoices/{id}` | Delete invoice |
 | `POST` | `/api/accounting/invoices/{id}/post` | Post invoice to GL |
 | `POST` | `/api/accounting/invoices/{id}/payments` | Record payment |
+| `POST` | `/api/accounting/invoices/{id}/expenses` | Record charge/expense against invoice |
 
 ### Bills
 
@@ -1693,8 +1815,11 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/bills` | List bills |
 | `POST` | `/api/accounting/bills` | Create bill |
+| `GET` | `/api/accounting/bills/{id}` | Get bill |
+| `DELETE` | `/api/accounting/bills/{id}` | Delete bill |
 | `POST` | `/api/accounting/bills/{id}/post` | Post bill to GL |
 | `POST` | `/api/accounting/bills/{id}/payments` | Record payment |
+| `POST` | `/api/accounting/bills/{id}/expenses` | Record charge/expense against bill |
 
 ### Expenses
 
@@ -1702,15 +1827,30 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/expenses` | List expenses |
 | `POST` | `/api/accounting/expenses` | Create expense |
+| `GET` | `/api/accounting/expenses/{id}` | Get expense |
+| `DELETE` | `/api/accounting/expenses/{id}` | Delete expense |
 | `POST` | `/api/accounting/expenses/{id}/post` | Post expense to GL |
 | `POST` | `/api/accounting/expenses/{id}/payments` | Record payment |
 
-### Customers & Vendors
+### Customers
 
 | Method | Endpoint | Action |
 | --- | --- | --- |
 | `GET` | `/api/accounting/customers` | List customers |
+| `POST` | `/api/accounting/customers` | Create customer |
+| `GET` | `/api/accounting/customers/{id}` | Get customer |
+| `PUT` | `/api/accounting/customers/{id}` | Update customer |
+| `DELETE` | `/api/accounting/customers/{id}` | Delete customer |
+
+### Vendors
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
 | `GET` | `/api/accounting/vendors` | List vendors |
+| `POST` | `/api/accounting/vendors` | Create vendor |
+| `GET` | `/api/accounting/vendors/{id}` | Get vendor |
+| `PUT` | `/api/accounting/vendors/{id}` | Update vendor |
+| `DELETE` | `/api/accounting/vendors/{id}` | Delete vendor |
 
 ### Budgets
 
@@ -1718,6 +1858,9 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | --- | --- | --- |
 | `GET` | `/api/accounting/budgets` | List budgets |
 | `POST` | `/api/accounting/budgets` | Create budget |
+| `GET` | `/api/accounting/budgets/{id}` | Get budget |
+| `PUT` | `/api/accounting/budgets/{id}` | Update budget |
+| `DELETE` | `/api/accounting/budgets/{id}` | Delete budget |
 | `POST` | `/api/accounting/budgets/{id}/approve` | Approve budget |
 | `GET` | `/api/accounting/budgets/{id}/vs-actual` | Budget vs actual comparison |
 
@@ -1730,18 +1873,8 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | `GET` | `/api/accounting/reports/income-statement` | P&L (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/cash-flow` | Cash flow (`?start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/general-ledger` | General ledger (`?account_id=&start=&end=&sbu=`) |
-| `GET` | `/api/accounting/reports/ar-aging` | A/R aging (`?as_of_date=&sbu_code=&format=qbo`) |
-| `GET` | `/api/accounting/reports/ap-aging` | A/P aging (`?as_of_date=&sbu_code=&format=qbo`) |
-
-### QuickBooks Online
-
-| Method | Endpoint | Action |
-| --- | --- | --- |
-| `GET` | `/api/accounting/qbo/status` | Connection status and token expiry |
-| `POST` | `/api/accounting/qbo/sync` | Push entities to QBO (`entities[]`, `realm_id`, `since`) |
-| `POST` | `/api/accounting/qbo/disconnect` | Revoke QBO access and remove stored token |
-| `GET` | `/api/accounting/qbo/reports/{report}` | Pull a named report from QBO |
-| `POST` | `/api/accounting/qbo/webhook` | QBO webhook receiver (HMAC-verified, no auth middleware) |
+| `GET` | `/api/accounting/reports/ar-aging` | A/R aging (`?as_of_date=&sbu_code=`) |
+| `GET` | `/api/accounting/reports/ap-aging` | A/P aging (`?as_of_date=&sbu_code=`) |
 
 ---
 
