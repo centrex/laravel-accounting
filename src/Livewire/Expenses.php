@@ -7,7 +7,7 @@ namespace Centrex\Accounting\Livewire;
 use Centrex\Accounting\Facades\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Expense, ExpenseItem};
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Gate};
 use Livewire\Attributes\Computed;
 use Livewire\{Component, WithPagination};
 
@@ -171,6 +171,26 @@ class Expenses extends Component
         $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
+    }
+
+    public function delete(int $id): void
+    {
+        if (Gate::denies('accounting.expense.delete')) {
+            $this->dispatch('notify', type: 'error', message: 'You are not authorized to delete expenses.');
+
+            return;
+        }
+
+        $expense = Expense::findOrFail($id);
+
+        if ($expense->status !== 'draft') {
+            $this->dispatch('notify', type: 'error', message: 'Only draft expenses can be deleted.');
+
+            return;
+        }
+
+        $expense->delete();
+        $this->dispatch('notify', type: 'success', message: 'Expense deleted.');
     }
 
     public function postExpense(int $id): void

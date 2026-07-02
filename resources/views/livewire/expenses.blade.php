@@ -114,6 +114,11 @@
                                     <x-tallui-button wire:click="postExpense({{ $expense->id }})"
                                         wire:confirm="Post expense {{ $expense->expense_number }}?"
                                         class="btn-info btn-xs" spinner="save">Post</x-tallui-button>
+                                    @can('accounting.expense.delete')
+                                        <x-tallui-button wire:click="delete({{ $expense->id }})"
+                                            wire:confirm="Delete expense {{ $expense->expense_number }}? This cannot be undone."
+                                            class="btn-error btn-xs btn-outline" spinner="delete">Delete</x-tallui-button>
+                                    @endcan
                                 @endif
                                 @if(in_array($expense->status, ['approved', 'partial']) && $expense->balance > 0)
                                     <x-tallui-button wire:click="openPayModal({{ $expense->id }})" class="btn-success btn-xs" spinner="pay">Pay</x-tallui-button>

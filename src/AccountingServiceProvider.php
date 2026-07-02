@@ -152,6 +152,9 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.budget.view',
             'accounting.budget.manage',
             'accounting.budget.approve',
+
+            // Expenses
+            'accounting.expense.delete',
         ];
 
         foreach ($abilities as $ability) {
