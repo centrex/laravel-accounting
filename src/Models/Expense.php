@@ -60,7 +60,7 @@ class Expense extends Model implements Auditable
             DB::connection($expense->getConnectionName())->transaction(function () use ($expense): void {
                 $date = now()->format('Ymd');
 
-                $lastExpense = self::query()
+                $lastExpense = self::withTrashed()
                     ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();

@@ -63,7 +63,7 @@ class Requisition extends Model implements Auditable
                 $prefix = $req->type === RequisitionType::PURCHASE ? 'PRQ' : 'ERQ';
                 $date = now()->format('Ymd');
 
-                $last = self::query()
+                $last = self::withTrashed()
                     ->where('type', $req->type)
                     ->orderByDesc('id')
                     ->lockForUpdate()

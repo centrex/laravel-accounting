@@ -61,7 +61,7 @@ class Bill extends Model implements Auditable
             DB::connection($bill->getConnectionName())->transaction(function () use ($bill) {
                 $date = now()->format('Ymd');
 
-                $lastBill = self::query()
+                $lastBill = self::withTrashed()
                     ->orderByDesc('id') // safer than bill_number
                     ->lockForUpdate()
                     ->first();

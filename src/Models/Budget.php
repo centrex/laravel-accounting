@@ -54,7 +54,7 @@ class Budget extends Model implements Auditable
             DB::connection($budget->getConnectionName())->transaction(function () use ($budget) {
                 $date = now()->format('Ymd');
 
-                $lastBudget = self::query()
+                $lastBudget = self::withTrashed()
                     ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();

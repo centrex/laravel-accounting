@@ -66,7 +66,7 @@ class Invoice extends Model implements Auditable
             DB::connection($invoice->getConnectionName())->transaction(function () use ($invoice) {
                 $date = now()->format('Ymd');
 
-                $lastInvoice = self::query()
+                $lastInvoice = self::withTrashed()
                     ->orderByDesc('id') // safer than invoice_number
                     ->lockForUpdate()
                     ->first();
