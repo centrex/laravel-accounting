@@ -80,7 +80,10 @@
 {{-- Customer Modal --}}
 <x-tallui-modal id="customer-modal" :title="$customerId ? 'Edit Customer' : 'New Customer'" icon="o-user-group" size="lg">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'customer-modal'); else $dispatch('close-modal', 'customer-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'customer-modal'); else $dispatch('close-modal', 'customer-modal')"
+            @modal-closed.window="if ($event.detail === 'customer-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">

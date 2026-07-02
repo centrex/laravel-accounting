@@ -107,7 +107,10 @@
 {{-- Create/Edit Modal --}}
 <x-tallui-modal id="account-modal" :title="$accountId ? 'Edit Account' : 'New Account'" icon="o-rectangle-stack" size="lg">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'account-modal'); else $dispatch('close-modal', 'account-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'account-modal'); else $dispatch('close-modal', 'account-modal')"
+            @modal-closed.window="if ($event.detail === 'account-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">

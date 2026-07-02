@@ -76,7 +76,10 @@
 {{-- Vendor Modal --}}
 <x-tallui-modal id="vendor-modal" :title="$vendorId ? 'Edit Vendor' : 'New Vendor'" icon="o-building-storefront" size="lg">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'vendor-modal'); else $dispatch('close-modal', 'vendor-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'vendor-modal'); else $dispatch('close-modal', 'vendor-modal')"
+            @modal-closed.window="if ($event.detail === 'vendor-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">

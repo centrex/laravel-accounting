@@ -94,7 +94,10 @@
 {{-- Create Budget Modal --}}
 <x-tallui-modal id="budget-modal" title="New Budget" icon="o-chart-pie" size="xl">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'budget-modal'); else $dispatch('close-modal', 'budget-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'budget-modal'); else $dispatch('close-modal', 'budget-modal')"
+            @modal-closed.window="if ($event.detail === 'budget-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">
@@ -183,7 +186,10 @@
     @if($viewingBudget)
         <x-tallui-modal id="budget-detail-modal" title="Budget: {{ $viewingBudget->name }}" icon="o-chart-pie" size="lg">
             <x-slot:trigger>
-                <span x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'budget-detail-modal'); else $dispatch('close-modal', 'budget-detail-modal')"></span>
+                <span
+                    x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'budget-detail-modal'); else $dispatch('close-modal', 'budget-detail-modal')"
+                    @modal-closed.window="if ($event.detail === 'budget-detail-modal') $wire.showDetailModal = false"
+                ></span>
             </x-slot:trigger>
 
             <div class="space-y-4">

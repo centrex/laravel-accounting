@@ -114,7 +114,10 @@
 {{-- Create Bill Modal --}}
 <x-tallui-modal id="bill-modal" title="New Bill" icon="o-shopping-cart" size="xl">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'bill-modal'); else $dispatch('close-modal', 'bill-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'bill-modal'); else $dispatch('close-modal', 'bill-modal')"
+            @modal-closed.window="if ($event.detail === 'bill-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">
@@ -190,7 +193,10 @@
 {{-- Pay Bill Modal --}}
 <x-tallui-modal id="pay-bill-modal" title="Record Bill Payment" icon="o-banknotes" size="md">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-bill-modal'); else $dispatch('close-modal', 'pay-bill-modal')"></span>
+        <span
+            x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-bill-modal'); else $dispatch('close-modal', 'pay-bill-modal')"
+            @modal-closed.window="if ($event.detail === 'pay-bill-modal') $wire.showPayModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="recordPayment" class="space-y-4">

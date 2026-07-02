@@ -228,7 +228,10 @@
 {{-- ── Pay Modal ────────────────────────────────────────────────────────── --}}
 <x-tallui-modal id="pay-expense-detail-modal" title="Record Expense Payment" icon="o-banknotes" size="md">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-expense-detail-modal'); else $dispatch('close-modal', 'pay-expense-detail-modal')"></span>
+        <span
+            x-effect="if ($wire.showPayModal) $dispatch('open-modal', 'pay-expense-detail-modal'); else $dispatch('close-modal', 'pay-expense-detail-modal')"
+            @modal-closed.window="if ($event.detail === 'pay-expense-detail-modal') $wire.showPayModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="recordPayment" class="space-y-4">

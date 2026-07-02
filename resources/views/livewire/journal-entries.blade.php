@@ -151,7 +151,10 @@
 {{-- Create Modal --}}
 <x-tallui-modal id="journal-modal" :title="$journalEntryId ? 'Edit Journal Entry' : 'New Journal Entry'" icon="o-pencil-square" size="xl">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showModal) $dispatch('open-modal', 'journal-modal'); else $dispatch('close-modal', 'journal-modal')"></span>
+        <span
+            x-effect="if ($wire.showModal) $dispatch('open-modal', 'journal-modal'); else $dispatch('close-modal', 'journal-modal')"
+            @modal-closed.window="if ($event.detail === 'journal-modal') $wire.showModal = false"
+        ></span>
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">
@@ -229,7 +232,10 @@
 {{-- Detail Modal --}}
 <x-tallui-modal id="journal-detail-modal" :title="$viewingEntry ? 'Journal Entry ' . $viewingEntry->entry_number : 'Journal Entry Details'" icon="o-eye" size="xl">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'journal-detail-modal'); else $dispatch('close-modal', 'journal-detail-modal')"></span>
+        <span
+            x-effect="if ($wire.showDetailModal) $dispatch('open-modal', 'journal-detail-modal'); else $dispatch('close-modal', 'journal-detail-modal')"
+            @modal-closed.window="if ($event.detail === 'journal-detail-modal') $wire.showDetailModal = false"
+        ></span>
     </x-slot:trigger>
 
     @if($viewingEntry)

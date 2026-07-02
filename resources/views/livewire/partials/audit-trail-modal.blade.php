@@ -1,6 +1,9 @@
 <x-tallui-modal id="accounting-audit-trail-modal" title="Audit trail" icon="o-clock" size="xl">
     <x-slot:trigger>
-        <span x-effect="if ($wire.showAuditTrailModal) $dispatch('open-modal', 'accounting-audit-trail-modal'); else $dispatch('close-modal', 'accounting-audit-trail-modal')"></span>
+        <span
+            x-effect="if ($wire.showAuditTrailModal) $dispatch('open-modal', 'accounting-audit-trail-modal'); else $dispatch('close-modal', 'accounting-audit-trail-modal')"
+            @modal-closed.window="if ($event.detail === 'accounting-audit-trail-modal') $wire.showAuditTrailModal = false"
+        ></span>
     </x-slot:trigger>
 
     <div class="space-y-4">
