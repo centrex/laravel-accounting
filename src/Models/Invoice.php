@@ -67,7 +67,6 @@ class Invoice extends Model implements Auditable
                 $date = now()->format('Ymd');
 
                 $lastInvoice = self::query()
-                    ->whereDate('created_at', now()->toDateString())
                     ->orderByDesc('id') // safer than invoice_number
                     ->lockForUpdate()
                     ->first();

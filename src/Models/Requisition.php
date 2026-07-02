@@ -65,7 +65,6 @@ class Requisition extends Model implements Auditable
 
                 $last = self::query()
                     ->where('type', $req->type)
-                    ->whereDate('created_at', now()->toDateString())
                     ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();

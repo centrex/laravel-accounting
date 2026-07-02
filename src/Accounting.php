@@ -578,7 +578,7 @@ class Accounting
                 ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
                 : $this->requireAccount($this->accountCode('cogs'));
 
-            $cashAccount = $this->requireAccount($this->accountCode('cash'));
+            $cashAccount = $this->requireAccount($expense->payment_account_code ?? $this->accountCode('cash'));
             $payableAccount = $this->requireAccount($this->accountCode('accounts_payable'));
             $taxAccount = Account::where('code', $this->accountCode('tax_payable'))->where('is_active', true)->first();
             $isCreditExpense = $expense->payment_method === 'credit';
@@ -593,7 +593,7 @@ class Accounting
 
             $totalCredit = round((float) $expense->subtotal + (float) $expense->tax_amount, 6);
             $creditAccount = $isCreditExpense ? $payableAccount : $cashAccount;
-            $creditDesc = $isCreditExpense ? 'Accounts Payable' : 'Cash paid';
+            $creditDesc = $isCreditExpense ? 'Accounts Payable' : $cashAccount->name;
 
             $lines[] = ['account_id' => $creditAccount->id, 'type' => 'credit', 'amount' => $totalCredit, 'description' => $creditDesc];
 

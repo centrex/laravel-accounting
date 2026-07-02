@@ -55,7 +55,6 @@ class Budget extends Model implements Auditable
                 $date = now()->format('Ymd');
 
                 $lastBudget = self::query()
-                    ->whereDate('created_at', now()->toDateString())
                     ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();

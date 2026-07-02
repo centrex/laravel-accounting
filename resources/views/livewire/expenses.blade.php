@@ -203,15 +203,23 @@
                 <x-tallui-input wire:model="reference" placeholder="Invoice #, receipt #…" />
             </x-tallui-form-group>
             <x-tallui-form-group label="Payment Method">
-                <x-tallui-select wire:model="payment_method">
+                <x-tallui-select wire:model.live="payment_method">
                     <option value="cash">Cash</option>
                     <option value="bank_transfer">Bank Transfer</option>
-                    <option value="check">Check</option>
+                    {{-- <option value="check">Check</option>
                     <option value="card">Card</option>
-                    <option value="credit">Credit</option>
+                    <option value="credit">Credit</option> --}}
                 </x-tallui-select>
             </x-tallui-form-group>
         </div>
+
+        <x-tallui-form-group label="Bank / Cash Account{{ $payment_method !== 'credit' ? ' *' : '' }}" :error="$errors->first('payment_account_code')">
+            <x-tallui-select wire:model="payment_account_code" :disabled="$payment_method === 'credit'">
+                @foreach($this->bankAccounts as $acct)
+                    <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                @endforeach
+            </x-tallui-select>
+        </x-tallui-form-group>
 
         {{-- Line Items --}}
         <div>

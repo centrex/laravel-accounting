@@ -39,6 +39,8 @@ class JournalEntries extends Component
 
     public $reference;
 
+    public $type = 'general';
+
     public $description;
 
     public $lines = [];
@@ -74,6 +76,7 @@ class JournalEntries extends Component
         $this->journalEntryId = null;
         $this->date = now()->format('Y-m-d');
         $this->reference = null;
+        $this->type = 'general';
         $this->description = null;
         $this->lines = [];
         $this->addLine();
@@ -99,6 +102,7 @@ class JournalEntries extends Component
         $this->journalEntryId = $entry->id;
         $this->date = $entry->date?->format('Y-m-d');
         $this->reference = $entry->reference;
+        $this->type = $entry->type ?? 'general';
         $this->description = $entry->description;
         $this->lines = $entry->lines
             ->map(fn (mixed $line): array => [
@@ -153,6 +157,7 @@ class JournalEntries extends Component
     {
         $this->validate([
             'date'               => 'required|date',
+            'type'               => 'required|in:general,closing,adjustment',
             'description'        => 'required|min:5',
             'lines'              => 'required|array|min:2',
             'lines.*.account_id' => ['required', Rule::exists((new Account())->getTable(), 'id')],
@@ -178,6 +183,7 @@ class JournalEntries extends Component
                     $entry->update([
                         'date' => $this->date,
                         'reference' => $this->reference,
+                        'type' => $this->type,
                         'description' => $this->description,
                     ]);
 
@@ -199,6 +205,7 @@ class JournalEntries extends Component
                 $service->createJournalEntry([
                     'date'        => $this->date,
                     'reference'   => $this->reference,
+                    'type'        => $this->type,
                     'description' => $this->description,
                     'lines'       => $this->lines,
                 ]);

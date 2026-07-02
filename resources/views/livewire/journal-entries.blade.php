@@ -155,12 +155,19 @@
     </x-slot:trigger>
 
     <form wire:submit.prevent="save" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-3 gap-4">
             <x-tallui-form-group label="Date *" :error="$errors->first('date')">
                 <x-tallui-input type="date" wire:model="date" />
             </x-tallui-form-group>
             <x-tallui-form-group label="Reference">
                 <x-tallui-input wire:model="reference" placeholder="e.g. INV-001" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Type *" :error="$errors->first('type')">
+                <select wire:model="type" class="select select-sm w-full border-base-300">
+                    <option value="general">General</option>
+                    <option value="closing">Closing</option>
+                    <option value="adjustment">Adjustment</option>
+                </select>
             </x-tallui-form-group>
         </div>
 

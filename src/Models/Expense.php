@@ -32,7 +32,7 @@ class Expense extends Model implements Auditable
         'expense_number', 'account_id', 'expense_date', 'due_date',
         'subtotal', 'tax_amount', 'total', 'paid_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
-        'payment_method', 'reference', 'vendor_name',
+        'payment_method', 'payment_account_code', 'reference', 'vendor_name',
         'chargeable_type', 'chargeable_id',
     ];
 
@@ -61,7 +61,6 @@ class Expense extends Model implements Auditable
                 $date = now()->format('Ymd');
 
                 $lastExpense = self::query()
-                    ->whereDate('created_at', now()->toDateString())
                     ->orderByDesc('id')
                     ->lockForUpdate()
                     ->first();

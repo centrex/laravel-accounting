@@ -62,7 +62,6 @@ class Bill extends Model implements Auditable
                 $date = now()->format('Ymd');
 
                 $lastBill = self::query()
-                    ->whereDate('created_at', now()->toDateString())
                     ->orderByDesc('id') // safer than bill_number
                     ->lockForUpdate()
                     ->first();

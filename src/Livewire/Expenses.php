@@ -8,6 +8,7 @@ use Centrex\Accounting\Facades\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Expense, ExpenseItem};
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\{Component, WithPagination};
 
 class Expenses extends Component
@@ -38,6 +39,8 @@ class Expenses extends Component
     public string $notes = '';
 
     public string $payment_method = 'cash';
+
+    public string $payment_account_code = '1100';
 
     public string $reference = '';
 
@@ -82,11 +85,22 @@ class Expenses extends Component
         $this->items = array_values($this->items);
     }
 
+    #[Computed]
+    public function bankAccounts(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Account::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(fn ($q) => $q->where('code', 'like', '10%')->orWhere('code', 'like', '11%'))
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
+    }
+
     public function openCreate(): void
     {
         $this->reset(['expenseId', 'account_id', 'notes', 'reference', 'vendor_name', 'items']);
         $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
+        $this->payment_account_code = '1100';
         $this->addItem();
         $this->showModal = true;
     }
@@ -98,6 +112,7 @@ class Expenses extends Component
             'expense_date'        => 'required|date',
             'due_date'            => 'nullable|date|after_or_equal:expense_date',
             'payment_method'      => 'required|string|in:cash,check,bank_transfer,card,credit',
+            'payment_account_code' => 'required_unless:payment_method,credit|nullable|string',
             'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.01',
@@ -126,6 +141,7 @@ class Expenses extends Component
                 'currency'       => config('accounting.base_currency', 'BDT'),
                 'status'         => 'draft',
                 'payment_method' => $this->payment_method,
+                'payment_account_code' => $this->payment_method !== 'credit' ? $this->payment_account_code : null,
                 'reference'      => $this->reference ?: null,
                 'vendor_name'    => $this->vendor_name ?: null,
                 'notes'          => $this->notes ?: null,
@@ -151,6 +167,7 @@ class Expenses extends Component
         $this->showModal = false;
         $this->reset(['expenseId', 'account_id', 'items', 'notes', 'reference', 'vendor_name']);
         $this->payment_method = 'cash';
+        $this->payment_account_code = '1100';
         $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
