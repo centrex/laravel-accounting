@@ -276,7 +276,8 @@ class Invoices extends Component
             ->where(fn ($q) => $q->whereNull('source_type')->orWhere('source_type', '!=', 'agent_b2b'))
             ->when($this->search, fn ($q) => $q->where(function ($q): void {
                 $q->where('invoice_number', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'));
+                    ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('organization_name', 'like', '%' . $this->search . '%'));
             }))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('invoice_date', '>=', $this->dateFrom))

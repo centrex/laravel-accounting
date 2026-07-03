@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
-use Centrex\Accounting\Models\{Account, JournalEntry};
+use Centrex\Accounting\Models\{Account, Bill, Expense, Invoice, JournalEntry};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
@@ -57,6 +57,14 @@ class JournalEntries extends Component
             $this->date = (string) request()->query('date', $this->date);
             $this->reference = (string) request()->query('reference', '');
             $this->description = (string) request()->query('description', '');
+        }
+
+        if (request()->filled('view')) {
+            $viewId = (int) request()->query('view');
+
+            if ($viewId > 0 && JournalEntry::whereKey($viewId)->exists()) {
+                $this->viewEntry($viewId);
+            }
         }
     }
 
@@ -307,9 +315,39 @@ class JournalEntries extends Component
         : 'components.layouts.app';
 
         return view('accounting::livewire.journal-entries', [
-            'entries'      => $entries,
-            'accounts'     => $accounts,
-            'pendingCount' => $pendingCount,
+            'entries'         => $entries,
+            'accounts'        => $accounts,
+            'pendingCount'    => $pendingCount,
+            'sourceDocuments' => $this->resolveSourceDocuments($entries->pluck('id')),
         ])->layout($layout, ['title' => __('Journal Entries')]);
+    }
+
+    /**
+     * Map journal_entry_id => ['type' => 'invoice'|'bill'|'expense', 'model' => Model]
+     * for the given entry IDs, so the list can link a reference straight to its
+     * originating document instead of just reopening the journal entry modal.
+     *
+     * @param  \Illuminate\Support\Collection<int, int>  $entryIds
+     * @return array<int, array{type: string, model: \Illuminate\Database\Eloquent\Model}>
+     */
+    private function resolveSourceDocuments($entryIds): array
+    {
+        if ($entryIds->isEmpty()) {
+            return [];
+        }
+
+        $sources = [];
+
+        foreach ([
+            'invoice' => Invoice::whereIn('journal_entry_id', $entryIds)->get(['id', 'journal_entry_id']),
+            'bill'    => Bill::whereIn('journal_entry_id', $entryIds)->get(['id', 'journal_entry_id']),
+            'expense' => Expense::whereIn('journal_entry_id', $entryIds)->get(['id', 'journal_entry_id']),
+        ] as $type => $documents) {
+            foreach ($documents as $document) {
+                $sources[$document->journal_entry_id] = ['type' => $type, 'model' => $document];
+            }
+        }
+
+        return $sources;
     }
 }

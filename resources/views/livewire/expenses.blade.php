@@ -187,12 +187,18 @@
             </x-tallui-form-group>
             @if($accounts->isNotEmpty())
             <x-tallui-form-group label="Expense Account">
-                <x-tallui-select wire:model="account_id" class="{{ $errors->has('account_id') ? 'select-error' : '' }}">
-                    <option value="">Select Account</option>
-                    @foreach($accounts as $account)
-                        <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
-                    @endforeach
-                </x-tallui-select>
+                <div wire:key="expense-account-select-{{ $account_id ?? 'none' }}">
+                    <x-tallui-select
+                        name="account_id"
+                        wire:model="account_id"
+                        :value="$account_id"
+                        searchable
+                        :sort="false"
+                        placeholder="Select account…"
+                        :options="$accounts->mapWithKeys(fn ($account) => [$account->id => $account->code . ' - ' . $account->name])->all()"
+                        class="{{ $errors->has('account_id') ? 'select-error' : '' }}"
+                    />
+                </div>
             </x-tallui-form-group>
             @endif
         </div>

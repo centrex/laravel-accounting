@@ -37,6 +37,7 @@ class Customer extends Model implements Auditable, HasMedia
     protected $fillable = [
         'code',
         'name',
+        'organization_name',
         'email',
         'phone',
         'address',

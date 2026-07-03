@@ -60,8 +60,18 @@
             <tbody class="divide-y divide-base-200">
                 @forelse($invoices as $invoice)
                     <tr class="hover:bg-base-50">
-                        <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $invoice->invoice_number }}</td>
-                        <td class="text-sm font-medium">{{ $invoice->customer?->name }}</td>
+                        <td class="pl-5 font-mono text-sm font-semibold">
+                            <a href="{{ route('accounting.invoices.show', $invoice) }}" wire:navigate class="text-primary hover:underline">
+                                {{ $invoice->invoice_number }}
+                            </a>
+                        </td>
+                        <td class="text-sm font-medium">
+                            @if ($invoice->customer)
+                                <a href="{{ route('accounting.customers.ledger', $invoice->customer) }}" wire:navigate class="text-primary hover:underline">
+                                    {{ $invoice->customer->organization_name ?: $invoice->customer->name }}
+                                </a>
+                            @endif
+                        </td>
                         <td class="text-sm text-base-content/60">{{ $invoice->invoice_date->format('M d, Y') }}</td>
                         <td class="text-sm {{ $invoice->due_date->isPast() && !in_array($invoice->status->value, ['paid','void']) ? 'text-error font-medium' : 'text-base-content/60' }}">
                             {{ $invoice->due_date->format('M d, Y') }}
@@ -130,7 +140,7 @@
                 <x-tallui-select wire:model="customer_id" class="{{ $errors->has('customer_id') ? 'select-error' : '' }}">
                     <option value="">Select Customer</option>
                     @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                        <option value="{{ $customer->id }}">{{ $customer->organization_name ?: $customer->name }}</option>
                     @endforeach
                 </x-tallui-select>
             </x-tallui-form-group>

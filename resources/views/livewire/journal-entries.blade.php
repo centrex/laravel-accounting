@@ -57,7 +57,11 @@
             <tbody class="divide-y divide-base-200">
                 @forelse($entries as $entry)
                     <tr class="hover:bg-base-50">
-                        <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $entry->entry_number }}</td>
+                        <td class="pl-5 font-mono text-sm font-semibold">
+                            <button type="button" wire:click="viewEntry({{ $entry->id }})" class="text-primary hover:underline">
+                                {{ $entry->entry_number }}
+                            </button>
+                        </td>
                         <td class="text-sm text-base-content/60">{{ $entry->date->format('M d, Y') }}</td>
                         <td>
                             <div class="text-sm max-w-xs truncate">{{ $entry->description }}</div>
@@ -74,7 +78,27 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="text-sm text-base-content/50">{{ $entry->reference ?? '—' }}</td>
+                        <td class="text-sm text-base-content/50">
+                            @php $source = $sourceDocuments[$entry->id] ?? null; @endphp
+                            <div class="flex items-center gap-1.5">
+                                @if($source)
+                                    <a href="{{ route('accounting.' . $source['type'] . 's.show', $source['model']) }}" wire:navigate class="text-primary hover:underline">
+                                        {{ $entry->reference }}
+                                    </a>
+                                @elseif($entry->reference)
+                                    <button type="button" wire:click="viewEntry({{ $entry->id }})" class="text-primary hover:underline">
+                                        {{ $entry->reference }}
+                                    </button>
+                                @else
+                                    —
+                                @endif
+                                @if($source)
+                                    <button type="button" wire:click="viewEntry({{ $entry->id }})" class="text-base-content/40 hover:text-primary" title="View journal entry">
+                                        <x-tallui-icon name="o-book-open" class="h-3.5 w-3.5" />
+                                    </button>
+                                @endif
+                            </div>
+                        </td>
                         <td class="text-right text-sm font-medium">
                             {{ number_format($entry->lines->where('type', 'debit')->sum('amount'), 2) }}
                         </td>
@@ -188,13 +212,17 @@
             <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
                 @foreach($lines as $index => $line)
                     <div class="flex gap-2 items-start bg-base-50 border border-base-200 p-2 rounded-xl">
-                        <div class="flex-1">
-                            <select wire:model="lines.{{ $index }}.account_id" class="select select-sm w-full border-base-300">
-                                <option value="">Select Account</option>
-                                @foreach($accounts as $account)
-                                    <option value="{{ $account->id }}">{{ $account->code }} — {{ $account->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="flex-1" wire:key="jv-account-select-{{ $index }}-{{ $line['account_id'] ?? 'none' }}">
+                            <x-tallui-select
+                                name="lines.{{ $index }}.account_id"
+                                wire:model="lines.{{ $index }}.account_id"
+                                :value="$line['account_id'] ?? null"
+                                searchable
+                                :sort="false"
+                                placeholder="Select account…"
+                                :options="$accounts->mapWithKeys(fn ($account) => [$account->id => $account->code . ' — ' . $account->name])->all()"
+                                class="select-sm w-full"
+                            />
                             @error("lines.{$index}.account_id") <p class="text-error text-xs mt-0.5">{{ $message }}</p> @enderror
                         </div>
                         <select wire:model="lines.{{ $index }}.type" class="select select-sm w-28 border-base-300">

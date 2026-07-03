@@ -307,7 +307,7 @@
         </div>
         <div class="divide-y divide-base-200">
             @foreach($pendingJournals as $pj)
-                <a href="{{ route('accounting.journal') }}" wire:navigate
+                <a href="{{ route('accounting.journal', ['view' => $pj->id]) }}" wire:navigate
                     class="flex items-center justify-between px-5 py-3 hover:bg-base-200/50 transition-colors">
                     <div class="min-w-0">
                         <div class="text-sm font-mono font-semibold text-primary">{{ $pj->entry_number }}</div>
@@ -614,7 +614,11 @@
                 <tbody>
                     @foreach($recentEntries as $entry)
                         <tr class="hover:bg-base-200/50">
-                            <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">{{ $entry->entry_number }}</td>
+                            <td class="pl-5 font-mono text-xs font-semibold whitespace-nowrap">
+                                <a href="{{ route('accounting.journal', ['view' => $entry->id]) }}" wire:navigate class="text-primary hover:underline">
+                                    {{ $entry->entry_number }}
+                                </a>
+                            </td>
                             <td class="text-xs text-base-content/60 whitespace-nowrap">{{ $entry->date->format('M d, Y') }}</td>
                             <td class="text-sm max-w-[200px] truncate text-base-content/80">{{ $entry->description ?? '—' }}</td>
                             <td class="text-xs capitalize text-base-content/50">{{ $entry->type ?? 'general' }}</td>
