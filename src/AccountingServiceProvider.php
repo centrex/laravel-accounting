@@ -124,6 +124,9 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.journal.post',
             'accounting.journal.void',
 
+            // General ledger
+            'accounting.ledger.view',
+
             // Invoices & bills
             'accounting.invoice.view',
             'accounting.invoice.create',
@@ -136,6 +139,9 @@ class AccountingServiceProvider extends ServiceProvider
 
             // Reports (read-only)
             'accounting.reports.view',
+
+            // Requisitions
+            'accounting.requisitions.view',
 
             // Chart of accounts
             'accounting.accounts.view',
@@ -154,6 +160,7 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.budget.approve',
 
             // Expenses
+            'accounting.expense.view',
             'accounting.expense.delete',
         ];
 

@@ -46,7 +46,7 @@
                     '6320' => 'info',
                     '6330' => 'info',
                     '6340' => 'info',
-                    '5500' => 'error',
+                    '5500', '5501', '5502', '5503' => 'error',
                     default => 'neutral',
                 },
                 'entry' => $charge->journalEntry,
@@ -227,7 +227,7 @@
                     @php
                         $itemBadge = match($item->account?->code ?? '') {
                             '4210', '4220', '6310', '6320', '6330', '6340' => 'info',
-                            '5500' => 'error',
+                            '5500', '5501', '5502', '5503' => 'error',
                             default => 'neutral',
                         };
                     @endphp
@@ -241,8 +241,9 @@
                                 @endif
                             </div>
                             <div class="text-right">
-                                <div class="font-mono font-semibold text-sm {{ $item->account?->code === '5500' ? 'text-error' : '' }}">
-                                    {{ $item->account?->code === '5500' ? '−' : '+' }}{{ $bill->base_currency }} {{ number_format((float) $item->total, 2) }}
+                                @php $isDiscountItem = in_array($item->account?->code, ['5500', '5501', '5502', '5503'], true); @endphp
+                                <div class="font-mono font-semibold text-sm {{ $isDiscountItem ? 'text-error' : '' }}">
+                                    {{ $isDiscountItem ? '−' : '+' }}{{ $bill->base_currency }} {{ number_format((float) $item->total, 2) }}
                                 </div>
                                 @if($item->journalEntry)
                                     <div class="font-mono text-xs text-base-content/40">{{ $item->journalEntry->entry_number }}</div>
@@ -341,6 +342,16 @@
 
         <div class="space-y-4">
             <div>
+                <label class="label"><span class="label-text font-medium">Discount Type <span class="text-error">*</span></span></label>
+                <select wire:model="discount_type" class="select select-bordered w-full">
+                    @foreach($this->discountAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->name }} ({{ $acct->code }})</option>
+                    @endforeach
+                </select>
+                @error('discount_type') <span class="mt-1 text-xs text-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
                 <label class="label"><span class="label-text font-medium">Discount Amount <span class="text-error">*</span></span></label>
                 <label class="input input-bordered flex items-center gap-2">
                     <span class="text-sm text-base-content/60">{{ $bill->base_currency }}</span>
@@ -369,7 +380,7 @@
                 </div>
             </div>
             <div class="rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-base-content/70">
-                Journal entry posted: <span class="font-mono">DR AP (2000) / CR Purchase Discount (5500)</span>
+                Journal entry posted: <span class="font-mono">DR AP (2000) / CR {{ $discount_type }}</span>
             </div>
         </div>
 
@@ -421,6 +432,16 @@
             </div>
 
             <div>
+                <label class="label"><span class="label-text font-medium">Paid From <span class="text-error">*</span></span></label>
+                <select wire:model="charge_account_code" class="select select-bordered w-full">
+                    @foreach($this->chargeAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                    @endforeach
+                </select>
+                @error('charge_account_code') <span class="mt-1 text-xs text-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
                 <label class="label"><span class="label-text font-medium">Notes</span></label>
                 <textarea wire:model="charge_notes" rows="2" placeholder="Optional notes..." class="textarea textarea-bordered w-full"></textarea>
             </div>
@@ -434,7 +455,7 @@
                 </div>
             </div>
             <div class="rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-base-content/70">
-                Journal entry posted: <span class="font-mono">DR {{ $charge_type }} / CR AP (2000)</span>
+                Journal entry posted: <span class="font-mono">DR {{ $charge_type }} / CR {{ $charge_account_code }}</span>
             </div>
         </div>
 

@@ -15,14 +15,30 @@
             <option value="this_quarter">This Quarter</option>
             <option value="this_year">This Year</option>
         </select>
+        @can('accounting.requisitions.view')
         <x-tallui-button label="Requisitions" icon="o-clipboard-document" :link="route('accounting.requisitions')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.invoice.view')
         <x-tallui-button label="Invoice" icon="o-document-text" :link="route('accounting.invoices')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.bill.view')
         <x-tallui-button label="Bill" icon="o-inbox-arrow-down" :link="route('accounting.bills')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.expense.view')
         <x-tallui-button label="Expense" icon="o-credit-card" :link="route('accounting.expenses')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.journal.view')
         <x-tallui-button label="Journal" icon="o-pencil-square" :link="route('accounting.journal')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.ledger.view')
         <x-tallui-button label="Ledger" icon="o-book-open" :link="route('accounting.ledger')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.reports.view')
         <x-tallui-button label="Reports" icon="o-chart-pie" :link="route('accounting.reports')" class="btn-outline btn-sm" />
+        @endcan
+        @can('accounting.fiscal-year.close')
         <x-tallui-button label="Period Close" icon="o-lock-closed" :link="route('accounting.period-close')" class="btn-primary btn-sm" />
+        @endcan
     </x-slot:actions>
 </x-tallui-page-header>
 
@@ -31,7 +47,9 @@
     <x-tallui-alert type="warning" title="Fiscal Period Overdue for Closing" :dismissible="true">
         Period <strong>{{ $openPeriod->name }}</strong> ended
         {{ \Carbon\Carbon::parse($openPeriod->end_date)->format('M d, Y') }} and has not been closed.
+        @can('accounting.fiscal-year.close')
         <a href="{{ route('accounting.period-close') }}" wire:navigate class="link link-warning font-semibold ml-1">Close now →</a>
+        @endcan
     </x-tallui-alert>
 @endif
 
@@ -40,13 +58,17 @@
         @if($invoiceStats['overdue_count'] > 0)
             <x-tallui-alert type="error" title="{{ $invoiceStats['overdue_count'] }} Invoice{{ $invoiceStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
                 {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }} outstanding.
+                @can('accounting.invoice.view')
                 <a href="{{ route('accounting.invoices') }}" wire:navigate class="link link-error font-semibold ml-1">Review →</a>
+                @endcan
             </x-tallui-alert>
         @endif
         @if($billStats['overdue_count'] > 0)
             <x-tallui-alert type="warning" title="{{ $billStats['overdue_count'] }} Bill{{ $billStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
                 {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }} due.
+                @can('accounting.bill.view')
                 <a href="{{ route('accounting.bills') }}" wire:navigate class="link link-warning font-semibold ml-1">Review →</a>
+                @endcan
             </x-tallui-alert>
         @endif
     </div>
@@ -67,66 +89,90 @@
     </div>
     <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    @can('accounting.journal.view')
     <a href="{{ route('accounting.journal') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-pencil-square class="w-7 h-7 text-primary" />
         <span class="text-sm font-medium">Journal</span>
     </a>
+    @endcan
+    @can('accounting.ledger.view')
     <a href="{{ route('accounting.ledger') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-book-open class="w-7 h-7 text-info" />
         <span class="text-sm font-medium">Ledger</span>
     </a>
+    @endcan
+    @can('accounting.invoice.view')
     <a href="{{ route('accounting.invoices') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-document-text class="w-7 h-7 text-success" />
         <span class="text-sm font-medium">Invoices</span>
     </a>
+    @endcan
+    @can('accounting.bill.view')
     <a href="{{ route('accounting.bills') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-inbox-arrow-down class="w-7 h-7 text-warning" />
         <span class="text-sm font-medium">Bills</span>
     </a>
+    @endcan
+    @can('accounting.expense.view')
     <a href="{{ route('accounting.expenses') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-credit-card class="w-7 h-7 text-error" />
         <span class="text-sm font-medium">Expenses</span>
     </a>
+    @endcan
+    @can('accounting.requisitions.view')
     <a href="{{ route('accounting.requisitions') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-clipboard-document class="w-7 h-7 text-secondary" />
         <span class="text-sm font-medium">Requisitions</span>
     </a>
+    @endcan
+    @can('accounting.customers.view')
     <a href="{{ route('accounting.customers') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-users class="w-7 h-7 text-primary" />
         <span class="text-sm font-medium">Customers</span>
     </a>
+    @endcan
+    @can('accounting.vendors.view')
     <a href="{{ route('accounting.vendors') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-building-storefront class="w-7 h-7 text-secondary" />
         <span class="text-sm font-medium">Vendors</span>
     </a>
+    @endcan
+    @can('accounting.accounts.view')
     <a href="{{ route('accounting.accounts') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-list-bullet class="w-7 h-7 text-accent" />
         <span class="text-sm font-medium">Accounts</span>
     </a>
+    @endcan
+    @can('accounting.budget.view')
     <a href="{{ route('accounting.budgets') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-calculator class="w-7 h-7 text-info" />
         <span class="text-sm font-medium">Budgets</span>
     </a>
+    @endcan
+    @can('accounting.fiscal-year.close')
     <a href="{{ route('accounting.period-close') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-lock-closed class="w-7 h-7 text-warning" />
         <span class="text-sm font-medium">Period Close</span>
     </a>
+    @endcan
+    @can('accounting.reports.view')
     <a href="{{ route('accounting.reports') }}" wire:navigate
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-chart-pie class="w-7 h-7 text-success" />
         <span class="text-sm font-medium">Reports</span>
     </a>
+    @endcan
 </div>
     </div>
 </div>
@@ -180,6 +226,7 @@
 {{-- ── AR / AP / Entity Summary Cards ──────────────────────────────────── --}}
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
 
+    @can('accounting.invoice.view')
     <a href="{{ route('accounting.invoices') }}" wire:navigate class="group">
         <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-success/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
@@ -207,7 +254,9 @@
             </div>
         </div>
     </a>
+    @endcan
 
+    @can('accounting.bill.view')
     <a href="{{ route('accounting.bills') }}" wire:navigate class="group">
         <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-warning/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
@@ -235,7 +284,9 @@
             </div>
         </div>
     </a>
+    @endcan
 
+    @can('accounting.customers.view')
     <a href="{{ route('accounting.customers') }}" wire:navigate class="group">
         <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-primary/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
@@ -250,7 +301,9 @@
             </div>
         </div>
     </a>
+    @endcan
 
+    @can('accounting.vendors.view')
     <a href="{{ route('accounting.vendors') }}" wire:navigate class="group">
         <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-secondary/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
@@ -265,7 +318,9 @@
             </div>
         </div>
     </a>
+    @endcan
 
+    @can('accounting.journal.view')
     <a href="{{ route('accounting.journal') }}" wire:navigate class="group col-span-2 lg:col-span-1">
         <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-accent/40 transition-all rounded-2xl h-full">
             <div class="card-body p-4 gap-1">
@@ -288,6 +343,7 @@
             </div>
         </div>
     </a>
+    @endcan
 </div>
 
 {{-- ── Pending Approvals + Period Status ───────────────────────────────── --}}
@@ -302,10 +358,13 @@
                 <span class="font-semibold text-sm">Pending Approval</span>
                 <x-tallui-badge type="info" size="sm">{{ $ledgerStats['submitted_count'] }}</x-tallui-badge>
             </div>
+            @can('accounting.journal.view')
             <a href="{{ route('accounting.journal') }}?statusFilter=submitted" wire:navigate
                 class="btn btn-ghost btn-xs">Review All</a>
+            @endcan
         </div>
         <div class="divide-y divide-base-200">
+            @can('accounting.journal.view')
             @foreach($pendingJournals as $pj)
                 <a href="{{ route('accounting.journal', ['view' => $pj->id]) }}" wire:navigate
                     class="flex items-center justify-between px-5 py-3 hover:bg-base-200/50 transition-colors">
@@ -325,6 +384,7 @@
                     </div>
                 </a>
             @endforeach
+            @endcan
         </div>
     </x-tallui-card>
     @endif
@@ -362,11 +422,13 @@
             </div>
         </div>
         <div class="mt-4 pt-3 border-t border-base-200">
+            @can('accounting.fiscal-year.close')
             <a href="{{ route('accounting.period-close') }}" wire:navigate
                 class="btn btn-outline btn-sm w-full gap-2">
                 <x-tallui-icon name="o-lock-closed" size="w-4 h-4" />
                 Close Period
             </a>
+            @endcan
         </div>
     </x-tallui-card>
     @endif
@@ -384,9 +446,11 @@
         class="xl:col-span-2"
     >
         <x-slot:actions>
+            @can('accounting.reports.view')
             <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
                 P&amp;L Report <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
             </a>
+            @endcan
         </x-slot:actions>
         @if(!empty($revenueExpensesChart['categories']))
             <livewire:tallui-bar-chart
@@ -401,9 +465,11 @@
 
     <x-tallui-card title="Balance Snapshot" icon="o-chart-pie">
         <x-slot:actions>
+            @can('accounting.reports.view')
             <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
                 Balance Sheet <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
             </a>
+            @endcan
         </x-slot:actions>
         @if($balanceChart['series'][0] > 0 || $balanceChart['series'][1] > 0 || $balanceChart['series'][2] > 0)
             <livewire:tallui-pie-chart
@@ -458,12 +524,16 @@
 
     <x-tallui-card title="Recent Invoices" icon="o-document-text" padding="none">
         <x-slot:actions>
+            @can('accounting.invoice.view')
             <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
+            @endcan
         </x-slot:actions>
         @if($recentInvoices->isEmpty())
             <div class="p-6">
                 <x-tallui-empty-state title="No invoices yet" icon="o-document-text" size="sm">
+                    @can('accounting.invoice.create')
                     <a href="{{ route('accounting.invoices') }}" wire:navigate class="btn btn-primary btn-sm">Create Invoice</a>
+                    @endcan
                 </x-tallui-empty-state>
             </div>
         @else
@@ -478,6 +548,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @can('accounting.invoice.view')
                         @foreach($recentInvoices as $invoice)
                             <tr class="hover:bg-base-200/50 cursor-pointer"
                                 onclick="window.location='{{ route('accounting.invoices.show', $invoice->id) }}'">
@@ -500,6 +571,7 @@
                                 </td>
                             </tr>
                         @endforeach
+                        @endcan
                     </tbody>
                 </table>
             </div>
@@ -518,12 +590,16 @@
 
     <x-tallui-card title="Recent Bills" icon="o-inbox-arrow-down" padding="none">
         <x-slot:actions>
+            @can('accounting.bill.view')
             <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
+            @endcan
         </x-slot:actions>
         @if($recentBills->isEmpty())
             <div class="p-6">
                 <x-tallui-empty-state title="No bills yet" icon="o-inbox-arrow-down" size="sm">
+                    @can('accounting.bill.create')
                     <a href="{{ route('accounting.bills') }}" wire:navigate class="btn btn-primary btn-sm">Add Bill</a>
+                    @endcan
                 </x-tallui-empty-state>
             </div>
         @else
@@ -538,6 +614,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @can('accounting.bill.view')
                         @foreach($recentBills as $bill)
                             <tr class="hover:bg-base-200/50 cursor-pointer"
                                 onclick="window.location='{{ route('accounting.bills.show', $bill->id) }}'">
@@ -560,6 +637,7 @@
                                 </td>
                             </tr>
                         @endforeach
+                        @endcan
                     </tbody>
                 </table>
             </div>
@@ -580,11 +658,17 @@
 {{-- ── Recent Journal Entries ────────────────────────────────────────────── --}}
 <x-tallui-card title="Recent Journal Entries" icon="o-clock" padding="none">
     <x-slot:actions>
+        @can('accounting.ledger.view')
         <a href="{{ route('accounting.ledger') }}" wire:navigate class="btn btn-ghost btn-xs">Ledger</a>
+        @endcan
+        @can('accounting.journal.view')
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-ghost btn-xs">View All</a>
+        @endcan
+        @can('accounting.journal.create')
         <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-primary btn-xs gap-1">
             <x-tallui-icon name="o-plus" size="w-3 h-3" /> New Entry
         </a>
+        @endcan
     </x-slot:actions>
 
     @if($recentEntries->isEmpty())
@@ -595,7 +679,9 @@
                 icon="o-document-text"
                 size="sm"
             >
+                @can('accounting.journal.create')
                 <a href="{{ route('accounting.journal') }}" wire:navigate class="btn btn-primary btn-sm">New Entry</a>
+                @endcan
             </x-tallui-empty-state>
         </div>
     @else
@@ -612,6 +698,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @can('accounting.journal.view')
                     @foreach($recentEntries as $entry)
                         <tr class="hover:bg-base-200/50">
                             <td class="pl-5 font-mono text-xs font-semibold whitespace-nowrap">
@@ -636,6 +723,7 @@
                             </td>
                         </tr>
                     @endforeach
+                    @endcan
                 </tbody>
             </table>
         </div>

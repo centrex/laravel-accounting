@@ -41,7 +41,7 @@
                 'type'  => $charge->account?->name ?? 'Charge',
                 'badge' => match($charge->account?->code ?? '') {
                     '4210', '4220', '6310', '6320', '6330', '6340' => 'info',
-                    '6130' => 'error',
+                    '6130', '6131', '6132', '6133' => 'error',
                     default => 'neutral',
                 },
                 'entry' => $charge->journalEntry,
@@ -342,6 +342,16 @@
 
         <div class="space-y-4">
             <div>
+                <label class="label"><span class="label-text font-medium">Discount Type <span class="text-error">*</span></span></label>
+                <select wire:model="discount_type" class="select select-bordered w-full">
+                    @foreach($this->discountAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->name }} ({{ $acct->code }})</option>
+                    @endforeach
+                </select>
+                @error('discount_type') <span class="mt-1 text-xs text-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
                 <label class="label"><span class="label-text font-medium">Discount Amount <span class="text-error">*</span></span></label>
                 <label class="input input-bordered flex items-center gap-2">
                     <span class="text-sm text-base-content/60">{{ $invoice->base_currency }}</span>
@@ -370,7 +380,7 @@
                 </div>
             </div>
             <div class="rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-base-content/70">
-                Journal entry posted: <span class="font-mono">DR Sales Discount (6130) / CR AR (1200)</span>
+                Journal entry posted: <span class="font-mono">DR {{ $discount_type }} / CR AR (1200)</span>
             </div>
         </div>
 
@@ -422,6 +432,16 @@
             </div>
 
             <div>
+                <label class="label"><span class="label-text font-medium">Paid From <span class="text-error">*</span></span></label>
+                <select wire:model="charge_account_code" class="select select-bordered w-full">
+                    @foreach($this->chargeAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                    @endforeach
+                </select>
+                @error('charge_account_code') <span class="mt-1 text-xs text-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
                 <label class="label"><span class="label-text font-medium">Notes</span></label>
                 <textarea wire:model="charge_notes" rows="2" placeholder="Optional notes..." class="textarea textarea-bordered w-full"></textarea>
             </div>
@@ -435,7 +455,7 @@
                 </div>
             </div>
             <div class="rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-base-content/70">
-                Journal entry posted: <span class="font-mono">DR AR (1200) / CR {{ $charge_type }}</span>
+                Journal entry posted: <span class="font-mono">DR {{ $charge_type }} / CR {{ $charge_account_code }}</span>
             </div>
         </div>
 
