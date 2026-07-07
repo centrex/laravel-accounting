@@ -13,7 +13,7 @@ class AccountTypeMapperTest extends TestCase
     public function test_operating_revenue_maps_to_income(): void
     {
         $result = AccountTypeMapper::fromSubtype(AccountSubtype::OPERATING_REVENUE);
-        $this->assertEquals(AccountType::INCOME, $result);
+        $this->assertEquals(AccountType::REVENUE, $result);
     }
 
     public function test_expense_subtypes_map_to_expense(): void

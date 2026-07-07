@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Models;
 
-use Centrex\Accounting\Concerns\AddTablePrefix;
-use Centrex\Accounting\Concerns\HasPrimaryImage;
+use Centrex\Accounting\Concerns\{AddTablePrefix, HasPrimaryImage};
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo};
 use OwenIt\Auditing\Auditable as AuditableTrait;
@@ -14,8 +14,9 @@ use Spatie\MediaLibrary\HasMedia;
 
 class Vendor extends Model implements Auditable, HasMedia
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
+    use HasFactory;
     use HasPrimaryImage;
     use SoftDeletes;
 

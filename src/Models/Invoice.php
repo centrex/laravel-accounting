@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Enums\EntryStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphMany};
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,9 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Invoice extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
+    use HasFactory;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
@@ -35,7 +37,7 @@ class Invoice extends Model implements Auditable
 
     protected $fillable = [
         'invoice_number', 'customer_id', 'invoice_date', 'due_date',
-        'subtotal', 'tax_amount', 'discount_amount', 'total',
+        'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'total',
         'paid_amount', 'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
         'source_type', 'source_id', 'source_reference', 'sbu_code',
         'inventory_sale_order_id',
@@ -48,6 +50,7 @@ class Invoice extends Model implements Auditable
         'subtotal'        => 'decimal:2',
         'tax_amount'      => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'shipping_amount' => 'decimal:2',
         'total'           => 'decimal:2',
         'paid_amount'     => 'decimal:2',
         'exchange_rate'   => 'decimal:6',
@@ -142,6 +145,11 @@ class Invoice extends Model implements Auditable
     public function getBaseDiscountAmountAttribute(): float
     {
         return $this->convertToBase($this->discount_amount);
+    }
+
+    public function getBaseShippingAmountAttribute(): float
+    {
+        return $this->convertToBase($this->shipping_amount);
     }
 
     public function getBaseTotalAttribute(): float

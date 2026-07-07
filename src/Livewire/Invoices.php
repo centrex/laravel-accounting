@@ -13,8 +13,8 @@ use Livewire\{Component, WithPagination};
 
 class Invoices extends Component
 {
-    use WithCurrency;
     use ShowsAuditTrail;
+    use WithCurrency;
     use WithPagination;
 
     public string $search = '';
@@ -49,11 +49,16 @@ class Invoices extends Component
 
     public string $pay_method = 'bank_transfer';
 
-    public string $pay_account_code = '1100';
+    public string $pay_account_code = '';
 
     public string $pay_reference = '';
 
     public string $pay_notes = '';
+
+    // Optional shipping/handling charge netted off AR alongside the cash received
+    public string $pay_charge_amount = '';
+
+    public string $pay_charge_account_code = '';
 
     protected array $queryString = ['search', 'statusFilter'];
 
@@ -207,6 +212,15 @@ class Invoices extends Component
             ->get(['id', 'code', 'name']);
     }
 
+    #[Computed]
+    public function chargeAccounts(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Account::whereIn('code', ['4210', '4220', '6310', '6320', '6330', '6340'])
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
+    }
+
     public function openPayModal(int $id): void
     {
         $invoice = Invoice::findOrFail($id);
@@ -214,31 +228,38 @@ class Invoices extends Component
         $this->pay_date = now()->format('Y-m-d');
         $this->pay_amount = number_format($invoice->balance, 2, '.', '');
         $this->pay_method = 'bank_transfer';
-        $this->pay_account_code = '1100';
+        $this->pay_account_code = '';
         $this->pay_reference = '';
         $this->pay_notes = '';
+        $this->pay_charge_amount = '';
+        $this->pay_charge_account_code = '';
         $this->showPayModal = true;
     }
 
     public function recordPayment(): void
     {
         $this->validate([
-            'pay_date'         => 'required|date',
-            'pay_amount'       => 'required|numeric|min:0.01',
-            'pay_method'       => 'required|string',
-            'pay_account_code' => 'required|string',
+            'pay_date'                => 'required|date',
+            'pay_amount'              => 'required|numeric|min:0.01',
+            'pay_method'              => 'required|string',
+            'pay_account_code'        => 'required|string',
+            'pay_charge_amount'       => 'nullable|numeric|min:0',
+            'pay_charge_account_code' => 'required_with:pay_charge_amount|string',
         ]);
 
         $invoice = Invoice::findOrFail($this->payingInvoiceId);
+        $chargeAmount = (float) ($this->pay_charge_amount ?: 0);
 
         try {
             app(Accounting::class)->recordInvoicePayment($invoice, [
-                'date'         => $this->pay_date,
-                'amount'       => $this->pay_amount,
-                'method'       => $this->pay_method,
-                'account_code' => $this->pay_account_code,
-                'reference'    => $this->pay_reference ?: null,
-                'notes'        => $this->pay_notes ?: null,
+                'date'                => $this->pay_date,
+                'amount'              => $this->pay_amount,
+                'method'              => $this->pay_method,
+                'account_code'        => $this->pay_account_code,
+                'reference'           => $this->pay_reference ?: null,
+                'notes'               => $this->pay_notes ?: null,
+                'charge_amount'       => $chargeAmount,
+                'charge_account_code' => $chargeAmount > 0 ? $this->pay_charge_account_code : null,
             ]);
 
             $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');

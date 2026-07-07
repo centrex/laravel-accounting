@@ -4,8 +4,9 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
+use Carbon\Carbon;
 use Centrex\Accounting\Contracts\InventorySnapshotProvider;
-use Centrex\Accounting\Enums\{AccountSubtype, RequisitionStatus, RequisitionType};
+use Centrex\Accounting\Enums\{RequisitionStatus, RequisitionType};
 use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
     DuplicatePaymentException,
@@ -32,7 +33,6 @@ use Centrex\Accounting\Models\{
 };
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Database\QueryException;
-use Carbon\Carbon;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\DB;
 
@@ -338,8 +338,11 @@ class Accounting
         $driverCode = (int) ($exception->errorInfo[1] ?? 0);
         $message = (string) ($exception->errorInfo[2] ?? $exception->getMessage());
 
-        return $driverCode === 1062
-            && str_contains($message, 'acct_journal_entries_entry_number_unique');
+        // MySQL reports code 1062 with the named unique index in the message;
+        // SQLite reports code 19 with a plain "table.column" constraint message.
+        $isDuplicateKeyError = in_array($driverCode, [1062, 19], true);
+
+        return $isDuplicateKeyError && str_contains($message, 'entry_number');
     }
 
     // -------------------------------------------------------------------------
@@ -362,7 +365,10 @@ class Accounting
             $revenueAccount = $this->requireAccount($this->accountCode('sales_revenue'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
             $discountAmount = round((float) ($invoice->discount_amount ?? 0), 2);
-            $netRevenueAmount = round((float) $invoice->subtotal - $discountAmount, 2);
+            $shippingAmount = round((float) ($invoice->shipping_amount ?? 0), 2);
+            // Shipping billed to the customer is folded into revenue — invoice->total
+            // (AR debit) already includes it, so revenue must too for the entry to balance.
+            $netRevenueAmount = round((float) $invoice->subtotal + $shippingAmount - $discountAmount, 2);
 
             $entry = $this->createJournalEntry([
                 'date'          => $invoice->invoice_date,
@@ -400,10 +406,14 @@ class Accounting
             $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
 
             $amount = (float) $paymentData['amount'];
+            // Optional shipping/handling charge netted off AR alongside the cash received —
+            // reduces the customer's balance without an extra cash leg.
+            $chargeAmount = (float) ($paymentData['charge_amount'] ?? 0);
+            $arReduction = round($amount + $chargeAmount, 6);
             $outstanding = round((float) $invoice->total - (float) $invoice->paid_amount, 6);
 
-            if ($amount > $outstanding + $this->tolerance()) {
-                throw OverpaymentException::make($amount, $outstanding);
+            if ($arReduction > $outstanding + $this->tolerance()) {
+                throw OverpaymentException::make($arReduction, $outstanding);
             }
 
             // Idempotency guard — same amount + date + method = duplicate
@@ -434,23 +444,55 @@ class Accounting
             $cashAccount = $this->requireAccount($cashCode);
             $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
 
+            $lines = [
+                ['account_id' => $cashAccount->id, 'type' => 'debit', 'amount' => $amount, 'description' => 'Cash received'],
+            ];
+
+            $chargeAccount = null;
+
+            if ($chargeAmount > 0) {
+                $chargeAccount = $this->requireAccount((string) ($paymentData['charge_account_code'] ?? $this->accountCode('shipping')));
+                $lines[] = ['account_id' => $chargeAccount->id, 'type' => 'debit', 'amount' => $chargeAmount, 'description' => 'Shipping/handling charge netted off AR'];
+            }
+
+            $lines[] = ['account_id' => $arAccount->id, 'type' => 'credit', 'amount' => $arReduction, 'description' => 'Accounts Receivable'];
+
             $entry = $this->createJournalEntry([
                 'date'        => $paymentData['date'],
                 'reference'   => $payment->payment_number,
                 'description' => "Payment received for Invoice {$invoice->invoice_number}",
                 'currency'    => $invoice->currency ?? config('accounting.base_currency', 'BDT'),
                 'sbu_code'    => $this->normalizeSbuCode($paymentData['sbu_code'] ?? null) ?? $this->resolveInvoiceSbuCode($invoice),
-                'lines'       => [
-                    ['account_id' => $cashAccount->id, 'type' => 'debit',  'amount' => $amount, 'description' => 'Cash received'],
-                    ['account_id' => $arAccount->id,   'type' => 'credit', 'amount' => $amount, 'description' => 'Accounts Receivable'],
-                ],
+                'lines'       => $lines,
             ]);
 
             $entry->post();
             $payment->update(['journal_entry_id' => $entry->id]);
 
+            if ($chargeAccount !== null) {
+                // No journal_entry_id here — this charge is already booked as a line inside
+                // $entry above. Linking the same entry a second time would make it show up
+                // twice in views that merge invoice->payments and invoice->expenses journal
+                // entries (e.g. the invoice audit trail), making one payment look like two.
+                Expense::create([
+                    'chargeable_type' => Invoice::class,
+                    'chargeable_id'   => $invoice->id,
+                    'account_id'      => $chargeAccount->id,
+                    'expense_date'    => $paymentData['date'],
+                    'subtotal'        => $chargeAmount,
+                    'tax_amount'      => 0,
+                    'total'           => $chargeAmount,
+                    'paid_amount'     => $chargeAmount,
+                    'currency'        => $invoice->currency ?? config('accounting.base_currency', 'BDT'),
+                    'status'          => 'paid',
+                    'payment_method'  => 'ar_deduction',
+                    'reference'       => $payment->payment_number,
+                    'notes'           => 'Netted off AR during payment ' . $payment->payment_number,
+                ]);
+            }
+
             // Atomic status update — compute from known locked value, no refresh needed
-            $newPaid = round((float) $invoice->paid_amount + $amount, 6);
+            $newPaid = round((float) $invoice->paid_amount + $arReduction, 6);
             $newStatus = $newPaid >= (float) $invoice->total - $this->tolerance() ? 'settled' : 'partially_settled';
 
             $invoice->update(['paid_amount' => $newPaid, 'status' => $newStatus]);
@@ -474,6 +516,12 @@ class Accounting
             $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
             $expenseAccount = $this->requireAccount($this->accountCode('inventory'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
+            $discountAmount = round((float) ($bill->discount_amount ?? 0), 2);
+            $shippingAmount = round((float) ($bill->shipping_amount ?? 0), 2);
+            $otherChargesAmount = round((float) ($bill->other_charges_amount ?? 0), 2);
+            // Shipping/other charges from the vendor are folded into the inventory cost —
+            // bill->total (AP credit) already includes them, so the debit side must too.
+            $netExpenseAmount = round((float) $bill->subtotal + $shippingAmount + $otherChargesAmount - $discountAmount, 2);
 
             $entry = $this->createJournalEntry([
                 'date'          => $bill->bill_date,
@@ -483,9 +531,9 @@ class Accounting
                 'exchange_rate' => $bill->exchange_rate ?? 1.0,
                 'sbu_code'      => $this->resolveBillSbuCode($bill),
                 'lines'         => [
-                    ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $bill->subtotal,   'description' => 'Inventory'],
-                    ['account_id' => $taxAccount->id,     'type' => 'debit',  'amount' => $bill->tax_amount, 'description' => 'Tax'],
-                    ['account_id' => $apAccount->id,      'type' => 'credit', 'amount' => $bill->total,      'description' => 'Accounts Payable'],
+                    ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $netExpenseAmount,  'description' => 'Inventory'],
+                    ['account_id' => $taxAccount->id,     'type' => 'debit',  'amount' => $bill->tax_amount,  'description' => 'Tax'],
+                    ['account_id' => $apAccount->id,      'type' => 'credit', 'amount' => $bill->total,       'description' => 'Accounts Payable'],
                 ],
             ]);
 
@@ -944,12 +992,12 @@ class Accounting
     public function getCashFlowStatement(mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
     {
         $start = $startDate ? Carbon::parse($startDate) : now()->startOfYear();
-        $end   = $endDate   ? Carbon::parse($endDate)   : now();
+        $end = $endDate ? Carbon::parse($endDate) : now();
 
         $opening = $this->getBalanceSheet($start->copy()->subDay()->toDateString(), $sbuCode);
         $closing = $this->getBalanceSheet($end->toDateString(), $sbuCode);
 
-        $income    = $this->getIncomeStatement($start->toDateString(), $end->toDateString(), $sbuCode);
+        $income = $this->getIncomeStatement($start->toDateString(), $end->toDateString(), $sbuCode);
         $netIncome = (float) ($income['net_income'] ?? 0);
 
         $balanceMap = static fn (array $section): array => collect($section['accounts'] ?? [])
@@ -957,41 +1005,44 @@ class Accounting
             ->map(fn ($item) => (float) ($item['balance'] ?? 0))
             ->all();
 
-        $openAssets  = $balanceMap($opening['assets']      ?? []);
-        $closeAssets = $balanceMap($closing['assets']       ?? []);
-        $openLiab    = $balanceMap($opening['liabilities']  ?? []);
-        $closeLiab   = $balanceMap($closing['liabilities']  ?? []);
-        $openEquity  = $balanceMap($opening['equity']       ?? []);
-        $closeEquity = $balanceMap($closing['equity']       ?? []);
+        $openAssets = $balanceMap($opening['assets'] ?? []);
+        $closeAssets = $balanceMap($closing['assets'] ?? []);
+        $openLiab = $balanceMap($opening['liabilities'] ?? []);
+        $closeLiab = $balanceMap($closing['liabilities'] ?? []);
+        $openEquity = $balanceMap($opening['equity'] ?? []);
+        $closeEquity = $balanceMap($closing['equity'] ?? []);
 
-        $operatingAdj        = 0.0;
+        $operatingAdj = 0.0;
         $investingActivities = 0.0;
         $financingActivities = 0.0;
 
         // Collect account name lookups from both balance sheets for breakdown labels
         $accountNames = [];
+
         foreach (array_merge(
-            $opening['assets']['accounts']      ?? [],
-            $closing['assets']['accounts']      ?? [],
+            $opening['assets']['accounts'] ?? [],
+            $closing['assets']['accounts'] ?? [],
             $opening['liabilities']['accounts'] ?? [],
             $closing['liabilities']['accounts'] ?? [],
-            $opening['equity']['accounts']      ?? [],
-            $closing['equity']['accounts']      ?? [],
+            $opening['equity']['accounts'] ?? [],
+            $closing['equity']['accounts'] ?? [],
         ) as $row) {
             $accountNames[(string) $row['account']->code] = $row['account']->name;
         }
 
-        $wcChanges           = [];
-        $investingDetails    = [];
-        $financingDetails    = [];
+        $wcChanges = [];
+        $investingDetails = [];
+        $financingDetails = [];
 
         foreach (array_unique(array_merge(array_keys($openAssets), array_keys($closeAssets))) as $code) {
             $strCode = (string) $code;
             $delta = ($closeAssets[$strCode] ?? 0.0) - ($openAssets[$strCode] ?? 0.0);
+
             if ((int) $strCode < 1500) {
                 if ((int) $strCode >= 1200) {
                     $adj = -$delta; // increase in AR/inventory = cash used
                     $operatingAdj += $adj;
+
                     if (abs($adj) > 0.001) {
                         $wcChanges[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($adj, 2)];
                     }
@@ -1000,6 +1051,7 @@ class Accounting
             } else {
                 $adj = -$delta; // increase in fixed assets = cash used
                 $investingActivities += $adj;
+
                 if (abs($adj) > 0.001) {
                     $investingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($adj, 2)];
                 }
@@ -1009,13 +1061,16 @@ class Accounting
         foreach (array_unique(array_merge(array_keys($openLiab), array_keys($closeLiab))) as $code) {
             $strCode = (string) $code;
             $delta = ($closeLiab[$strCode] ?? 0.0) - ($openLiab[$strCode] ?? 0.0);
+
             if ((int) $strCode < 2500) {
                 $operatingAdj += $delta; // increase in current liabilities = cash provided
+
                 if (abs($delta) > 0.001) {
                     $wcChanges[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
                 }
             } else {
                 $financingActivities += $delta; // increase in LT liabilities = financing
+
                 if (abs($delta) > 0.001) {
                     $financingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
                 }
@@ -1026,13 +1081,14 @@ class Accounting
             $strCode = (string) $code;
             $delta = ($closeEquity[$strCode] ?? 0.0) - ($openEquity[$strCode] ?? 0.0);
             $financingActivities += $delta;
+
             if (abs($delta) > 0.001) {
                 $financingDetails[] = ['code' => $strCode, 'name' => $accountNames[$strCode] ?? $strCode, 'amount' => round($delta, 2)];
             }
         }
 
         $operatingTotal = $netIncome + $operatingAdj;
-        $netChange      = $operatingTotal + $investingActivities + $financingActivities;
+        $netChange = $operatingTotal + $investingActivities + $financingActivities;
 
         return [
             'period'               => ['start' => $start->toDateString(), 'end' => $end->toDateString()],
@@ -1042,13 +1098,13 @@ class Accounting
             'net_change'           => round($netChange, 2),
             'sbu_code'             => $this->normalizeSbuCode($sbuCode),
             // Breakdown — shows how invoice payments, AR changes, and other items contribute
-            'operating_breakdown'  => [
+            'operating_breakdown' => [
                 'net_income'                  => round($netIncome, 2),
                 'working_capital_adjustments' => round($operatingAdj, 2),
                 'changes_in_working_capital'  => $wcChanges,
             ],
-            'investing_breakdown'  => $investingDetails,
-            'financing_breakdown'  => $financingDetails,
+            'investing_breakdown' => $investingDetails,
+            'financing_breakdown' => $financingDetails,
         ];
     }
 
@@ -1699,7 +1755,7 @@ class Accounting
             ]);
 
             foreach ($items as $item) {
-                $qty   = (float) ($item['quantity'] ?? 1);
+                $qty = (float) ($item['quantity'] ?? 1);
                 $price = (float) ($item['unit_price'] ?? 0);
 
                 RequisitionItem::create([
@@ -1720,7 +1776,7 @@ class Accounting
     {
         if ($requisition->status !== RequisitionStatus::DRAFT) {
             throw new InvalidStatusTransitionException(
-                "Cannot submit a requisition with status [{$requisition->status->value}]."
+                "Cannot submit a requisition with status [{$requisition->status->value}].",
             );
         }
 
@@ -1734,7 +1790,7 @@ class Accounting
     {
         if ($requisition->status !== RequisitionStatus::SUBMITTED) {
             throw new InvalidStatusTransitionException(
-                "Cannot approve a requisition with status [{$requisition->status->value}]."
+                "Cannot approve a requisition with status [{$requisition->status->value}].",
             );
         }
 
@@ -1748,7 +1804,7 @@ class Accounting
     {
         if ($requisition->status !== RequisitionStatus::SUBMITTED) {
             throw new InvalidStatusTransitionException(
-                "Cannot reject a requisition with status [{$requisition->status->value}]."
+                "Cannot reject a requisition with status [{$requisition->status->value}].",
             );
         }
 
@@ -1773,15 +1829,15 @@ class Accounting
 
         return DB::transaction(function () use ($requisition): Bill {
             $bill = Bill::create([
-                'vendor_id'   => $requisition->vendor_id,
-                'bill_date'   => now()->toDateString(),
-                'due_date'    => ($requisition->required_date ?? now()->addDays(30))->toDateString(),
-                'subtotal'    => $requisition->total_amount,
-                'tax_amount'  => 0,
-                'total'       => $requisition->total_amount,
-                'currency'    => $requisition->currency,
-                'notes'       => "Converted from requisition {$requisition->requisition_number}",
-                'status'      => 'draft',
+                'vendor_id'  => $requisition->vendor_id,
+                'bill_date'  => now()->toDateString(),
+                'due_date'   => ($requisition->required_date ?? now()->addDays(30))->toDateString(),
+                'subtotal'   => $requisition->total_amount,
+                'tax_amount' => 0,
+                'total'      => $requisition->total_amount,
+                'currency'   => $requisition->currency,
+                'notes'      => "Converted from requisition {$requisition->requisition_number}",
+                'status'     => 'draft',
             ]);
 
             foreach ($requisition->items as $item) {
@@ -2379,14 +2435,14 @@ class Accounting
     {
         $asOf = $asOfDate ? \Illuminate\Support\Carbon::parse($asOfDate) : now();
 
-        $invoices = \Centrex\Accounting\Models\Invoice::with('customer')
+        $invoices = Invoice::with('customer')
             ->whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])
             ->where('due_date', '<=', $asOf->toDateString())
             ->orWhere(fn ($q) => $q->whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue']))
             ->get();
 
-        $rows    = [];
-        $totals  = ['current' => 0.0, '1_30' => 0.0, '31_60' => 0.0, '61_90' => 0.0, 'over_90' => 0.0, 'total' => 0.0];
+        $rows = [];
+        $totals = ['current' => 0.0, '1_30' => 0.0, '31_60' => 0.0, '61_90' => 0.0, 'over_90' => 0.0, 'total' => 0.0];
 
         foreach ($invoices->groupBy(fn ($inv) => (string) ($inv->customer?->name ?? 'Unknown')) as $name => $group) {
             $row = ['name' => $name, 'current' => 0.0, '1_30' => 0.0, '31_60' => 0.0, '61_90' => 0.0, 'over_90' => 0.0, 'total' => 0.0];
@@ -2402,11 +2458,11 @@ class Accounting
                 $daysOverdue = $dueDate->isPast() ? (int) $dueDate->diffInDays($asOf) : 0;
 
                 $bucket = match (true) {
-                    $daysOverdue === 0       => 'current',
-                    $daysOverdue <= 30       => '1_30',
-                    $daysOverdue <= 60       => '31_60',
-                    $daysOverdue <= 90       => '61_90',
-                    default                  => 'over_90',
+                    $daysOverdue === 0 => 'current',
+                    $daysOverdue <= 30 => '1_30',
+                    $daysOverdue <= 60 => '31_60',
+                    $daysOverdue <= 90 => '61_90',
+                    default            => 'over_90',
                 };
 
                 $row[$bucket] += $outstanding;
@@ -2415,6 +2471,7 @@ class Accounting
 
             if ($row['total'] > $this->tolerance()) {
                 $rows[] = $row;
+
                 foreach (['current', '1_30', '31_60', '61_90', 'over_90', 'total'] as $b) {
                     $totals[$b] += $row[$b];
                 }
@@ -2439,11 +2496,11 @@ class Accounting
     {
         $asOf = $asOfDate ? \Illuminate\Support\Carbon::parse($asOfDate) : now();
 
-        $bills = \Centrex\Accounting\Models\Bill::with('vendor')
+        $bills = Bill::with('vendor')
             ->whereIn('status', ['issued', 'partially_settled', 'overdue'])
             ->get();
 
-        $rows   = [];
+        $rows = [];
         $totals = ['current' => 0.0, '1_30' => 0.0, '31_60' => 0.0, '61_90' => 0.0, 'over_90' => 0.0, 'total' => 0.0];
 
         foreach ($bills->groupBy(fn ($bill) => (string) ($bill->vendor?->name ?? 'Unknown')) as $name => $group) {
@@ -2456,15 +2513,15 @@ class Accounting
                     continue;
                 }
 
-                $dueDate     = \Illuminate\Support\Carbon::parse($bill->due_date);
+                $dueDate = \Illuminate\Support\Carbon::parse($bill->due_date);
                 $daysOverdue = $dueDate->isPast() ? (int) $dueDate->diffInDays($asOf) : 0;
 
                 $bucket = match (true) {
-                    $daysOverdue === 0  => 'current',
-                    $daysOverdue <= 30  => '1_30',
-                    $daysOverdue <= 60  => '31_60',
-                    $daysOverdue <= 90  => '61_90',
-                    default             => 'over_90',
+                    $daysOverdue === 0 => 'current',
+                    $daysOverdue <= 30 => '1_30',
+                    $daysOverdue <= 60 => '31_60',
+                    $daysOverdue <= 90 => '61_90',
+                    default            => 'over_90',
                 };
 
                 $row[$bucket] += $outstanding;
@@ -2473,6 +2530,7 @@ class Accounting
 
             if ($row['total'] > $this->tolerance()) {
                 $rows[] = $row;
+
                 foreach (['current', '1_30', '31_60', '61_90', 'over_90', 'total'] as $b) {
                     $totals[$b] += $row[$b];
                 }
@@ -2499,7 +2557,7 @@ class Accounting
      * Get accounts of a given type with their balances.
      * Uses the shared balance map — no per-account queries.
      *
-     * @param  string[]  $onlySubtypes   restrict to these subtypes (empty = all)
+     * @param  string[]  $onlySubtypes  restrict to these subtypes (empty = all)
      * @param  string[]  $excludeSubtypes  exclude these subtypes
      */
     protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null, ?string $sbuCode = null, array $onlySubtypes = [], array $excludeSubtypes = []): array

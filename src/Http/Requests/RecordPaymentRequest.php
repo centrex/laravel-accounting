@@ -22,6 +22,9 @@ class RecordPaymentRequest extends FormRequest
             'reference'    => ['nullable', 'string', 'max:255'],
             'notes'        => ['nullable', 'string'],
             'account_code' => ['nullable', 'string', 'max:50'],
+            // Optional invoice-only shipping/handling charge netted off AR alongside the cash received
+            'charge_amount'       => ['nullable', 'numeric', 'min:0'],
+            'charge_account_code' => ['nullable', 'required_with:charge_amount', 'string', 'max:50'],
         ];
     }
 }

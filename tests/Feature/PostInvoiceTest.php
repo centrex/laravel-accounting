@@ -118,7 +118,7 @@ class PostInvoiceTest extends TestCase
 
     public function test_payment_creates_balanced_journal_entry(): void
     {
-        $invoice = $this->createInvoice(total: 100);
+        $invoice = $this->createInvoice(subtotal: 100, tax: 0, total: 100);
         $this->accounting->postInvoice($invoice);
 
         $payment = $this->accounting->recordInvoicePayment($invoice->fresh(), $this->paymentData(100));
@@ -133,7 +133,7 @@ class PostInvoiceTest extends TestCase
 
     public function test_overpayment_throws_exception(): void
     {
-        $invoice = $this->createInvoice(total: 100);
+        $invoice = $this->createInvoice(subtotal: 100, tax: 0, total: 100);
         $this->accounting->postInvoice($invoice);
 
         $this->expectException(OverpaymentException::class);
@@ -142,7 +142,7 @@ class PostInvoiceTest extends TestCase
 
     public function test_duplicate_payment_throws_exception(): void
     {
-        $invoice = $this->createInvoice(total: 200);
+        $invoice = $this->createInvoice(subtotal: 200, tax: 0, total: 200);
         $this->accounting->postInvoice($invoice);
         $data = $this->paymentData(100);
 
@@ -154,7 +154,7 @@ class PostInvoiceTest extends TestCase
 
     public function test_multiple_partial_payments_accumulate_correctly(): void
     {
-        $invoice = $this->createInvoice(total: 300);
+        $invoice = $this->createInvoice(subtotal: 300, tax: 0, total: 300);
         $this->accounting->postInvoice($invoice);
 
         $this->accounting->recordInvoicePayment($invoice->fresh(), $this->paymentData(100, date: '2025-01-01'));

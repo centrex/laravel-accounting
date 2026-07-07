@@ -130,6 +130,24 @@
                 <span class="text-sm text-base-content/60">Tax</span>
                 <span class="font-mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_tax_amount, 2) }}</span>
             </div>
+            @if((float) $bill->discount_amount > 0)
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-base-content/60">Discount</span>
+                    <span class="font-mono">-{{ $bill->base_currency }} {{ number_format((float) $bill->base_discount_amount, 2) }}</span>
+                </div>
+            @endif
+            @if((float) $bill->shipping_amount > 0)
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-base-content/60">Shipping</span>
+                    <span class="font-mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_shipping_amount, 2) }}</span>
+                </div>
+            @endif
+            @if((float) $bill->other_charges_amount > 0)
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-base-content/60">Other Charges</span>
+                    <span class="font-mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_other_charges_amount, 2) }}</span>
+                </div>
+            @endif
             <div class="flex items-center justify-between border-t border-base-200 pt-3">
                 <span class="font-medium">Total</span>
                 <span class="font-mono font-semibold">{{ $bill->base_currency }} {{ number_format((float) $bill->base_total, 2) }}</span>

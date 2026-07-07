@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Enums\EntryStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphMany};
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,9 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Bill extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
+    use HasFactory;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
@@ -31,21 +33,24 @@ class Bill extends Model implements Auditable
 
     protected $fillable = [
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
-        'subtotal', 'tax_amount', 'total', 'paid_amount',
+        'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'other_charges_amount', 'total', 'paid_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
         'source_type', 'source_id', 'source_reference', 'sbu_code',
         'inventory_purchase_order_id',
     ];
 
     protected $casts = [
-        'bill_date'     => 'date',
-        'due_date'      => 'date',
-        'status'        => EntryStatus::class,
-        'subtotal'      => 'decimal:2',
-        'tax_amount'    => 'decimal:2',
-        'total'         => 'decimal:2',
-        'paid_amount'   => 'decimal:2',
-        'exchange_rate' => 'decimal:6',
+        'bill_date'            => 'date',
+        'due_date'             => 'date',
+        'status'               => EntryStatus::class,
+        'subtotal'             => 'decimal:2',
+        'tax_amount'           => 'decimal:2',
+        'discount_amount'      => 'decimal:2',
+        'shipping_amount'      => 'decimal:2',
+        'other_charges_amount' => 'decimal:2',
+        'total'                => 'decimal:2',
+        'paid_amount'          => 'decimal:2',
+        'exchange_rate'        => 'decimal:6',
     ];
 
     #[\Override]
@@ -132,6 +137,21 @@ class Bill extends Model implements Auditable
     public function getBaseTaxAmountAttribute(): float
     {
         return $this->convertToBase($this->tax_amount);
+    }
+
+    public function getBaseDiscountAmountAttribute(): float
+    {
+        return $this->convertToBase($this->discount_amount);
+    }
+
+    public function getBaseShippingAmountAttribute(): float
+    {
+        return $this->convertToBase($this->shipping_amount);
+    }
+
+    public function getBaseOtherChargesAmountAttribute(): float
+    {
+        return $this->convertToBase($this->other_charges_amount);
     }
 
     public function getBaseTotalAttribute(): float

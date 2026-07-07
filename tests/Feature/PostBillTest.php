@@ -119,7 +119,7 @@ class PostBillTest extends TestCase
 
     public function test_payment_creates_balanced_journal_entry(): void
     {
-        $bill = $this->createBill(total: 100);
+        $bill = $this->createBill(subtotal: 100, tax: 0, total: 100);
         $this->accounting->postBill($bill);
 
         $payment = $this->accounting->recordBillPayment($bill->fresh(), $this->paymentData(100));
@@ -134,16 +134,16 @@ class PostBillTest extends TestCase
 
     public function test_payment_retries_when_generated_journal_entry_number_collides(): void
     {
-        $bill = $this->createBill(total: 100);
+        $bill = $this->createBill(subtotal: 100, tax: 0, total: 100);
         $this->accounting->postBill($bill);
 
         JournalEntry::create([
-            'entry_number' => 'JE-collision',
-            'date' => '2025-06-01',
-            'type' => 'general',
-            'currency' => 'BDT',
+            'entry_number'  => 'JE-collision',
+            'date'          => '2025-06-01',
+            'type'          => 'general',
+            'currency'      => 'BDT',
             'exchange_rate' => 1,
-            'status' => 'draft',
+            'status'        => 'draft',
         ]);
 
         $accounting = Mockery::mock(Accounting::class)->makePartial()->shouldAllowMockingProtectedMethods();
@@ -161,7 +161,7 @@ class PostBillTest extends TestCase
 
     public function test_overpayment_throws_exception(): void
     {
-        $bill = $this->createBill(total: 100);
+        $bill = $this->createBill(subtotal: 100, tax: 0, total: 100);
         $this->accounting->postBill($bill);
 
         $this->expectException(OverpaymentException::class);
@@ -170,7 +170,7 @@ class PostBillTest extends TestCase
 
     public function test_duplicate_payment_throws_exception(): void
     {
-        $bill = $this->createBill(total: 200);
+        $bill = $this->createBill(subtotal: 200, tax: 0, total: 200);
         $this->accounting->postBill($bill);
         $data = $this->paymentData(100);
 
@@ -182,7 +182,7 @@ class PostBillTest extends TestCase
 
     public function test_multiple_partial_payments_accumulate_correctly(): void
     {
-        $bill = $this->createBill(total: 300);
+        $bill = $this->createBill(subtotal: 300, tax: 0, total: 300);
         $this->accounting->postBill($bill);
 
         $this->accounting->recordBillPayment($bill->fresh(), $this->paymentData(100, date: '2025-01-01'));

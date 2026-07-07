@@ -22,6 +22,16 @@ class AccountingServiceProvider extends ServiceProvider
     {
         $this->registerViteDirective();
 
+        // Resolve Model::factory() for this package's own models to its Database\Factories
+        // namespace. Only applies to Centrex\Accounting\Models\* — anything else falls
+        // back to Laravel's default App\Database\Factories guess, so host-app factories
+        // keep working unaffected.
+        \Illuminate\Database\Eloquent\Factories\Factory::guessFactoryNamesUsing(
+            fn (string $modelName): string => str_starts_with($modelName, 'Centrex\\Accounting\\Models\\')
+                ? 'Centrex\\Accounting\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+                : 'Database\\Factories\\' . class_basename($modelName) . 'Factory',
+        );
+
         // Register Livewire Components
         Livewire::component('accounting-dashboard', AccountingDashboard::class);
         Livewire::component('chart-of-accounts', ChartOfAccounts::class);
@@ -192,6 +202,5 @@ class AccountingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
         $this->app->singleton('accounting', fn (): Accounting => new Accounting());
-
     }
 }

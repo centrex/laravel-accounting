@@ -131,6 +131,12 @@
                     <span class="font-mono">-{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_discount_amount, 2) }}</span>
                 </div>
             @endif
+            @if((float) $invoice->shipping_amount > 0)
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-base-content/60">Shipping</span>
+                    <span class="font-mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_shipping_amount, 2) }}</span>
+                </div>
+            @endif
             <div class="flex items-center justify-between border-t border-base-200 pt-3">
                 <span class="font-medium">Total</span>
                 <span class="font-mono font-semibold">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_total, 2) }}</span>

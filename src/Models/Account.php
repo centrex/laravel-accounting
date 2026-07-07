@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
 use Centrex\Accounting\Enums\{AccountSubtype, AccountType};
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use OwenIt\Auditing\Auditable as AuditableTrait;
@@ -14,8 +15,9 @@ use OwenIt\Auditing\Contracts\Auditable;
 // Account Model
 class Account extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
+    use HasFactory;
     use SoftDeletes;
 
     protected function getTableSuffix(): string

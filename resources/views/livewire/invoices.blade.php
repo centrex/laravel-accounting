@@ -238,7 +238,21 @@
             </x-tallui-form-group>
             <x-tallui-form-group label="Bank / Cash Account *" :error="$errors->first('pay_account_code')">
                 <x-tallui-select wire:model="pay_account_code">
+                    <option value="">— Select Account —</option>
                     @foreach($this->paymentAccounts as $acct)
+                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                    @endforeach
+                </x-tallui-select>
+            </x-tallui-form-group>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Shipping / Charge (deducted from AR)" :error="$errors->first('pay_charge_amount')">
+                <x-tallui-input type="number" step="0.01" wire:model="pay_charge_amount" class="text-right" placeholder="0.00" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Charge Account" :error="$errors->first('pay_charge_account_code')">
+                <x-tallui-select wire:model="pay_charge_account_code">
+                    <option value="">— Select Account —</option>
+                    @foreach($this->chargeAccounts as $acct)
                         <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
                     @endforeach
                 </x-tallui-select>

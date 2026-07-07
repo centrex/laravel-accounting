@@ -6,9 +6,8 @@ namespace Tests\Feature;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
-use Centrex\Accounting\Models\Account;
+use Centrex\Accounting\Models\{Account, Expense};
 use Centrex\Accounting\Tests\TestCase;
-use Centrex\Inventory\Models\Expense;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PostExpenseTest extends TestCase
@@ -224,9 +223,10 @@ class PostExpenseTest extends TestCase
     private function seedMinimalAccounts(): void
     {
         $accounts = [
-            ['code' => '1000', 'name' => 'Cash',              'type' => 'asset',   'subtype' => 'current_asset'],
-            ['code' => '2300', 'name' => 'Sales Tax Payable', 'type' => 'liability', 'subtype' => 'current_liability'],
-            ['code' => '5000', 'name' => 'COGS',              'type' => 'expense', 'subtype' => 'operating_expense'],
+            ['code' => '1000', 'name' => 'Cash',              'type' => 'asset',     'subtype' => 'current_asset'],
+            ['code' => '2000', 'name' => 'Accounts Payable',   'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2300', 'name' => 'Sales Tax Payable',  'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '5000', 'name' => 'COGS',               'type' => 'expense',   'subtype' => 'operating_expense'],
         ];
 
         foreach ($accounts as $data) {
