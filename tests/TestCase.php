@@ -9,13 +9,13 @@ use Centrex\TallUi\TallUiServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\LivewireServiceProvider;
-use Orchestra\Testbench\Attributes\WithWorkbench;
+use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
 
-#[WithWorkbench]
 class TestCase extends Orchestra
 {
     use RefreshDatabase;
+    use WithWorkbench;
 
     protected function setUp(): void
     {
@@ -40,6 +40,18 @@ class TestCase extends Orchestra
             LivewireServiceProvider::class,
             AccountingServiceProvider::class,
         ];
+
+        // Transitive deps of tallui (blade-heroicons -> blade-icons) aren't auto-discovered
+        // by WithWorkbench since they're not direct requires of this package; tallui's
+        // <x-tallui-icon> renders <x-svg>, which needs BladeIconsServiceProvider's
+        // $manifestPath binding, or every route/Livewire test that renders an icon fails.
+        if (class_exists(\BladeUI\Icons\BladeIconsServiceProvider::class)) {
+            $providers[] = \BladeUI\Icons\BladeIconsServiceProvider::class;
+        }
+
+        if (class_exists(\BladeUI\Heroicons\BladeHeroiconsServiceProvider::class)) {
+            $providers[] = \BladeUI\Heroicons\BladeHeroiconsServiceProvider::class;
+        }
 
         if (class_exists(\Centrex\Inventory\InventoryServiceProvider::class)) {
             $providers[] = \Centrex\Inventory\InventoryServiceProvider::class;

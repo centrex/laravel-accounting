@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 return [
 
     /*
@@ -118,9 +120,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'number_format' => [
-        'decimals'        => 2,
-        'decimal_point'   => '.',
-        'thousands_sep'   => ',',
+        'decimals'      => 2,
+        'decimal_point' => '.',
+        'thousands_sep' => ',',
     ],
 
     /*
@@ -160,7 +162,9 @@ return [
         'sales_revenue'       => env('ACCOUNTING_ACCOUNT_SALES_REVENUE', '4000'),
         'cogs'                => env('ACCOUNTING_ACCOUNT_COGS', '5000'),
         'purchase_discount'   => env('ACCOUNTING_ACCOUNT_PURCHASE_DISCOUNT', '5500'),
+        'purchase_returns'    => env('ACCOUNTING_ACCOUNT_PURCHASE_RETURNS', '5504'),
         'sales_discount'      => env('ACCOUNTING_ACCOUNT_SALES_DISCOUNT', '6130'),
+        'sales_returns'       => env('ACCOUNTING_ACCOUNT_SALES_RETURNS', '6134'),
         'delivery_charge'     => env('ACCOUNTING_ACCOUNT_DELIVERY_CHARGE', '6310'),
         'shipping'            => env('ACCOUNTING_ACCOUNT_SHIPPING', '6320'),
         'local_delivery'      => env('ACCOUNTING_ACCOUNT_LOCAL_DELIVERY', '6330'),

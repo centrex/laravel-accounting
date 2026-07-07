@@ -28,6 +28,7 @@ class BillsLivewirePaymentTest extends TestCase
             ->set('pay_date', '2025-06-01')
             ->set('pay_amount', '150')
             ->set('pay_method', 'cash')
+            ->set('pay_account_code', '1000')
             ->set('pay_reference', 'CHK-123')
             ->set('pay_notes', 'Paid in full.')
             ->call('recordPayment');
@@ -40,8 +41,8 @@ class BillsLivewirePaymentTest extends TestCase
         $this->assertEquals('settled', $bill->status->value);
         $this->assertEquals('150.00', $bill->paid_amount);
         $this->assertDatabaseHas('acct_journal_entries', [
-            'id' => $payment->journal_entry_id,
-            'status' => 'posted',
+            'id'        => $payment->journal_entry_id,
+            'status'    => 'posted',
             'reference' => $payment->payment_number,
         ]);
     }
@@ -65,15 +66,15 @@ class BillsLivewirePaymentTest extends TestCase
         $vendor = Vendor::factory()->create();
 
         return Bill::factory()->create([
-            'vendor_id' => $vendor->id,
-            'bill_date' => now()->toDateString(),
-            'subtotal' => $subtotal,
-            'tax_amount' => $tax,
+            'vendor_id'       => $vendor->id,
+            'bill_date'       => now()->toDateString(),
+            'subtotal'        => $subtotal,
+            'tax_amount'      => $tax,
             'discount_amount' => 0,
-            'total' => $total,
-            'paid_amount' => 0,
-            'currency' => 'BDT',
-            'status' => 'issued',
+            'total'           => $total,
+            'paid_amount'     => 0,
+            'currency'        => 'BDT',
+            'status'          => 'issued',
         ]);
     }
 }

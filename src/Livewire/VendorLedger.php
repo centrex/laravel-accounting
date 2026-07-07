@@ -1,16 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
 use Carbon\Carbon;
-use Centrex\Accounting\Models\{Bill, Payment, Vendor};
+use Centrex\Accounting\Models\{Bill, Expense, Payment, Vendor};
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class VendorLedger extends Component
 {
+    // Expense account codes that reduce AP (purchase discounts + purchase returns).
+    private const AP_REDUCING_ACCOUNT_CODES = ['5500', '5501', '5502', '5503', '5504'];
+
     public Vendor $vendor;
 
     public string $startDate = '';
@@ -21,14 +24,22 @@ class VendorLedger extends Component
 
     public function mount(Vendor $vendor): void
     {
-        $this->vendor    = $vendor;
+        $this->vendor = $vendor;
         $this->startDate = $this->startDate ?: now()->startOfYear()->format('Y-m-d');
-        $this->endDate   = $this->endDate   ?: now()->format('Y-m-d');
+        $this->endDate = $this->endDate ?: now()->format('Y-m-d');
     }
 
     private function billIds(): \Illuminate\Support\Collection
     {
         return Bill::where('vendor_id', $this->vendor->id)->pluck('id');
+    }
+
+    private function apReducingExpensesQuery(\Illuminate\Support\Collection $ids): \Illuminate\Database\Eloquent\Builder
+    {
+        return Expense::with('account')
+            ->where('chargeable_type', Bill::class)
+            ->whereIn('chargeable_id', $ids)
+            ->whereHas('account', fn ($q) => $q->whereIn('code', self::AP_REDUCING_ACCOUNT_CODES));
     }
 
     private function openingBalance(\Illuminate\Support\Collection $ids): float
@@ -47,7 +58,11 @@ class VendorLedger extends Component
             ->where('payment_date', '<', $this->startDate)
             ->sum('amount');
 
-        return round((float) $billed - (float) $paid, 2);
+        $credited = $this->apReducingExpensesQuery($ids)
+            ->where('expense_date', '<', $this->startDate)
+            ->sum('total');
+
+        return round((float) $billed - (float) $paid - (float) $credited, 2);
     }
 
     public function getLedgerData(): array
@@ -57,7 +72,7 @@ class VendorLedger extends Component
         $bills = Bill::where('vendor_id', $this->vendor->id)
             ->whereNotNull('journal_entry_id')
             ->when($this->startDate, fn ($q) => $q->where('bill_date', '>=', $this->startDate))
-            ->when($this->endDate,   fn ($q) => $q->where('bill_date', '<=', $this->endDate))
+            ->when($this->endDate, fn ($q) => $q->where('bill_date', '<=', $this->endDate))
             ->orderBy('bill_date')->orderBy('id')
             ->get()
             ->map(fn ($bill) => [
@@ -75,7 +90,7 @@ class VendorLedger extends Component
         $payments = Payment::where('payable_type', Bill::class)
             ->whereIn('payable_id', $ids)
             ->when($this->startDate, fn ($q) => $q->where('payment_date', '>=', $this->startDate))
-            ->when($this->endDate,   fn ($q) => $q->where('payment_date', '<=', $this->endDate))
+            ->when($this->endDate, fn ($q) => $q->where('payment_date', '<=', $this->endDate))
             ->orderBy('payment_date')->orderBy('id')
             ->get()
             ->map(fn ($pmt) => [
@@ -90,18 +105,35 @@ class VendorLedger extends Component
                 'link'        => null,
             ]);
 
-        $entries     = $bills->merge($payments)->sortBy('sort_key')->values();
-        $opening     = $this->openingBalance($ids);
-        $balance     = $opening;
-        $totalDebit  = 0.0;
+        $credits = $this->apReducingExpensesQuery($ids)
+            ->when($this->startDate, fn ($q) => $q->where('expense_date', '>=', $this->startDate))
+            ->when($this->endDate, fn ($q) => $q->where('expense_date', '<=', $this->endDate))
+            ->orderBy('expense_date')->orderBy('id')
+            ->get()
+            ->map(fn ($exp) => [
+                'date'        => Carbon::parse($exp->expense_date),
+                'sort_key'    => Carbon::parse($exp->expense_date)->format('Y-m-d') . '_1_' . str_pad((string) $exp->id, 10, '0', STR_PAD_LEFT) . '_5',
+                'type'        => 'credit',
+                'reference'   => $exp->reference ?? $exp->expense_number,
+                'description' => $exp->account?->name ?? 'Credit',
+                'status'      => null,
+                'debit'       => 0.0,
+                'credit'      => (float) $exp->total,
+                'link'        => null,
+            ]);
+
+        $entries = $bills->merge($payments)->merge($credits)->sortBy('sort_key')->values();
+        $opening = $this->openingBalance($ids);
+        $balance = $opening;
+        $totalDebit = 0.0;
         $totalCredit = 0.0;
-        $rows        = [];
+        $rows = [];
 
         foreach ($entries as $entry) {
-            $balance     += $entry['debit'] - $entry['credit'];
-            $totalDebit  += $entry['debit'];
+            $balance += $entry['debit'] - $entry['credit'];
+            $totalDebit += $entry['debit'];
             $totalCredit += $entry['credit'];
-            $rows[]       = array_merge($entry, ['balance' => $balance]);
+            $rows[] = array_merge($entry, ['balance' => $balance]);
         }
 
         return [
