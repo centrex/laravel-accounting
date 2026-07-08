@@ -289,6 +289,8 @@ class JournalEntries extends Component
 
     public function render()
     {
+        $this->viewingEntry?->load(['lines.account', 'creator', 'approver']);
+
         $entries = JournalEntry::query()
             ->with(['lines.account', 'creator', 'submitter'])
             ->when($this->search, function ($q): void {
