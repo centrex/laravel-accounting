@@ -32,7 +32,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Budget #</th>
                     <th>Name</th>
                     <th>Period</th>
@@ -44,7 +44,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($budgets as $budget)
-                    <tr class="hover:bg-base-50">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $budget->budget_number }}</td>
                         <td class="text-sm font-medium">{{ $budget->name }}</td>
                         <td class="text-sm text-base-content/60">
@@ -68,9 +68,11 @@
                                     class="btn-ghost btn-xs" icon="o-eye">View</x-tallui-button>
                                 <x-tallui-button wire:click="openAuditTrail(@js($budget::class), {{ $budget->getKey() }}, @js($budget->name))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($budget->status === 'draft')
-                                    <x-tallui-button wire:click="approveBudget({{ $budget->id }})"
-                                        wire:confirm="Approve budget {{ $budget->budget_number }}?"
-                                        class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
+                                    @can('accounting.budget.approve')
+                                        <x-tallui-button wire:click="approveBudget({{ $budget->id }})"
+                                            wire:confirm="Approve budget {{ $budget->budget_number }}?"
+                                            class="btn-info btn-xs" spinner="save">Approve</x-tallui-button>
+                                    @endcan
                                     <x-tallui-button wire:click="deleteBudget({{ $budget->id }})"
                                         wire:confirm="Delete this budget?"
                                         class="btn-error btn-xs" icon="o-trash">Delete</x-tallui-button>
@@ -212,7 +214,7 @@
 
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/50 uppercase">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th>Account</th>
                             <th class="text-right">Budgeted</th>
                             <th class="text-right">Actual</th>

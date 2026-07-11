@@ -7,6 +7,12 @@
     subtitle="Financial overview · {{ \Carbon\Carbon::parse($startDate)->format('M d') }} – {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}"
     icon="o-chart-bar-square"
 >
+    {{--
+        The full action-button row used to duplicate every sidebar link (Invoice/Bill/Expense/
+        Journal/Ledger/Reports/Requisitions). Now that the app shell's sidebar (see
+        resources/views/partials/sidebar.blade.php) covers all of those, this only keeps what's
+        specific to this page: the date range and the one action worth surfacing prominently.
+    --}}
     <x-slot:actions>
         <select wire:model.live="dateRange" class="select select-bordered select-sm w-36">
             <option value="today">Today</option>
@@ -178,49 +184,62 @@
 </div>
 
 {{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
-<div class="stats stats-vertical lg:stats-horizontal shadow-sm w-full bg-base-100 border border-base-200 rounded-2xl overflow-x-auto">
-    <x-tallui-stat
-        title="Revenue"
-        :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
-        icon="o-arrow-trending-up"
-        icon-color="text-success"
-        :desc="\Carbon\Carbon::parse($startDate)->format('M d') . ' – ' . \Carbon\Carbon::parse($endDate)->format('M d')"
-    />
-    <x-tallui-stat
-        title="Expenses"
-        :value="$currency . ' ' . number_format($metrics['expenses'], 2)"
-        icon="o-arrow-trending-down"
-        icon-color="text-error"
-        desc="Total costs for period"
-    />
-    <x-tallui-stat
-        :title="$metrics['net_income'] >= 0 ? 'Net Profit' : 'Net Loss'"
-        :value="$currency . ' ' . number_format(abs($metrics['net_income']), 2)"
-        :icon="$metrics['net_income'] >= 0 ? 'o-face-smile' : 'o-face-frown'"
-        :icon-color="$metrics['net_income'] >= 0 ? 'text-primary' : 'text-error'"
-        :desc="$metrics['net_income'] >= 0 ? 'Profitable period' : 'Loss period'"
-    />
-    <x-tallui-stat
-        title="Total Assets"
-        :value="$currency . ' ' . number_format($metrics['total_assets'], 2)"
-        icon="o-building-library"
-        icon-color="text-info"
-        desc="Current asset base"
-    />
-    <x-tallui-stat
-        title="Liabilities"
-        :value="$currency . ' ' . number_format($metrics['total_liabilities'], 2)"
-        icon="o-credit-card"
-        icon-color="text-warning"
-        desc="Total obligations"
-    />
-    <x-tallui-stat
-        title="Equity"
-        :value="$currency . ' ' . number_format($metrics['total_equity'], 2)"
-        icon="o-scale"
-        icon-color="text-secondary"
-        desc="Owner's equity"
-    />
+{{-- QuickBooks-style KPI row: separated elevated tiles rather than DaisyUI's joined "stats" bar --}}
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            title="Revenue"
+            :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
+            icon="o-arrow-trending-up"
+            icon-color="text-success"
+            :desc="\Carbon\Carbon::parse($startDate)->format('M d') . ' – ' . \Carbon\Carbon::parse($endDate)->format('M d')"
+        />
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            title="Expenses"
+            :value="$currency . ' ' . number_format($metrics['expenses'], 2)"
+            icon="o-arrow-trending-down"
+            icon-color="text-error"
+            desc="Total costs for period"
+        />
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            :title="$metrics['net_income'] >= 0 ? 'Net Profit' : 'Net Loss'"
+            :value="$currency . ' ' . number_format(abs($metrics['net_income']), 2)"
+            :icon="$metrics['net_income'] >= 0 ? 'o-face-smile' : 'o-face-frown'"
+            :icon-color="$metrics['net_income'] >= 0 ? 'text-primary' : 'text-error'"
+            :desc="$metrics['net_income'] >= 0 ? 'Profitable period' : 'Loss period'"
+        />
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            title="Total Assets"
+            :value="$currency . ' ' . number_format($metrics['total_assets'], 2)"
+            icon="o-building-library"
+            icon-color="text-info"
+            desc="Current asset base"
+        />
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            title="Liabilities"
+            :value="$currency . ' ' . number_format($metrics['total_liabilities'], 2)"
+            icon="o-credit-card"
+            icon-color="text-warning"
+            desc="Total obligations"
+        />
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
+        <x-tallui-stat
+            title="Equity"
+            :value="$currency . ' ' . number_format($metrics['total_equity'], 2)"
+            icon="o-scale"
+            icon-color="text-secondary"
+            desc="Owner's equity"
+        />
+    </div>
 </div>
 
 {{-- ── AR / AP / Entity Summary Cards ──────────────────────────────────── --}}
@@ -540,7 +559,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/40 uppercase">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="pl-5">Invoice</th>
                             <th>Customer</th>
                             <th class="text-right">Total</th>
@@ -550,7 +569,7 @@
                     <tbody>
                         @can('accounting.invoice.view')
                         @foreach($recentInvoices as $invoice)
-                            <tr class="hover:bg-base-200/50 cursor-pointer"
+                            <tr class="even:bg-base-200/50 hover:bg-base-200 cursor-pointer"
                                 onclick="window.location='{{ route('accounting.invoices.show', $invoice->id) }}'">
                                 <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">
                                     {{ $invoice->invoice_number }}
@@ -606,7 +625,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/40 uppercase">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="pl-5">Bill</th>
                             <th>Vendor</th>
                             <th class="text-right">Total</th>
@@ -616,7 +635,7 @@
                     <tbody>
                         @can('accounting.bill.view')
                         @foreach($recentBills as $bill)
-                            <tr class="hover:bg-base-200/50 cursor-pointer"
+                            <tr class="even:bg-base-200/50 hover:bg-base-200 cursor-pointer"
                                 onclick="window.location='{{ route('accounting.bills.show', $bill->id) }}'">
                                 <td class="pl-5 font-mono text-xs font-semibold text-primary whitespace-nowrap">
                                     {{ $bill->bill_number }}
@@ -688,7 +707,7 @@
         <div class="overflow-x-auto">
             <table class="table table-sm w-full">
                 <thead>
-                    <tr class="text-xs text-base-content/40 uppercase">
+                    <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                         <th class="pl-5">Entry #</th>
                         <th>Date</th>
                         <th>Description</th>
@@ -700,7 +719,7 @@
                 <tbody>
                     @can('accounting.journal.view')
                     @foreach($recentEntries as $entry)
-                        <tr class="hover:bg-base-200/50">
+                        <tr class="even:bg-base-200/50 hover:bg-base-200">
                             <td class="pl-5 font-mono text-xs font-semibold whitespace-nowrap">
                                 <a href="{{ route('accounting.journal', ['view' => $entry->id]) }}" wire:navigate class="text-primary hover:underline">
                                     {{ $entry->entry_number }}

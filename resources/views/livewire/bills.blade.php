@@ -45,7 +45,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Bill #</th>
                     <th>Vendor</th>
                     <th>Bill Date</th>
@@ -58,7 +58,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($bills as $bill)
-                    <tr class="hover:bg-base-50">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $bill->bill_number }}</td>
                         <td class="text-sm font-medium">{{ $bill->vendor?->name }}</td>
                         <td class="text-sm text-base-content/60">{{ $bill->bill_date->format('M d, Y') }}</td>
@@ -200,6 +200,18 @@
     </x-slot:trigger>
 
     <form wire:submit.prevent="recordPayment" class="space-y-4">
+        @if($this->payingBill)
+            <div class="flex items-center justify-between rounded-xl border border-base-300 bg-base-200/40 px-4 py-3">
+                <div>
+                    <div class="text-xs text-base-content/50">Bill</div>
+                    <div class="font-semibold text-base-content">{{ $this->payingBill->bill_number }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-base-content/50">Amount Due</div>
+                    <div class="font-semibold text-base-content">{{ $this->payingBill->currency }} {{ number_format($this->payingBill->balance, 2) }}</div>
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Payment Date *" :error="$errors->first('pay_date')">
                 <x-tallui-input type="date" wire:model="pay_date" />
@@ -237,7 +249,12 @@
 
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showPayModal', false)" class="btn-ghost">Cancel</x-tallui-button>
-        <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-warning">Record Payment</x-tallui-button>
+        <x-tallui-button
+            wire:click="recordPayment"
+            wire:confirm="Record this payment for bill {{ $this->payingBill?->bill_number }}? This will post a journal entry and cannot be undone."
+            spinner="recordPayment"
+            class="btn-warning"
+        >Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 @include('accounting::livewire.partials.audit-trail-modal')

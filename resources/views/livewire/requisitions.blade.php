@@ -54,7 +54,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Req #</th>
                     <th>Type</th>
                     <th>Title</th>
@@ -68,7 +68,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($requisitions as $req)
-                    <tr class="hover:bg-base-50">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-sm text-primary font-semibold">{{ $req->requisition_number }}</td>
                         <td>
                             <x-tallui-badge :type="$req->type->value === 'purchase' ? 'info' : 'secondary'" size="sm">
@@ -198,7 +198,7 @@
         @endif
 
         <x-tallui-form-group label="Description">
-            <x-tallui-form-textarea wire:model="description" placeholder="Purpose or justification…" :rows="2" />
+            <x-tallui-textarea wire:model="description" placeholder="Purpose or justification…" :rows="2" />
         </x-tallui-form-group>
 
         {{-- Line Items --}}
@@ -210,7 +210,7 @@
             <div class="overflow-x-auto border border-base-200 rounded-lg">
                 <table class="table table-xs w-full">
                     <thead>
-                        <tr class="bg-base-100 text-xs uppercase text-base-content/50">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="w-full pl-3">Description</th>
                             <th class="w-24 text-right">Qty</th>
                             <th class="w-32 text-right">Unit Price</th>
@@ -220,7 +220,7 @@
                     </thead>
                     <tbody>
                         @foreach($items as $i => $item)
-                            <tr>
+                            <tr class="even:bg-base-200/50 hover:bg-base-200">
                                 <td class="pl-3">
                                     <x-tallui-input wire:model="items.{{ $i }}.description"
                                         placeholder="Item description…" class="input-xs w-full" />
@@ -259,7 +259,7 @@
         </div>
 
         <x-tallui-form-group label="Notes">
-            <x-tallui-form-textarea wire:model="notes" placeholder="Internal notes…" :rows="2" />
+            <x-tallui-textarea wire:model="notes" placeholder="Internal notes…" :rows="2" />
         </x-tallui-form-group>
 
         <div class="flex justify-end gap-2 pt-2">
@@ -273,7 +273,7 @@
 <x-tallui-modal wire:model="showRejectModal" title="Reject Requisition" size="md">
     <form wire:submit="confirmReject" class="space-y-4">
         <x-tallui-form-group label="Reason for rejection" :required="true">
-            <x-tallui-form-textarea wire:model="rejectionReason" placeholder="Provide a reason…" :rows="3" />
+            <x-tallui-textarea wire:model="rejectionReason" placeholder="Provide a reason…" :rows="3" />
             <x-tallui-error-message field="rejectionReason" />
         </x-tallui-form-group>
         <div class="flex justify-end gap-2">
@@ -323,7 +323,7 @@
             <div class="overflow-x-auto border border-base-200 rounded-lg">
                 <table class="table table-xs w-full">
                     <thead>
-                        <tr class="bg-base-100 text-xs uppercase text-base-content/50">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="pl-3">Description</th>
                             <th class="text-right">Qty</th>
                             <th class="text-right">Unit Price</th>
@@ -332,7 +332,7 @@
                     </thead>
                     <tbody>
                         @foreach($viewing->items as $item)
-                            <tr>
+                            <tr class="even:bg-base-200/50 hover:bg-base-200">
                                 <td class="pl-3">{{ $item->description }}</td>
                                 <td class="text-right font-mono">{{ number_format($item->quantity, 2) }}</td>
                                 <td class="text-right font-mono">{{ number_format($item->unit_price, 2) }}</td>

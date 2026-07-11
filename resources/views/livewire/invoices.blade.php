@@ -7,123 +7,8 @@
     </x-slot:actions>
 </x-tallui-page-header>
 
-{{-- Filters --}}
-<x-tallui-card class="mb-4" padding="compact">
-    <div class="flex flex-wrap gap-3 items-end p-1">
-        <div class="flex-1 min-w-52">
-            <x-tallui-form-group label="Search">
-                <x-tallui-input wire:model.live.debounce.300ms="search" placeholder="Invoice # or customer…" class="input-sm" />
-            </x-tallui-form-group>
-        </div>
-        <div class="w-36">
-            <x-tallui-form-group label="Status">
-                <x-tallui-select wire:model.live="statusFilter" class="select-sm">
-                    <option value="">All</option>
-                    <option value="draft">Draft</option>
-                    <option value="sent">Sent</option>
-                    <option value="partial">Partial</option>
-                    <option value="paid">Paid</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="void">Void</option>
-                </x-tallui-select>
-            </x-tallui-form-group>
-        </div>
-        <div class="w-40">
-            <x-tallui-form-group label="From">
-                <x-tallui-input type="date" wire:model.live="dateFrom" class="input-sm" />
-            </x-tallui-form-group>
-        </div>
-        <div class="w-40">
-            <x-tallui-form-group label="To">
-                <x-tallui-input type="date" wire:model.live="dateTo" class="input-sm" />
-            </x-tallui-form-group>
-        </div>
-    </div>
-</x-tallui-card>
-
 {{-- Invoices Table --}}
-<x-tallui-card padding="none">
-    <div class="overflow-x-auto">
-        <table class="table table-sm w-full">
-            <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
-                    <th class="pl-5">Invoice #</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Due Date</th>
-                    <th class="text-right">Total ({{ config('accounting.base_currency', 'BDT') }})</th>
-                    <th class="text-right">Balance ({{ config('accounting.base_currency', 'BDT') }})</th>
-                    <th>Status</th>
-                    <th class="pr-5 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-base-200">
-                @forelse($invoices as $invoice)
-                    <tr class="hover:bg-base-50">
-                        <td class="pl-5 font-mono text-sm font-semibold">
-                            <a href="{{ route('accounting.invoices.show', $invoice) }}" wire:navigate class="text-primary hover:underline">
-                                {{ $invoice->invoice_number }}
-                            </a>
-                        </td>
-                        <td class="text-sm font-medium">
-                            @if ($invoice->customer)
-                                <a href="{{ route('accounting.customers.ledger', $invoice->customer) }}" wire:navigate class="text-primary hover:underline">
-                                    {{ $invoice->customer->organization_name ?: $invoice->customer->name }}
-                                </a>
-                            @endif
-                        </td>
-                        <td class="text-sm text-base-content/60">{{ $invoice->invoice_date->format('M d, Y') }}</td>
-                        <td class="text-sm {{ $invoice->due_date->isPast() && !in_array($invoice->status->value, ['paid','void']) ? 'text-error font-medium' : 'text-base-content/60' }}">
-                            {{ $invoice->due_date->format('M d, Y') }}
-                        </td>
-                        <td class="text-right text-sm font-mono font-medium">{{ $invoice->base_currency }} {{ number_format($invoice->base_total, 2) }}</td>
-                        <td class="text-right text-sm font-mono {{ $invoice->base_balance > 0 ? 'text-warning' : 'text-success' }}">
-                            {{ $invoice->base_currency }} {{ number_format($invoice->base_balance, 2) }}
-                        </td>
-                        <td>
-                            <x-tallui-badge :type="match($invoice->status->value ?? $invoice->status) {
-                                'paid'    => 'success',
-                                'sent'    => 'info',
-                                'partial' => 'warning',
-                                'overdue' => 'error',
-                                'void'    => 'error',
-                                default   => 'neutral',
-                            }">
-                                {{ ucfirst($invoice->status->value ?? $invoice->status) }}
-                            </x-tallui-badge>
-                        </td>
-                        <td class="pr-5">
-                            <div class="flex justify-end gap-1">
-                                <a href="{{ route('accounting.invoices.show', $invoice) }}" class="btn btn-ghost btn-xs">
-                                    View
-                                </a>
-                                <x-tallui-button wire:click="openAuditTrail(@js($invoice::class), {{ $invoice->getKey() }}, @js($invoice->invoice_number))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
-                                @php $status = $invoice->status->value ?? $invoice->status; @endphp
-                                @if($status === 'draft')
-                                    <x-tallui-button wire:click="postInvoice({{ $invoice->id }})"
-                                        wire:confirm="Post invoice {{ $invoice->invoice_number }}?"
-                                        class="btn-info btn-xs" spinner="save">Post</x-tallui-button>
-                                @endif
-                                @if(in_array($status, ['sent', 'partial', 'overdue']) && $invoice->base_balance > 0)
-                                    <x-tallui-button wire:click="openPayModal({{ $invoice->id }})" class="btn-success btn-xs" spinner="pay">
-                                        Record Payment
-                                    </x-tallui-button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8">
-                            <x-tallui-empty-state title="No invoices found" description="Create your first invoice to get started" />
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="px-5 py-3 border-t border-base-200">{{ $invoices->links() }}</div>
-</x-tallui-card>
+<livewire:accounting-invoice-table />
 
 {{-- Create Invoice Modal --}}
 <x-tallui-modal id="invoice-modal" title="New Invoice" icon="o-document-text" size="xl">
@@ -166,7 +51,7 @@
             </div>
             <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
                 @foreach($items as $i => $item)
-                    <div class="flex gap-2 items-start bg-base-50 border border-base-200 p-2 rounded-xl">
+                    <div class="flex gap-2 items-start bg-base-200 border border-base-200 p-2 rounded-xl">
                         <div class="flex-1">
                             <x-tallui-input wire:model="items.{{ $i }}.description" placeholder="Description" class="input-sm" />
                             @error("items.{$i}.description") <p class="text-error text-xs">{{ $message }}</p> @enderror
@@ -180,7 +65,7 @@
             </div>
 
             {{-- Totals --}}
-            <div class="mt-3 p-3 bg-base-50 rounded-xl border border-base-200 text-sm">
+            <div class="mt-3 p-3 bg-base-200 rounded-xl border border-base-200 text-sm">
                 <div class="flex justify-between mb-1">
                     <span class="text-base-content/60">Subtotal</span>
                     <span class="font-mono">{{ number_format($this->subtotal, 2) }}</span>
@@ -217,6 +102,18 @@
     </x-slot:trigger>
 
     <form wire:submit.prevent="recordPayment" class="space-y-4">
+        @if($this->payingInvoice)
+            <div class="flex items-center justify-between rounded-xl border border-base-300 bg-base-200/40 px-4 py-3">
+                <div>
+                    <div class="text-xs text-base-content/50">Invoice</div>
+                    <div class="font-semibold text-base-content">{{ $this->payingInvoice->invoice_number }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-base-content/50">Amount Due</div>
+                    <div class="font-semibold text-base-content">{{ $this->payingInvoice->currency }} {{ number_format($this->payingInvoice->balance, 2) }}</div>
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Payment Date *" :error="$errors->first('pay_date')">
                 <x-tallui-input type="date" wire:model="pay_date" />
@@ -268,7 +165,12 @@
 
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showPayModal', false)" class="btn-ghost">Cancel</x-tallui-button>
-        <x-tallui-button wire:click="recordPayment" spinner="recordPayment" class="btn-success">Record Payment</x-tallui-button>
+        <x-tallui-button
+            wire:click="recordPayment"
+            wire:confirm="Record this payment for invoice {{ $this->payingInvoice?->invoice_number }}? This will post a journal entry and cannot be undone."
+            spinner="recordPayment"
+            class="btn-success"
+        >Record Payment</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 @include('accounting::livewire.partials.audit-trail-modal')

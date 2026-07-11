@@ -31,7 +31,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="text-xs text-base-content/50 uppercase border-b border-base-200">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5 py-3">Code</th>
                     <th>Customer</th>
                     <th>Contact</th>
@@ -48,7 +48,7 @@
                         $paid        = (float) ($customer->paid_sum ?? 0);
                         $outstanding = $invoiced - $paid;
                     @endphp
-                    <tr class="hover:bg-base-200/40">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-xs text-base-content/60">{{ $customer->code }}</td>
                         <td>
                             <div class="font-medium text-sm">{{ $customer->name }}</div>

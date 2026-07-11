@@ -34,6 +34,7 @@ class Bill extends Model implements Auditable
     protected $fillable = [
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
         'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'other_charges_amount', 'total', 'paid_amount',
+        'grni_clearing_amount',
         'currency', 'exchange_rate', 'status', 'notes', 'journal_entry_id',
         'source_type', 'source_id', 'source_reference', 'sbu_code',
         'inventory_purchase_order_id',
@@ -48,6 +49,7 @@ class Bill extends Model implements Auditable
         'discount_amount'      => 'decimal:2',
         'shipping_amount'      => 'decimal:2',
         'other_charges_amount' => 'decimal:2',
+        'grni_clearing_amount' => 'decimal:2',
         'total'                => 'decimal:2',
         'paid_amount'          => 'decimal:2',
         'exchange_rate'        => 'decimal:6',

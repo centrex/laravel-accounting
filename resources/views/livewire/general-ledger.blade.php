@@ -124,7 +124,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/50 uppercase border-b border-base-200">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="py-3">Date</th>
                             <th>Entry</th>
                             <th>Reference</th>
@@ -141,7 +141,7 @@
                         </tr>
 
                         @forelse($section['entries'] as $entry)
-                            <tr class="hover:bg-base-200/40">
+                            <tr class="even:bg-base-200/50 hover:bg-base-200">
                                 <td class="text-sm whitespace-nowrap">{{ \Carbon\Carbon::parse($entry['date'])->format('M d, Y') }}</td>
                                 <td class="text-sm font-mono">{{ $entry['entry_number'] }}</td>
                                 <td class="text-sm">{{ $entry['reference'] ?: '—' }}</td>

@@ -32,9 +32,10 @@ use Centrex\Accounting\Models\{
     RequisitionItem
 };
 use Centrex\Accounting\Models\Expense;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\{Collection, Str};
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Gate};
 
 class Accounting
 {
@@ -523,6 +524,28 @@ class Accounting
             // bill->total (AP credit) already includes them, so the debit side must too.
             $netExpenseAmount = round((float) $bill->subtotal + $shippingAmount + $otherChargesAmount - $discountAmount, 2);
 
+            // If the goods this bill covers were already capitalized to Inventory via an earlier
+            // goods-received posting (e.g. an inventory GRN), don't debit Inventory for that
+            // portion again — clear it against the GRNI liability instead. Only the remainder
+            // (typically shipping/other charges not known at receipt time, or the full amount if
+            // nothing was received yet) hits Inventory here.
+            $grniClearAmount = min(max(0.0, (float) ($bill->grni_clearing_amount ?? 0)), $netExpenseAmount);
+            $inventoryDebitAmount = round($netExpenseAmount - $grniClearAmount, 2);
+
+            $lines = [];
+
+            if ($inventoryDebitAmount > 0) {
+                $lines[] = ['account_id' => $expenseAccount->id, 'type' => 'debit', 'amount' => $inventoryDebitAmount, 'description' => 'Inventory'];
+            }
+
+            if ($grniClearAmount > 0) {
+                $grniAccount = $this->requireAccount($this->accountCode('goods_received_clearing'));
+                $lines[] = ['account_id' => $grniAccount->id, 'type' => 'debit', 'amount' => $grniClearAmount, 'description' => 'Clear goods received not invoiced'];
+            }
+
+            $lines[] = ['account_id' => $taxAccount->id, 'type' => 'debit', 'amount' => $bill->tax_amount, 'description' => 'Tax'];
+            $lines[] = ['account_id' => $apAccount->id, 'type' => 'credit', 'amount' => $bill->total, 'description' => 'Accounts Payable'];
+
             $entry = $this->createJournalEntry([
                 'date'          => $bill->bill_date,
                 'reference'     => $bill->bill_number,
@@ -530,11 +553,7 @@ class Accounting
                 'currency'      => $bill->currency ?? config('accounting.base_currency', 'BDT'),
                 'exchange_rate' => $bill->exchange_rate ?? 1.0,
                 'sbu_code'      => $this->resolveBillSbuCode($bill),
-                'lines'         => [
-                    ['account_id' => $expenseAccount->id, 'type' => 'debit',  'amount' => $netExpenseAmount,  'description' => 'Inventory'],
-                    ['account_id' => $taxAccount->id,     'type' => 'debit',  'amount' => $bill->tax_amount,  'description' => 'Tax'],
-                    ['account_id' => $apAccount->id,      'type' => 'credit', 'amount' => $bill->total,       'description' => 'Accounts Payable'],
-                ],
+                'lines'         => $lines,
             ]);
 
             $entry->post();
@@ -1266,6 +1285,7 @@ class Accounting
             ['code' => '1700', 'name' => 'Fixed Assets',            'type' => 'asset',     'subtype' => 'fixed_asset'],
             ['code' => '1800', 'name' => 'Accumulated Depreciation', 'type' => 'asset',     'subtype' => 'fixed_asset'],
             ['code' => '2000', 'name' => 'Accounts Payable',        'type' => 'liability', 'subtype' => 'current_liability'],
+            ['code' => '2050', 'name' => 'Goods Received Not Invoiced', 'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2100', 'name' => 'Credit Card Payable',     'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2150', 'name' => 'Inventory Financing Payable',          'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '2170', 'name' => 'Accrued Interest — Inventory Financing', 'type' => 'liability', 'subtype' => 'current_liability'],
@@ -1625,6 +1645,8 @@ class Accounting
     /** Approve a budget (wrapped in a transaction to prevent concurrent approvals). */
     public function approveBudget(Budget $budget, ?int $userId = null): Budget
     {
+        $this->assertBudgetApprovalAuthorized();
+
         return DB::transaction(function () use ($budget, $userId): Budget {
             $budget = Budget::lockForUpdate()->findOrFail($budget->id);
 
@@ -1636,6 +1658,24 @@ class Accounting
 
             return $budget;
         });
+    }
+
+    /**
+     * Budget approval is a high-level sign-off (accounting.budget.approve — General Manager by
+     * default) — separate from accounting.budget.manage, since drafting a budget and approving
+     * spend against it shouldn't require the same trust level. Skipped for console callers
+     * (seeders, artisan, demo data commands) — there's no web user to check, and CLI access is
+     * already a higher trust boundary.
+     */
+    private function assertBudgetApprovalAuthorized(): void
+    {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
+        if (Gate::forUser(auth()->user())->denies('accounting.budget.approve')) {
+            throw new AuthorizationException('Only a General Manager (or equivalent) can approve this budget.');
+        }
     }
 
     /**

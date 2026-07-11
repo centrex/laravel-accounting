@@ -86,7 +86,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/50 uppercase border-b border-base-200">
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                             <th class="py-3">Code</th>
                             <th>Account Name</th>
                             <th class="text-right">Debit</th>
@@ -95,7 +95,7 @@
                     </thead>
                     <tbody class="divide-y divide-base-200">
                         @foreach($reportData['accounts'] as $item)
-                            <tr class="hover:bg-base-200/50">
+                            <tr class="even:bg-base-200/50 hover:bg-base-200">
                                 <td class="font-mono text-sm text-primary">{{ $item['account']->code }}</td>
                                 <td class="text-sm">{{ $item['account']->name }}</td>
                                 <td class="text-right text-sm font-mono">

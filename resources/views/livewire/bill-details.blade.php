@@ -173,7 +173,7 @@
         <div class="overflow-x-auto">
             <table class="table table-sm w-full">
                 <thead>
-                    <tr class="bg-base-50 text-xs uppercase text-base-content/50">
+                    <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                         <th class="pl-5">Description</th>
                         <th class="text-right">Qty</th>
                         <th class="text-right">Unit Price</th>
@@ -183,7 +183,7 @@
                 </thead>
                 <tbody class="divide-y divide-base-200">
                     @forelse($bill->items as $item)
-                        <tr>
+                        <tr class="even:bg-base-200/50 hover:bg-base-200">
                             <td class="pl-5 text-sm">{{ $item->description }}</td>
                             <td class="text-right font-mono text-sm">{{ number_format((float) $item->quantity, 2) }}</td>
                             <td class="text-right font-mono text-sm">{{ $bill->base_currency }} {{ number_format($bill->convertToBase($item->unit_price), 2) }}</td>
@@ -314,7 +314,7 @@
         <div class="overflow-x-auto {{ !$loop->last ? 'border-b border-base-200' : '' }}">
             <table class="table table-sm w-full">
                 <thead>
-                    <tr class="text-xs uppercase text-base-content/40">
+                    <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                         <th class="pl-5">Account</th>
                         <th>Description</th>
                         <th class="text-right">Debit</th>
@@ -323,7 +323,7 @@
                 </thead>
                 <tbody class="divide-y divide-base-200">
                     @foreach($je->lines as $line)
-                        <tr>
+                        <tr class="even:bg-base-200/50 hover:bg-base-200">
                             <td class="pl-5 text-sm">
                                 <div class="font-medium">{{ $line->account?->name ?? 'Unknown account' }}</div>
                                 <div class="text-xs text-base-content/40">{{ $line->account?->code }}</div>
@@ -339,7 +339,7 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="bg-base-50/50 text-xs font-semibold text-base-content/60">
+                    <tr class="bg-base-200/50 text-xs font-semibold text-base-content/60">
                         <td colspan="2" class="pl-5 py-2">Totals</td>
                         <td class="py-2 text-right font-mono">{{ number_format((float) $je->lines->where('type', 'debit')->sum('amount'), 2) }}</td>
                         <td class="pr-5 py-2 text-right font-mono">{{ number_format((float) $je->lines->where('type', 'credit')->sum('amount'), 2) }}</td>

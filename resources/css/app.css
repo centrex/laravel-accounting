@@ -1,9 +1,91 @@
 /*
  |-----------------------------------------------------------------------------
- | Accounting package development styles
+ | Accounting package styles
  |-----------------------------------------------------------------------------
  |
- | This file is loaded through @accountingVite when the package dev server is
- | running. Use it for package-local CSS while developing accounting screens.
+ | This file is loaded through @accountingVite. It builds Tailwind v4 + DaisyUI
+ | and scans this package's own Blade/PHP as well as the sibling `tallui`
+ | package (whose component templates reference the DaisyUI utility classes
+ | that must exist in this compiled CSS), matching the technique already
+ | proven in laravel-erp/resources/css/app.css.
  |
  */
+
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+@source "../../../tallui/resources/views/**/*.blade.php";
+@source "../../../tallui/src/**/*.php";
+@source "../../vendor/centrex/tallui/resources/views";
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source "../../src/**/*.php";
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-brand-50: #ecf3ff;
+    --color-brand-100: #dde9ff;
+    --color-brand-200: #c2d6ff;
+    --color-brand-300: #9cb9ff;
+    --color-brand-500: #465fff;
+    --color-brand-600: #3641f5;
+    --color-brand-700: #2a31d8;
+
+    --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+    --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06);
+    --shadow-theme-xl: 0px 20px 24px -4px rgba(16, 24, 40, 0.08), 0px 8px 8px -4px rgba(16, 24, 40, 0.03);
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
+}
+
+@utility no-scrollbar {
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    scrollbar-width: none;
+}
+
+@utility menu-item {
+    @apply relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium;
+}
+
+@utility menu-item-text {
+    @apply whitespace-nowrap text-sm font-medium;
+}
+
+@utility menu-item-active {
+    @apply bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300;
+}
+
+@utility menu-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-zinc-800 dark:hover:text-white;
+}
+
+@utility menu-item-icon-active {
+    @apply text-brand-600 dark:text-brand-300;
+}
+
+@utility menu-item-icon-inactive {
+    @apply text-gray-500 dark:text-gray-400;
+}

@@ -24,7 +24,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Code</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -39,7 +39,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($customers as $customer)
-                    <tr class="hover:bg-base-50 {{ !$customer->is_active ? 'opacity-60' : '' }}">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200 {{ !$customer->is_active ? 'opacity-60' : '' }}">
                         <td class="pl-5 font-mono text-sm font-semibold">{{ $customer->code }}</td>
                         <td class="text-sm font-medium">{{ $customer->name }}</td>
                         <td class="text-sm text-base-content/60">{{ $customer->email ?? '—' }}</td>

@@ -8,22 +8,13 @@ use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
 use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem};
 use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\Computed;
-use Livewire\{Component, WithPagination};
+use Livewire\Attributes\{Computed, On};
+use Livewire\Component;
 
 class Invoices extends Component
 {
     use ShowsAuditTrail;
     use WithCurrency;
-    use WithPagination;
-
-    public string $search = '';
-
-    public string $statusFilter = '';
-
-    public string $dateFrom = '';
-
-    public string $dateTo = '';
 
     public bool $showModal = false;
 
@@ -59,8 +50,6 @@ class Invoices extends Component
     public string $pay_charge_amount = '';
 
     public string $pay_charge_account_code = '';
-
-    protected array $queryString = ['search', 'statusFilter'];
 
     public function mount(): void
     {
@@ -188,8 +177,10 @@ class Invoices extends Component
         $this->dispatch('notify', type: 'success', message: 'Invoice created successfully!');
         $this->showModal = false;
         $this->reset(['invoiceId', 'customer_id', 'items']);
+        $this->dispatch('invoice-table:refresh');
     }
 
+    #[On('invoice-table:post')]
     public function postInvoice(int $id): void
     {
         $invoice = Invoice::findOrFail($id);
@@ -197,9 +188,17 @@ class Invoices extends Component
         try {
             app(Accounting::class)->postInvoice($invoice);
             $this->dispatch('notify', type: 'success', message: "Invoice {$invoice->invoice_number} posted.");
+            $this->dispatch('invoice-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
+    }
+
+    #[On('invoice-table:audit')]
+    public function openInvoiceAuditTrail(int $id): void
+    {
+        $invoice = Invoice::findOrFail($id);
+        $this->openAuditTrail($invoice::class, $invoice->id, $invoice->invoice_number);
     }
 
     #[Computed]
@@ -221,6 +220,13 @@ class Invoices extends Component
             ->get(['id', 'code', 'name']);
     }
 
+    #[Computed]
+    public function payingInvoice(): ?Invoice
+    {
+        return $this->payingInvoiceId ? Invoice::find($this->payingInvoiceId) : null;
+    }
+
+    #[On('invoice-table:pay')]
     public function openPayModal(int $id): void
     {
         $invoice = Invoice::findOrFail($id);
@@ -248,6 +254,13 @@ class Invoices extends Component
         ]);
 
         $invoice = Invoice::findOrFail($this->payingInvoiceId);
+
+        if ((float) $this->pay_amount > $invoice->balance + 0.005) {
+            $this->addError('pay_amount', 'Amount cannot exceed the outstanding balance of ' . $invoice->currency . ' ' . number_format($invoice->balance, 2) . '.');
+
+            return;
+        }
+
         $chargeAmount = (float) ($this->pay_charge_amount ?: 0);
 
         try {
@@ -264,6 +277,7 @@ class Invoices extends Component
 
             $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');
             $this->showPayModal = false;
+            $this->dispatch('invoice-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
@@ -290,28 +304,12 @@ class Invoices extends Component
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        $invoices = Invoice::query()
-            ->with(['customer'])
-            // Agent B2B invoices are internal cost records visible only via the
-            // inventory-pro agent invoices page — exclude them from this list.
-            ->where(fn ($q) => $q->whereNull('source_type')->orWhere('source_type', '!=', 'agent_b2b'))
-            ->when($this->search, fn ($q) => $q->where(function ($q): void {
-                $q->where('invoice_number', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('organization_name', 'like', '%' . $this->search . '%'));
-            }))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('invoice_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('invoice_date', '<=', $this->dateTo))
-            ->latest('invoice_date')
-            ->paginate(config('accounting.per_page.invoices', 15));
-
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
 
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'
         : 'components.layouts.app';
 
-        return view('accounting::livewire.invoices', ['invoices' => $invoices, 'customers' => $customers])->layout($layout, ['title' => __('Invoices')]);
+        return view('accounting::livewire.invoices', ['customers' => $customers])->layout($layout, ['title' => __('Invoices')]);
     }
 }

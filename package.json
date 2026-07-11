@@ -7,7 +7,10 @@
         "dev": "vite --host 127.0.0.1"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0",
+        "daisyui": "^5.5.19",
         "laravel-vite-plugin": "^3.0.0",
+        "tailwindcss": "^4.0.0",
         "vite": "^8.0.0"
     }
 }

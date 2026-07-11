@@ -203,6 +203,12 @@ class Bills extends Component
             ->get(['id', 'code', 'name']);
     }
 
+    #[Computed]
+    public function payingBill(): ?Bill
+    {
+        return $this->payingBillId ? Bill::find($this->payingBillId) : null;
+    }
+
     public function openPayModal(int $id): void
     {
         $bill = Bill::findOrFail($id);
@@ -226,6 +232,12 @@ class Bills extends Component
         ]);
 
         $bill = Bill::findOrFail($this->payingBillId);
+
+        if ((float) $this->pay_amount > $bill->balance + 0.005) {
+            $this->addError('pay_amount', 'Amount cannot exceed the outstanding balance of ' . $bill->currency . ' ' . number_format($bill->balance, 2) . '.');
+
+            return;
+        }
 
         try {
             app(Accounting::class)->recordBillPayment($bill, [

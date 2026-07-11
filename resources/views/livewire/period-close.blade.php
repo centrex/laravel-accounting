@@ -192,7 +192,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="text-xs text-base-content/50 uppercase border-b border-base-200">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="py-3">Period</th>
                     <th>Snapshot Date</th>
                     <th class="text-right">Lines</th>
@@ -205,7 +205,7 @@
                         $totalValue = \Centrex\Accounting\Models\PeriodInventorySnapshot::where('fiscal_period_id', $snap->fiscal_period_id)->sum('total_value');
                         $count = \Centrex\Accounting\Models\PeriodInventorySnapshot::where('fiscal_period_id', $snap->fiscal_period_id)->count();
                     @endphp
-                    <tr class="hover:bg-base-200/40">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="text-sm font-medium">{{ $snap->fiscalPeriod?->name ?? '—' }}</td>
                         <td class="text-sm text-base-content/60">
                             {{ \Carbon\Carbon::parse($snap->snapshot_date)->format('M d, Y') }}

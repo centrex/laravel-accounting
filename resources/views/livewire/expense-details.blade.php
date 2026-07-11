@@ -149,7 +149,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Description</th>
                     <th class="text-right w-24">Qty</th>
                     <th class="text-right w-32">Unit Price</th>
@@ -160,7 +160,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @foreach($expense->items as $item)
-                    <tr>
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 text-sm">{{ $item->description }}</td>
                         <td class="text-right font-mono text-sm">{{ number_format((float) $item->quantity, 2) }}</td>
                         <td class="text-right font-mono text-sm">{{ number_format((float) $item->unit_price, 2) }}</td>
@@ -171,7 +171,7 @@
                 @endforeach
             </tbody>
             <tfoot>
-                <tr class="border-t border-base-200 bg-base-50 font-semibold text-sm">
+                <tr class="border-t border-base-200 bg-base-200/50 font-semibold text-sm">
                     <td class="pl-5" colspan="5">Total</td>
                     <td class="pr-5 text-right font-mono">{{ number_format((float) $expense->total, 2) }}</td>
                 </tr>
@@ -195,7 +195,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Account</th>
                     <th>Description</th>
                     <th class="text-right w-32">Debit</th>
@@ -204,7 +204,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @foreach($expense->journalEntry->lines as $line)
-                    <tr>
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-sm">
                             {{ $line->account?->code }} · {{ $line->account?->name }}
                         </td>

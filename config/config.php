@@ -157,6 +157,11 @@ return [
         'accounts_receivable' => env('ACCOUNTING_ACCOUNT_AR', '1200'),
         'inventory'           => env('ACCOUNTING_ACCOUNT_INVENTORY', '1300'),
         'accounts_payable'    => env('ACCOUNTING_ACCOUNT_AP', '2000'),
+        // Goods Received Not Invoiced — a distinct liability from Accounts Payable so that
+        // capitalizing a goods receipt (before the vendor bill arrives) and later posting that
+        // bill don't both land on the same account and inflate it. Must match the inventory
+        // package's INVENTORY_ACCOUNTING_GRNI so the two postings net against each other.
+        'goods_received_clearing' => env('ACCOUNTING_ACCOUNT_GRNI', '2050'),
         'tax_payable'         => env('ACCOUNTING_ACCOUNT_TAX_PAYABLE', '2300'),
         'retained_earnings'   => env('ACCOUNTING_ACCOUNT_RETAINED_EARNINGS', '3100'),
         'sales_revenue'       => env('ACCOUNTING_ACCOUNT_SALES_REVENUE', '4000'),

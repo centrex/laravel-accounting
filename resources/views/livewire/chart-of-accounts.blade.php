@@ -34,74 +34,77 @@
     </div>
 </x-tallui-card>
 
-{{-- Accounts Table --}}
+{{--
+    QuickBooks-style Chart of Accounts: grouped by major account type (Assets, Liabilities,
+    Equity, Revenue, Expenses), with each parent account followed by its children, indented —
+    rather than a flat alphabetical/coded list. The whole (filtered) tree renders at once instead
+    of paginating, since splitting a hierarchy across pages would separate parents from children.
+--}}
 <x-tallui-card padding="none">
-    <div class="overflow-x-auto">
-        <table class="table table-sm w-full">
-            <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
-                    <th class="pl-5">Code</th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Subtype</th>
-                    <th>Currency</th>
-                    <th>Status</th>
-                    <th class="pr-5 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-base-200">
-                @forelse($accounts as $account)
-                    <tr class="hover:bg-base-50">
-                        <td class="pl-5">
-                            <span class="font-mono text-sm text-primary font-semibold">{{ $account->code }}</span>
-                            @if($account->is_system)
-                                <x-tallui-badge type="info" class="ml-1 badge-xs">System</x-tallui-badge>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="text-sm font-medium">{{ $account->name }}</div>
-                            @if($account->description)
-                                <div class="text-xs text-base-content/40 truncate max-w-xs">{{ $account->description }}</div>
-                            @endif
-                        </td>
-                        <td>
-                            <x-tallui-badge :type="match($account->type->value ?? $account->type) {
-                                'asset'     => 'success',
-                                'liability' => 'error',
-                                'equity'    => 'info',
-                                'revenue'   => 'success',
-                                'expense'   => 'warning',
-                                default     => 'neutral',
-                            }">
-                                {{ ucfirst($account->type->value ?? $account->type) }}
-                            </x-tallui-badge>
-                        </td>
-                        <td class="text-sm text-base-content/60">
-                            {{ $account->subtype ? ucwords(str_replace('_', ' ', $account->subtype->value ?? $account->subtype)) : '—' }}
-                        </td>
-                        <td class="text-sm text-base-content/60">{{ $account->currency }}</td>
-                        <td>
-                            <button wire:click="toggleStatus({{ $account->id }})"
-                                class="text-sm {{ $account->is_active ? 'text-success' : 'text-base-content/30' }} hover:underline">
-                                {{ $account->is_active ? 'Active' : 'Inactive' }}
-                            </button>
-                        </td>
-                        <td class="pr-5 text-right">
-                            <x-tallui-button wire:click="openAuditTrail(@js($account::class), {{ $account->getKey() }}, @js($account->code . ' - ' . $account->name))" icon="o-clock" class="btn-ghost btn-sm" title="Audit trail" />
-                            <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-sm" />
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">
-                            <x-tallui-empty-state title="No accounts found" description="Create your first account or adjust your filters" />
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="px-5 py-3 border-t border-base-200">{{ $accounts->links() }}</div>
+    @forelse($accountGroups as $group)
+        <div class="border-b border-base-300 last:border-b-0">
+            <div class="bg-base-200 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                {{ match ($group['type']) {
+                    'asset'     => 'Assets',
+                    'liability' => 'Liabilities',
+                    'equity'    => 'Equity',
+                    'revenue'   => 'Revenue',
+                    'expense'   => 'Expenses',
+                    default     => ucfirst($group['type']),
+                } }}
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <tbody class="divide-y divide-base-200">
+                        @foreach($group['rows'] as $row)
+                            @php [$account, $depth, $matched] = [$row['account'], $row['depth'], $row['matched']]; @endphp
+                            <tr class="{{ $matched ? 'even:bg-base-200/50 hover:bg-base-200' : 'opacity-50' }}">
+                                <td class="pl-5 w-32" style="padding-left: {{ 1.25 + $depth * 1.5 }}rem">
+                                    <span class="font-mono text-sm font-semibold {{ $matched ? 'text-primary' : 'text-base-content/60' }}">{{ $account->code }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-1.5 text-sm font-medium">
+                                        @if($depth > 0)
+                                            <x-tallui-icon name="o-arrow-turn-down-right" class="h-3.5 w-3.5 shrink-0 text-base-content/30" />
+                                        @endif
+                                        {{ $account->name }}
+                                        @if($account->is_system)
+                                            <x-tallui-badge type="info" class="badge-xs">System</x-tallui-badge>
+                                        @endif
+                                    </div>
+                                    @if($account->description)
+                                        <div class="text-xs text-base-content/40 truncate max-w-xs">{{ $account->description }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-sm text-base-content/60">
+                                    {{ $account->subtype ? ucwords(str_replace('_', ' ', $account->subtype->value ?? $account->subtype)) : '—' }}
+                                </td>
+                                <td class="text-sm text-base-content/60">{{ $account->currency }}</td>
+                                <td>
+                                    @if($matched)
+                                        <button wire:click="toggleStatus({{ $account->id }})"
+                                            class="text-sm {{ $account->is_active ? 'text-success' : 'text-base-content/30' }} hover:underline">
+                                            {{ $account->is_active ? 'Active' : 'Inactive' }}
+                                        </button>
+                                    @else
+                                        <span class="text-sm text-base-content/30">{{ $account->is_active ? 'Active' : 'Inactive' }}</span>
+                                    @endif
+                                </td>
+                                <td class="pr-5 text-right">
+                                    @if($matched)
+                                        <x-tallui-button wire:click="openAuditTrail(@js($account::class), {{ $account->getKey() }}, @js($account->code . ' - ' . $account->name))" icon="o-clock" class="btn-ghost btn-sm" title="Audit trail" />
+                                        <x-tallui-button wire:click="openModal({{ $account->id }})" icon="o-pencil" class="btn-ghost btn-sm" />
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @empty
+        <x-tallui-empty-state title="No accounts found" description="Create your first account or adjust your filters" />
+    @endforelse
 </x-tallui-card>
 
 {{-- Create/Edit Modal --}}

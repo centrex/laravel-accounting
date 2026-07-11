@@ -44,7 +44,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5 w-6"></th>
                     <th>Expense #</th>
                     <th>Document</th>
@@ -60,7 +60,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($expenses as $expense)
-                    <tr x-data="{ open: false }" class="hover:bg-base-50">
+                    <tr x-data="{ open: false }" class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5">
                             @if($expense->items->isNotEmpty())
                                 <button @click="open = !open" class="btn btn-ghost btn-xs p-0">
@@ -127,12 +127,12 @@
                         </td>
                     </tr>
                     @if($expense->items->isNotEmpty())
-                        <tr x-data x-show="$parent.open" x-cloak class="bg-base-50/60">
+                        <tr x-data x-show="$parent.open" x-cloak class="bg-base-200/30">
                             <td></td>
                             <td colspan="10" class="px-4 pb-3 pt-1">
                                 <table class="table table-xs w-full">
                                     <thead>
-                                        <tr class="text-xs text-base-content/40 uppercase">
+                                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                                             <th>Description</th>
                                             <th class="text-right w-20">Qty</th>
                                             <th class="text-right w-28">Unit Price</th>
@@ -142,7 +142,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach($expense->items as $item)
-                                            <tr>
+                                            <tr class="even:bg-base-200/50 hover:bg-base-200">
                                                 <td class="text-sm">{{ $item->description }}</td>
                                                 <td class="text-right text-sm font-mono">{{ number_format($item->quantity, 2) }}</td>
                                                 <td class="text-right text-sm font-mono">{{ number_format($item->unit_price, 2) }}</td>

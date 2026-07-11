@@ -44,7 +44,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs text-base-content/50 uppercase">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5">Entry #</th>
                     <th>Date</th>
                     <th>Description</th>
@@ -56,7 +56,7 @@
             </thead>
             <tbody class="divide-y divide-base-200">
                 @forelse($entries as $entry)
-                    <tr class="hover:bg-base-50">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
                         <td class="pl-5 font-mono text-sm font-semibold">
                             <button type="button" wire:click="viewEntry({{ $entry->id }})" class="text-primary hover:underline">
                                 {{ $entry->entry_number }}
@@ -297,7 +297,7 @@
                 <div class="overflow-x-auto">
                     <table class="table table-sm w-full">
                         <thead>
-                            <tr class="text-xs uppercase text-base-content/50">
+                            <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                                 <th>Account</th>
                                 <th>Type</th>
                                 <th class="text-right">Amount</th>
@@ -306,7 +306,7 @@
                         </thead>
                         <tbody>
                             @foreach($viewingEntry->lines as $line)
-                                <tr>
+                                <tr class="even:bg-base-200/50 hover:bg-base-200">
                                     <td class="font-mono text-sm">{{ $line->account?->code }} {{ $line->account?->name ? '— ' . $line->account->name : '' }}</td>
                                     <td>
                                         <x-tallui-badge :type="$line->type === 'debit' ? 'success' : 'error'">

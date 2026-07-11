@@ -81,7 +81,7 @@
     <div class="overflow-x-auto">
         <table class="table table-sm w-full">
             <thead>
-                <tr class="bg-base-50 text-xs uppercase text-base-content/50">
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
                     <th class="pl-5 w-28">Date</th>
                     <th class="w-48">Reference</th>
                     <th>Description</th>
@@ -105,7 +105,7 @@
                 @endif
 
                 @forelse($ledger['entries'] as $entry)
-                    <tr class="hover:bg-base-50 text-sm">
+                    <tr class="even:bg-base-200/50 hover:bg-base-200 text-sm">
                         <td class="pl-5 text-base-content/70 whitespace-nowrap">
                             {{ $entry['date']->format('d M Y') }}
                         </td>

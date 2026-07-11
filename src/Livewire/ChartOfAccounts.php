@@ -121,7 +121,7 @@ class ChartOfAccounts extends Component
 
     public function exportPdf()
     {
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             session()->flash('error', 'PDF export is not available in this environment.');
 
             return null;
@@ -132,14 +132,14 @@ class ChartOfAccounts extends Component
             ->get();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.chart-of-accounts', [
-            'accounts' => $accounts,
-            'search' => $this->search,
-            'typeFilter' => $this->typeFilter,
+            'accounts'    => $accounts,
+            'search'      => $this->search,
+            'typeFilter'  => $this->typeFilter,
             'generatedAt' => now(),
         ]);
 
         return response()->streamDownload(
-            static fn () => print($pdf->output()),
+            static fn () => print ($pdf->output()),
             'chart-of-accounts-' . now()->format('Ymd_His') . '.pdf',
         );
     }
@@ -157,11 +157,66 @@ class ChartOfAccounts extends Component
             ->orderBy('code');
     }
 
+    /**
+     * Build a QuickBooks-style tree: grouped by account type in standard financial-statement
+     * order, with each top-level (parentless) account immediately followed by its children
+     * (flattened with a depth marker for indentation, since the UI renders a flat list of rows).
+     *
+     * A search/type filter narrows the underlying account set, but a matched child still pulls
+     * its parent in too (unindented, marked so the view can grey it out) — otherwise a filtered
+     * child would appear with no visual anchor for its indentation.
+     *
+     * @return array<int, array{type: string, rows: array<int, array{account: Account, depth: int, matched: bool}>}>
+     */
+    protected function groupedAccounts(): array
+    {
+        $matched = $this->filteredAccountsQuery()->get();
+        $matchedIds = $matched->pluck('id')->all();
+
+        $parentIds = $matched->pluck('parent_id')->filter()->diff($matchedIds)->unique();
+        $extraParents = $parentIds->isEmpty() ? collect() : Account::query()->whereIn('id', $parentIds)->get();
+
+        $all = $matched->concat($extraParents)->unique('id');
+        $byParent = $all->groupBy('parent_id');
+
+        $buildRows = function (?int $parentId, int $depth) use (&$buildRows, $byParent, $matchedIds): array {
+            $rows = [];
+
+            foreach ($byParent->get($parentId, collect())->sortBy('code') as $account) {
+                $rows[] = ['account' => $account, 'depth' => $depth, 'matched' => in_array($account->id, $matchedIds, true)];
+                $rows = array_merge($rows, $buildRows($account->id, $depth + 1));
+            }
+
+            return $rows;
+        };
+
+        $typeOrder = ['asset', 'liability', 'equity', 'revenue', 'expense'];
+        $topLevelByType = $all->whereNull('parent_id')->groupBy(fn (Account $a) => $a->type->value ?? $a->type);
+
+        $groups = [];
+
+        foreach ($typeOrder as $type) {
+            if ($this->typeFilter && $this->typeFilter !== $type) {
+                continue;
+            }
+
+            $rows = [];
+
+            foreach ($topLevelByType->get($type, collect())->sortBy('code') as $topAccount) {
+                $rows[] = ['account' => $topAccount, 'depth' => 0, 'matched' => in_array($topAccount->id, $matchedIds, true)];
+                $rows = array_merge($rows, $buildRows($topAccount->id, 1));
+            }
+
+            if ($rows !== []) {
+                $groups[] = ['type' => $type, 'rows' => $rows];
+            }
+        }
+
+        return $groups;
+    }
+
     public function render(): View
     {
-        $accounts = $this->filteredAccountsQuery()
-            ->paginate(20);
-
         $parentAccounts = Account::whereNull('parent_id')
             ->orderBy('code')
             ->get();
@@ -171,7 +226,7 @@ class ChartOfAccounts extends Component
         : 'components.layouts.app';
 
         return view('accounting::livewire.chart-of-accounts', [
-            'accounts'       => $accounts,
+            'accountGroups'  => $this->groupedAccounts(),
             'parentAccounts' => $parentAccounts,
         ])->layout($layout, ['title' => __('Chart of Accounts')]);
     }
