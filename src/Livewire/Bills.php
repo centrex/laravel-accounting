@@ -8,21 +8,12 @@ use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Bill, BillItem, Vendor};
 use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\Computed;
-use Livewire\{Component, WithPagination};
+use Livewire\Attributes\{Computed, On};
+use Livewire\Component;
 
 class Bills extends Component
 {
     use ShowsAuditTrail;
-    use WithPagination;
-
-    public string $search = '';
-
-    public string $statusFilter = '';
-
-    public string $dateFrom = '';
-
-    public string $dateTo = '';
 
     public bool $showModal = false;
 
@@ -55,8 +46,6 @@ class Bills extends Component
     public string $pay_reference = '';
 
     public string $pay_notes = '';
-
-    protected array $queryString = ['search', 'statusFilter'];
 
     public function mount(): void
     {
@@ -179,8 +168,10 @@ class Bills extends Component
         $this->dispatch('notify', type: 'success', message: 'Bill created successfully!');
         $this->showModal = false;
         $this->reset(['billId', 'vendor_id', 'items']);
+        $this->dispatch('bill-table:refresh');
     }
 
+    #[On('bill-table:post')]
     public function postBill(int $id): void
     {
         $bill = Bill::findOrFail($id);
@@ -188,9 +179,17 @@ class Bills extends Component
         try {
             app(Accounting::class)->postBill($bill);
             $this->dispatch('notify', type: 'success', message: "Bill {$bill->bill_number} approved.");
+            $this->dispatch('bill-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
+    }
+
+    #[On('bill-table:audit')]
+    public function openBillAuditTrail(int $id): void
+    {
+        $bill = Bill::findOrFail($id);
+        $this->openAuditTrail($bill::class, $bill->getKey(), $bill->bill_number);
     }
 
     #[Computed]
@@ -209,6 +208,7 @@ class Bills extends Component
         return $this->payingBillId ? Bill::find($this->payingBillId) : null;
     }
 
+    #[On('bill-table:pay')]
     public function openPayModal(int $id): void
     {
         $bill = Bill::findOrFail($id);
@@ -251,6 +251,7 @@ class Bills extends Component
 
             $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');
             $this->showPayModal = false;
+            $this->dispatch('bill-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
@@ -277,24 +278,12 @@ class Bills extends Component
 
     public function render()
     {
-        $bills = Bill::query()
-            ->with(['vendor'])
-            ->when($this->search, fn ($q) => $q->where(function ($q): void {
-                $q->where('bill_number', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('vendor', fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'));
-            }))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('bill_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('bill_date', '<=', $this->dateTo))
-            ->latest('bill_date')
-            ->paginate(config('accounting.per_page.bills', 15));
-
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
 
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'
         : 'components.layouts.app';
 
-        return view('accounting::livewire.bills', ['bills' => $bills, 'vendors' => $vendors])->layout($layout, ['title' => __('Bills')]);
+        return view('accounting::livewire.bills', ['vendors' => $vendors])->layout($layout, ['title' => __('Bills')]);
     }
 }

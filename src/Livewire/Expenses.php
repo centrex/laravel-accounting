@@ -4,25 +4,16 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
-use Centrex\Accounting\Facades\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
+use Centrex\Accounting\Facades\Accounting;
 use Centrex\Accounting\Models\{Account, Expense, ExpenseItem};
 use Illuminate\Support\Facades\{DB, Gate};
-use Livewire\Attributes\Computed;
-use Livewire\{Component, WithPagination};
+use Livewire\Attributes\{Computed, On};
+use Livewire\Component;
 
 class Expenses extends Component
 {
     use ShowsAuditTrail;
-    use WithPagination;
-
-    public string $search = '';
-
-    public string $statusFilter = '';
-
-    public string $dateFrom = '';
-
-    public string $dateTo = '';
 
     public bool $showModal = false;
 
@@ -59,8 +50,6 @@ class Expenses extends Component
     public string $pay_reference = '';
 
     public string $pay_notes = '';
-
-    protected array $queryString = ['search', 'statusFilter'];
 
     public function mount(): void
     {
@@ -108,16 +97,16 @@ class Expenses extends Component
     public function save(): void
     {
         $this->validate([
-            'account_id'          => 'nullable|integer',
-            'expense_date'        => 'required|date',
-            'due_date'            => 'nullable|date|after_or_equal:expense_date',
-            'payment_method'      => 'required|string|in:cash,check,bank_transfer,card,credit',
+            'account_id'           => 'nullable|integer',
+            'expense_date'         => 'required|date',
+            'due_date'             => 'nullable|date|after_or_equal:expense_date',
+            'payment_method'       => 'required|string|in:cash,check,bank_transfer,card,credit',
             'payment_account_code' => 'required_unless:payment_method,credit|nullable|string',
-            'items'               => 'required|array|min:1',
-            'items.*.description' => 'required|string',
-            'items.*.quantity'    => 'required|numeric|min:0.01',
-            'items.*.unit_price'  => 'required|numeric|min:0',
-            'items.*.tax_rate'    => 'nullable|numeric|min:0|max:100',
+            'items'                => 'required|array|min:1',
+            'items.*.description'  => 'required|string',
+            'items.*.quantity'     => 'required|numeric|min:0.01',
+            'items.*.unit_price'   => 'required|numeric|min:0',
+            'items.*.tax_rate'     => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::transaction(function (): void {
@@ -132,19 +121,19 @@ class Expenses extends Component
             }
 
             $expense = Expense::create([
-                'account_id'     => $this->account_id,
-                'expense_date'   => $this->expense_date,
-                'due_date'       => $this->due_date ?: null,
-                'subtotal'       => $subtotal,
-                'tax_amount'     => $taxAmount,
-                'total'          => $subtotal + $taxAmount,
-                'currency'       => config('accounting.base_currency', 'BDT'),
-                'status'         => 'draft',
-                'payment_method' => $this->payment_method,
+                'account_id'           => $this->account_id,
+                'expense_date'         => $this->expense_date,
+                'due_date'             => $this->due_date ?: null,
+                'subtotal'             => $subtotal,
+                'tax_amount'           => $taxAmount,
+                'total'                => $subtotal + $taxAmount,
+                'currency'             => config('accounting.base_currency', 'BDT'),
+                'status'               => 'draft',
+                'payment_method'       => $this->payment_method,
                 'payment_account_code' => $this->payment_method !== 'credit' ? $this->payment_account_code : null,
-                'reference'      => $this->reference ?: null,
-                'vendor_name'    => $this->vendor_name ?: null,
-                'notes'          => $this->notes ?: null,
+                'reference'            => $this->reference ?: null,
+                'vendor_name'          => $this->vendor_name ?: null,
+                'notes'                => $this->notes ?: null,
             ]);
 
             foreach ($this->items as $item) {
@@ -171,8 +160,10 @@ class Expenses extends Component
         $this->expense_date = now()->format('Y-m-d');
         $this->due_date = now()->addDays(30)->format('Y-m-d');
         $this->addItem();
+        $this->dispatch('expense-table:refresh');
     }
 
+    #[On('expense-table:delete')]
     public function delete(int $id): void
     {
         if (Gate::denies('accounting.expense.delete')) {
@@ -191,8 +182,10 @@ class Expenses extends Component
 
         $expense->delete();
         $this->dispatch('notify', type: 'success', message: 'Expense deleted.');
+        $this->dispatch('expense-table:refresh');
     }
 
+    #[On('expense-table:post')]
     public function postExpense(int $id): void
     {
         $expense = Expense::findOrFail($id);
@@ -200,11 +193,20 @@ class Expenses extends Component
         try {
             Accounting::postExpense($expense);
             $this->dispatch('notify', type: 'success', message: "Expense {$expense->expense_number} posted.");
+            $this->dispatch('expense-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
     }
 
+    #[On('expense-table:audit')]
+    public function openExpenseAuditTrail(int $id): void
+    {
+        $expense = Expense::findOrFail($id);
+        $this->openAuditTrail($expense::class, $expense->getKey(), $expense->reference ?: ('Expense #' . $expense->getKey()));
+    }
+
+    #[On('expense-table:pay')]
     public function openPayModal(int $id): void
     {
         $expense = Expense::findOrFail($id);
@@ -238,6 +240,7 @@ class Expenses extends Component
 
             $this->dispatch('notify', type: 'success', message: 'Payment recorded successfully!');
             $this->showPayModal = false;
+            $this->dispatch('expense-table:refresh');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
@@ -264,31 +267,16 @@ class Expenses extends Component
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        $expenses = Expense::query()
-            ->when($this->search, fn ($q) => $q->where(function ($q): void {
-                $q->where('expense_number', 'like', '%' . $this->search . '%')
-                    ->orWhere('vendor_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('reference', 'like', '%' . $this->search . '%');
-            }))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('expense_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('expense_date', '<=', $this->dateTo))
-            ->latest('expense_date')
-            ->paginate(config('accounting.per_page.expenses', 15));
-
         $accounts = Account::where('type', 'expense')
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
-
-        $expenses->load(['items', 'account', 'chargeable']);
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'
             : 'components.layouts.app';
 
         return view('accounting::livewire.expenses', [
-            'expenses' => $expenses,
             'accounts' => $accounts,
         ])->layout($layout, ['title' => __('Expenses')]);
     }
