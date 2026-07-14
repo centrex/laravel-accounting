@@ -1330,6 +1330,8 @@ class Accounting
             ['code' => '6720', 'name' => 'Interest Expense — Short-term Loans',   'type' => 'expense', 'subtype' => 'interest_expense'],
             ['code' => '6730', 'name' => 'Interest Expense — Long-term Loans',    'type' => 'expense', 'subtype' => 'interest_expense'],
             ['code' => '6800', 'name' => 'Bank Fees',               'type' => 'expense',   'subtype' => 'bank_fees_expense'],
+            ['code' => '7100', 'name' => 'Consultancy Fee',         'type' => 'expense',   'subtype' => 'consulting_expense'],
+            ['code' => '7200', 'name' => 'Donation Expense',        'type' => 'expense',   'subtype' => 'donation_expense'],
         ];
 
         foreach ($accounts as $accountData) {

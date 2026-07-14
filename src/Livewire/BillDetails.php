@@ -51,23 +51,14 @@ class BillDetails extends Component
     }
 
     /**
-     * Effective AP = bill total − paid − discounts.
+     * Effective AP = bill total − paid − discounts (Bill::$balance is the canonical
+     * calculation, shared with the bill list, ledger, and payment cap).
      * Delivery/courier/return charges are expenses and do not affect AP.
      */
     #[Computed]
     public function availableAp(): float
     {
-        $discounts = Expense::with('account')
-            ->where('chargeable_type', Bill::class)
-            ->where('chargeable_id', $this->bill->id)
-            ->get()
-            ->filter(fn ($e) => in_array($e->account?->code, self::DISCOUNT_ACCOUNT_CODES, true))
-            ->sum('total');
-
-        return round(
-            (float) $this->bill->total - (float) $this->bill->paid_amount - (float) $discounts,
-            2,
-        );
+        return round((float) $this->bill->balance, 2);
     }
 
     #[Computed]

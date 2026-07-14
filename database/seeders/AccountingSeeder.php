@@ -264,6 +264,13 @@ class AccountingSeeder extends Seeder
                 'is_system' => true,
             ],
             [
+                'code'      => '5504',
+                'name'      => 'Purchase Returns & Allowances',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::COST_OF_GOODS_SOLD,
+                'is_system' => true,
+            ],
+            [
                 'code'      => '6000',
                 'name'      => 'Salaries & Wages',
                 'type'      => AccountType::EXPENSE,
@@ -301,6 +308,13 @@ class AccountingSeeder extends Seeder
             [
                 'code'      => '6133',
                 'name'      => 'Promotional Discount (Sales)',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code'      => '6134',
+                'name'      => 'Sales Returns & Allowances',
                 'type'      => AccountType::EXPENSE,
                 'subtype'   => AccountSubtype::SELLING_EXPENSE,
                 'is_system' => true,
@@ -359,6 +373,20 @@ class AccountingSeeder extends Seeder
                 'name'      => 'Bank Charges',
                 'type'      => AccountType::EXPENSE,
                 'subtype'   => AccountSubtype::BANK_FEES_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code'      => '7100',
+                'name'      => 'Consultancy Fee',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::CONSULTING_EXPENSE,
+                'is_system' => true,
+            ],
+            [
+                'code'      => '7200',
+                'name'      => 'Donation Expense',
+                'type'      => AccountType::EXPENSE,
+                'subtype'   => AccountSubtype::DONATION_EXPENSE,
                 'is_system' => true,
             ],
         ];

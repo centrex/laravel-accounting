@@ -12,7 +12,7 @@ use Livewire\Component;
 class VendorLedger extends Component
 {
     // Expense account codes that reduce AP (purchase discounts + purchase returns).
-    private const AP_REDUCING_ACCOUNT_CODES = ['5500', '5501', '5502', '5503', '5504'];
+    private const AP_REDUCING_ACCOUNT_CODES = Bill::AP_REDUCING_ACCOUNT_CODES;
 
     public Vendor $vendor;
 

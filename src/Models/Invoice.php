@@ -20,6 +20,13 @@ class Invoice extends Model implements Auditable
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * Expense account codes that reduce AR when recorded against an invoice: manual
+     * sales discounts plus sale returns & allowances posted by the inventory ERP
+     * integration. Canonical set — also used by InvoiceDetails and CustomerLedger.
+     */
+    public const AR_REDUCING_ACCOUNT_CODES = ['6130', '6131', '6132', '6133', '6134'];
+
     protected function getTableSuffix(): string
     {
         return 'invoices';
@@ -169,6 +176,10 @@ class Invoice extends Model implements Auditable
 
     public function getBalanceAttribute(): float
     {
-        return $this->total - $this->paid_amount;
+        $discounts = $this->expenses()
+            ->whereHas('account', fn ($q) => $q->whereIn('code', self::AR_REDUCING_ACCOUNT_CODES))
+            ->sum('total');
+
+        return round((float) $this->total - (float) $this->paid_amount - (float) $discounts, 2);
     }
 }

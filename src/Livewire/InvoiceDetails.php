@@ -49,23 +49,14 @@ class InvoiceDetails extends Component
     }
 
     /**
-     * Effective AR = invoice total − paid − discounts.
+     * Effective AR = invoice total − paid − discounts (Invoice::$balance is the
+     * canonical calculation, shared with the invoice list, ledger, and payment cap).
      * Delivery/COD/return charges are expenses and do not affect AR.
      */
     #[Computed]
     public function availableAr(): float
     {
-        $discounts = Expense::with('account')
-            ->where('chargeable_type', Invoice::class)
-            ->where('chargeable_id', $this->invoice->id)
-            ->get()
-            ->filter(fn ($e) => in_array($e->account?->code, self::DISCOUNT_ACCOUNT_CODES, true))
-            ->sum('total');
-
-        return round(
-            (float) $this->invoice->total - (float) $this->invoice->paid_amount - (float) $discounts,
-            2,
-        );
+        return round((float) $this->invoice->balance, 2);
     }
 
     #[Computed]

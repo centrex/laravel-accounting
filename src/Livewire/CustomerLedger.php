@@ -14,7 +14,7 @@ class CustomerLedger extends Component
     // Expense account codes that reduce AR (discounts + sale returns), regardless of
     // payment_method. 'ar_deduction' additionally covers charges netted off AR at
     // payment time, whose account code varies (shipping/delivery accounts).
-    private const AR_REDUCING_ACCOUNT_CODES = ['6130', '6131', '6132', '6133', '6134'];
+    private const AR_REDUCING_ACCOUNT_CODES = Invoice::AR_REDUCING_ACCOUNT_CODES;
 
     public Customer $customer;
 

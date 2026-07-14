@@ -20,6 +20,13 @@ class Bill extends Model implements Auditable
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * Expense account codes that reduce AP when recorded against a bill: manual
+     * purchase discounts plus purchase returns & allowances posted by the inventory
+     * ERP integration. Canonical set — also used by BillDetails and VendorLedger.
+     */
+    public const AP_REDUCING_ACCOUNT_CODES = ['5500', '5501', '5502', '5503', '5504'];
+
     protected function getTableSuffix(): string
     {
         return 'bills';
@@ -173,6 +180,10 @@ class Bill extends Model implements Auditable
 
     public function getBalanceAttribute(): float
     {
-        return $this->total - $this->paid_amount;
+        $discounts = $this->expenses()
+            ->whereHas('account', fn ($q) => $q->whereIn('code', self::AP_REDUCING_ACCOUNT_CODES))
+            ->sum('total');
+
+        return round((float) $this->total - (float) $this->paid_amount - (float) $discounts, 2);
     }
 }
