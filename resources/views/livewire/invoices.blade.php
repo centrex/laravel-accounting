@@ -107,6 +107,7 @@
                 <div>
                     <div class="text-xs text-base-content/50">Invoice</div>
                     <div class="font-semibold text-base-content">{{ $this->payingInvoice->invoice_number }}</div>
+                    <div class="font-light text-base-content">{{ $this->payingInvoice->customer->organization_name ?? $this->payingInvoice->customer->name }}</div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs text-base-content/50">Amount Due</div>
