@@ -5,15 +5,16 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Carbon\Carbon;
-use Centrex\Accounting\Models\{Customer, Expense, Invoice, Payment};
+use Centrex\Accounting\Models\{CreditMemo, Customer, Expense, Invoice, Payment};
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class CustomerLedger extends Component
 {
-    // Expense account codes that reduce AR (discounts + sale returns), regardless of
+    // Expense account codes that reduce AR (manual discounts), regardless of
     // payment_method. 'ar_deduction' additionally covers charges netted off AR at
     // payment time, whose account code varies (shipping/delivery accounts).
+    // Sale returns are no longer in this set — they flow through CreditMemo rows below.
     private const AR_REDUCING_ACCOUNT_CODES = Invoice::AR_REDUCING_ACCOUNT_CODES;
 
     public Customer $customer;
@@ -45,6 +46,13 @@ class CustomerLedger extends Component
                 ->orWhereHas('account', fn ($q2) => $q2->whereIn('code', self::AR_REDUCING_ACCOUNT_CODES)));
     }
 
+    /** Issued (non-draft, non-void) credit memos for this customer — they credit AR like a payment. */
+    private function creditMemosQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return CreditMemo::where('customer_id', $this->customer->id)
+            ->whereNotIn('status', ['draft', 'void']);
+    }
+
     private function openingBalance(\Illuminate\Support\Collection $ids): float
     {
         if ($this->startDate === '') {
@@ -65,7 +73,17 @@ class CustomerLedger extends Component
             ->where('expense_date', '<', $this->startDate)
             ->sum('total');
 
-        return round((float) $invoiced - (float) $paid - (float) $credited, 2);
+        $memoCredits = $this->creditMemosQuery()
+            ->where('credit_memo_date', '<', $this->startDate)
+            ->sum('total');
+
+        // Cash refunds debit AR back after the memo credited it
+        $refunds = Payment::where('payable_type', CreditMemo::class)
+            ->whereIn('payable_id', $this->creditMemosQuery()->pluck('id'))
+            ->where('payment_date', '<', $this->startDate)
+            ->sum('amount');
+
+        return round((float) $invoiced - (float) $paid - (float) $credited - (float) $memoCredits + (float) $refunds, 2);
     }
 
     public function getLedgerData(): array
@@ -125,7 +143,43 @@ class CustomerLedger extends Component
                 'link'        => null,
             ]);
 
-        $entries = $invoices->merge($payments)->merge($credits)->sortBy('sort_key')->values();
+        $creditMemos = $this->creditMemosQuery()
+            ->when($this->startDate, fn ($q) => $q->where('credit_memo_date', '>=', $this->startDate))
+            ->when($this->endDate, fn ($q) => $q->where('credit_memo_date', '<=', $this->endDate))
+            ->orderBy('credit_memo_date')->orderBy('id')
+            ->get()
+            ->map(fn ($memo) => [
+                'date'        => Carbon::parse($memo->credit_memo_date),
+                'sort_key'    => Carbon::parse($memo->credit_memo_date)->format('Y-m-d') . '_1_' . str_pad((string) $memo->id, 10, '0', STR_PAD_LEFT) . '_6',
+                'type'        => 'credit',
+                'reference'   => $memo->credit_memo_number,
+                'description' => 'Credit Memo' . ($memo->reason ? ' — ' . $memo->reason : ''),
+                'status'      => $memo->status->value,
+                'debit'       => 0.0,
+                'credit'      => (float) $memo->total,
+                'link'        => route('accounting.credit-memos.show', $memo->id),
+            ]);
+
+        // Cash refunds against credit memos debit AR back out
+        $refunds = Payment::where('payable_type', CreditMemo::class)
+            ->whereIn('payable_id', $this->creditMemosQuery()->pluck('id'))
+            ->when($this->startDate, fn ($q) => $q->where('payment_date', '>=', $this->startDate))
+            ->when($this->endDate, fn ($q) => $q->where('payment_date', '<=', $this->endDate))
+            ->orderBy('payment_date')->orderBy('id')
+            ->get()
+            ->map(fn ($pmt) => [
+                'date'        => Carbon::parse($pmt->payment_date),
+                'sort_key'    => Carbon::parse($pmt->payment_date)->format('Y-m-d') . '_2_' . str_pad((string) $pmt->id, 10, '0', STR_PAD_LEFT) . '_7',
+                'type'        => 'refund',
+                'reference'   => $pmt->payment_number,
+                'description' => 'Refund — ' . ucwords(str_replace('_', ' ', (string) ($pmt->payment_method ?? ''))),
+                'status'      => null,
+                'debit'       => (float) $pmt->amount,
+                'credit'      => 0.0,
+                'link'        => null,
+            ]);
+
+        $entries = $invoices->merge($payments)->merge($credits)->merge($creditMemos)->merge($refunds)->sortBy('sort_key')->values();
         $opening = $this->openingBalance($ids);
         $balance = $opening;
         $totalDebit = 0.0;

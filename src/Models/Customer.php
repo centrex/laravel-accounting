@@ -76,6 +76,11 @@ class Customer extends Model implements Auditable, HasMedia
         return $this->hasMany(Invoice::class);
     }
 
+    public function creditMemos(): HasMany
+    {
+        return $this->hasMany(CreditMemo::class);
+    }
+
     public function getTotalOutstandingAttribute(): float
     {
         return (float) $this->invoices()

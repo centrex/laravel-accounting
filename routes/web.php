@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
@@ -18,6 +18,8 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/reports', FinancialReports::class)->name('reports');
         Route::get('/invoices', Invoices::class)->name('invoices');
         Route::get('/invoices/{invoice}', InvoiceDetails::class)->name('invoices.show');
+        Route::get('/credit-memos', CreditMemos::class)->name('credit-memos');
+        Route::get('/credit-memos/{creditMemo}', CreditMemoDetails::class)->name('credit-memos.show');
         Route::get('/bills', Bills::class)->name('bills');
         Route::get('/bills/{bill}', BillDetails::class)->name('bills.show');
         Route::get('/budgets', Budgets::class)->name('budgets');

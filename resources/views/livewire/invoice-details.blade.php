@@ -49,6 +49,16 @@
         }
     }
 
+    foreach ($invoice->creditMemos as $memo) {
+        if ($memo->journalEntry) {
+            $allJournals->push([
+                'type'  => 'Credit Memo ' . $memo->credit_memo_number,
+                'badge' => 'warning',
+                'entry' => $memo->journalEntry,
+            ]);
+        }
+    }
+
     $allJournals = $allJournals->sortBy(fn($j) => $j['entry']->date?->timestamp ?? 0)->values();
 @endphp
 
@@ -62,6 +72,11 @@
             <button wire:click="openChargeModal" class="btn btn-outline btn-sm">
                 Record Charge
             </button>
+            @if($invoice->journal_entry_id)
+                <a href="{{ route('accounting.credit-memos', ['action' => 'create', 'invoice' => $invoice->id]) }}" class="btn btn-outline btn-sm">
+                    Credit Memo
+                </a>
+            @endif
         @endif
         @if(in_array($status, ['issued', 'sent', 'partially_settled', 'partial', 'overdue']) && $invoice->balance > 0)
             <a href="{{ route('accounting.invoices', ['action' => 'pay', 'invoice' => $invoice->id]) }}" class="btn btn-primary btn-sm">

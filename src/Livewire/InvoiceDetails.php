@@ -251,6 +251,7 @@ class InvoiceDetails extends Component
             'journalEntry.lines.account',
             'expenses.account',
             'expenses.journalEntry.lines.account',
+            'creditMemos.journalEntry.lines.account',
         ]);
 
         $layout = view()->exists('layouts.app')

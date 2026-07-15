@@ -32,6 +32,7 @@ class AccountingWorkspace
                 'section' => 'Sales',
                 'items'   => [
                     ['label' => 'Invoices', 'route' => 'accounting.invoices', 'icon' => 'o-document-text', 'permission' => 'accounting.invoice.view'],
+                    ['label' => 'Credit Memos', 'route' => 'accounting.credit-memos', 'icon' => 'o-receipt-refund', 'permission' => 'accounting.credit-memo.view'],
                     ['label' => 'Customers', 'route' => 'accounting.customers', 'icon' => 'o-users', 'permission' => 'accounting.customers.view'],
                     ['label' => 'Customer Ledger', 'route' => 'accounting.ledger.customers', 'icon' => 'o-book-open', 'permission' => 'accounting.ledger.view'],
                 ],
@@ -74,6 +75,7 @@ class AccountingWorkspace
     {
         $actions = [
             ['label' => 'Invoice', 'description' => 'Bill a customer', 'route' => 'accounting.invoices', 'icon' => 'o-document-text', 'permission' => 'accounting.invoice.create'],
+            ['label' => 'Credit Memo', 'description' => 'Credit a customer for a return', 'route' => 'accounting.credit-memos', 'icon' => 'o-receipt-refund', 'permission' => 'accounting.credit-memo.create'],
             ['label' => 'Bill', 'description' => 'Record a vendor bill', 'route' => 'accounting.bills', 'icon' => 'o-inbox-arrow-down', 'permission' => 'accounting.bill.create'],
             ['label' => 'Expense', 'description' => 'Log a cash expense', 'route' => 'accounting.expenses', 'icon' => 'o-credit-card'],
             ['label' => 'Journal Entry', 'description' => 'Post a manual entry', 'route' => 'accounting.journal', 'icon' => 'o-pencil-square', 'permission' => 'accounting.journal.create'],

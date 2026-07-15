@@ -7,7 +7,7 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
-use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
 use Centrex\Accounting\Models\{BillItem, ExpenseItem, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, ExpenseItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
@@ -43,6 +43,8 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('accounting-bills', Bills::class);
         Livewire::component('accounting-bill-table', BillTable::class);
         Livewire::component('accounting-bill-details', BillDetails::class);
+        Livewire::component('accounting-credit-memos', CreditMemos::class);
+        Livewire::component('accounting-credit-memo-details', CreditMemoDetails::class);
         Livewire::component('accounting-customers', Customers::class);
         Livewire::component('accounting-vendors', Vendors::class);
         Livewire::component('accounting-expenses', Expenses::class);
@@ -150,6 +152,12 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.bill.create',
             'accounting.bill.post',
             'accounting.bill.payment',
+
+            // Credit memos
+            'accounting.credit-memo.view',
+            'accounting.credit-memo.create',
+            'accounting.credit-memo.issue',
+            'accounting.credit-memo.refund',
 
             // Reports (read-only)
             'accounting.reports.view',

@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Models;
 
 use Centrex\Accounting\Concerns\AddTablePrefix;
-use Centrex\Accounting\Enums\EntryStatus;
+use Centrex\Accounting\Enums\{CreditMemoStatus, EntryStatus};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphMany};
@@ -21,11 +21,13 @@ class Invoice extends Model implements Auditable
     use SoftDeletes;
 
     /**
-     * Expense account codes that reduce AR when recorded against an invoice: manual
-     * sales discounts plus sale returns & allowances posted by the inventory ERP
-     * integration. Canonical set — also used by InvoiceDetails and CustomerLedger.
+     * Expense account codes that reduce AR when recorded as a manual discount against
+     * an invoice. Sale returns & allowances (6134) used to be posted here too by the
+     * inventory ERP integration, but that account is now owned by the CreditMemo model
+     * (see creditMemos() + getBalanceAttribute() below) — 6134 is deliberately excluded
+     * to avoid double-counting a return's effect on the balance.
      */
-    public const AR_REDUCING_ACCOUNT_CODES = ['6130', '6131', '6132', '6133', '6134'];
+    public const AR_REDUCING_ACCOUNT_CODES = ['6130', '6131', '6132', '6133'];
 
     protected function getTableSuffix(): string
     {
@@ -122,6 +124,11 @@ class Invoice extends Model implements Auditable
         return $this->morphMany(Expense::class, 'chargeable');
     }
 
+    public function creditMemos(): HasMany
+    {
+        return $this->hasMany(CreditMemo::class);
+    }
+
     public function convertToBase(float|int|string|null $amount): float
     {
         $value = (float) ($amount ?? 0);
@@ -180,6 +187,13 @@ class Invoice extends Model implements Auditable
             ->whereHas('account', fn ($q) => $q->whereIn('code', self::AR_REDUCING_ACCOUNT_CODES))
             ->sum('total');
 
-        return round((float) $this->total - (float) $this->paid_amount - (float) $discounts, 2);
+        // Issued credit memos have already credited AR via their own journal entry,
+        // so they reduce what the customer still owes on this invoice. Draft and void
+        // memos have no posted JE and therefore no effect.
+        $credits = $this->creditMemos()
+            ->whereNotIn('status', [CreditMemoStatus::DRAFT->value, CreditMemoStatus::VOID->value])
+            ->sum('total');
+
+        return round((float) $this->total - (float) $this->paid_amount - (float) $discounts - (float) $credits, 2);
     }
 }
