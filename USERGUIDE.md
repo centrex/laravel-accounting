@@ -246,6 +246,32 @@ $fy = FiscalYear::where('name', 'FY 2026')->first();
 Accounting::closeFiscalYear($fy);
 ```
 
+### Adjustments & Reconciliation
+
+```php
+// Cash count variance — post against a dedicated variance account (create once)
+$cashOverShort = Account::firstOrCreate(['code' => '6900'], [
+    'name' => 'Cash Over/Short', 'type' => 'expense', 'subtype' => 'other_expense',
+]);
+$cash = Account::where('code', '1000')->first();
+
+$entry = Accounting::createJournalEntry([
+    'date' => today(), 'type' => 'adjustment', 'description' => 'Cash count shortage',
+    'lines' => [
+        ['account_id' => $cashOverShort->id, 'type' => 'debit',  'amount' => 500],
+        ['account_id' => $cash->id,          'type' => 'credit', 'amount' => 500],
+    ],
+]);
+$entry->post();
+
+// Daily bank reconciliation — tie GL activity to the bank statement
+$bank = Account::where('code', '1100')->first();
+$gl   = Accounting::getGeneralLedger($bank->id, today()->toDateString(), today()->toDateString());
+$closingBalance = $gl['accounts'][0]['closing_balance'] ?? 0.0; // compare to the statement
+```
+
+Full write-up — including inventory adjustments, monthly reconciliation, the distinction between monthly period-close and the year-end closing journal, and a step-by-step guide for balance sheet discrepancies — lives in [README.md § Adjustments, Reconciliation & Closing](README.md#adjustments-reconciliation--closing).
+
 ---
 
 ## QuickBooks Online Integration
@@ -413,9 +439,11 @@ if (!$tb['is_balanced']) {
 
 ## Troubleshooting
 
-**Trial balance not balancing** — check for entries created outside the facade, or entries still in `draft` status (only `posted` entries affect balances).
+**Trial balance not balancing** — check for entries created outside the facade, or entries still in `draft` status (only `posted` entries affect balances). `Accounting::createJournalEntry()` refuses to save an unbalanced entry, so this only happens via a direct `JournalEntry::create()` call.
 
 **Account balance incorrect** — verify all relevant journal entries are posted; check the `sbu_code` filter if using SBU-scoped reports.
+
+**Balance sheet doesn't balance (but trial balance does)** — almost always a deactivated account (`is_active = false`) still carrying a posted balance (reports exclude it; `Account::getCurrentBalance()` does not), or an account filed under the wrong `type` (Assets/Expenses are debit-normal, Liabilities/Equity/Revenue are credit-normal — see `Account::isDebitAccount()`). Full diagnostic walkthrough: [README.md § Solving Balance Sheet Discrepancies](README.md#solving-balance-sheet-discrepancies).
 
 **Cannot post to a period** — `ACCOUNTING_ENFORCE_PERIOD_LOCK=true` blocks posting to closed periods. Pass `bypassPeriodLock: true` if you have permission, or re-open the period first.
 

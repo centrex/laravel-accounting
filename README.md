@@ -30,6 +30,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Budgets](#budgets)
 - [Period Closing (Month-End)](#period-closing-month-end)
 - [Fiscal Year Closing](#fiscal-year-closing)
+- [Adjustments, Reconciliation & Closing](#adjustments-reconciliation--closing)
 - [Inventory Financing](#inventory-financing)
 - [Organizational Loans & SBU-wise Tracking](#organizational-loans--sbu-wise-tracking)
 - [Owner's Equity](#owners-equity)
@@ -1023,6 +1024,256 @@ Accounting::closeFiscalYear($fy);
 // 3. Posts the entry (bypasses period lock)
 // 4. Sets fiscal_year.is_closed = true
 ```
+
+---
+
+## Adjustments, Reconciliation & Closing
+
+### Adjustment Journals
+
+There's no separate "adjustment" API — an adjustment is just a normal journal entry with `'type' => 'adjustment'` (purely a label for filtering/reporting; the ledger effect is identical to `'general'`). Use it for accruals, depreciation, prepaid amortization, write-offs, and reclassifications:
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'ADJ-' . now()->format('Ymd') . '-001',
+    'type'        => 'adjustment',
+    'description' => 'Accrual — electricity bill received but not yet invoiced',
+    'lines' => [
+        ['account_id' => $utilitiesExpenseId, 'type' => 'debit',  'amount' => 18000],
+        ['account_id' => $accruedLiabilityId, 'type' => 'credit', 'amount' => 18000],
+    ],
+]);
+$entry->submit();  // optional — post() works directly from draft too
+$entry->post();
+```
+
+`createJournalEntry()` throws `UnbalancedJournalException` immediately if debits ≠ credits, so an adjustment can never be saved half-written. To undo a posted adjustment, don't edit it — void it and post a mirror-image reversal (see [Void and Reverse a Posted Entry](#void-and-reverse-a-posted-entry)).
+
+### Cash Adjustments
+
+A cash/petty-cash count that doesn't match the GL (`1000` Cash, `1050` Petty Cash) is posted as an adjustment against a dedicated variance account. The chart of accounts doesn't seed one by default — create it once:
+
+```php
+use Centrex\Accounting\Models\Account;
+use Centrex\Accounting\Enums\{AccountType, AccountSubtype};
+
+$cashOverShort = Account::firstOrCreate(['code' => '6900'], [
+    'name'    => 'Cash Over/Short',
+    'type'    => AccountType::EXPENSE,
+    'subtype' => AccountSubtype::OTHER_EXPENSE,
+]);
+```
+
+```php
+$cash = Account::where('code', '1000')->first();
+
+// Shortage — physical count is ৳500 less than the GL balance
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'CASH-ADJ-' . today()->format('Ymd'),
+    'type'        => 'adjustment',
+    'description' => 'Cash count variance — shortage',
+    'lines' => [
+        ['account_id' => $cashOverShort->id, 'type' => 'debit',  'amount' => 500],
+        ['account_id' => $cash->id,          'type' => 'credit', 'amount' => 500],
+    ],
+]);
+$entry->post();
+
+// Overage — physical count is ৳500 more than the GL balance (reverse the lines)
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'CASH-ADJ-' . today()->format('Ymd'),
+    'type'        => 'adjustment',
+    'description' => 'Cash count variance — overage',
+    'lines' => [
+        ['account_id' => $cash->id,          'type' => 'debit',  'amount' => 500],
+        ['account_id' => $cashOverShort->id, 'type' => 'credit', 'amount' => 500],
+    ],
+]);
+$entry->post();
+```
+
+The same pattern applies to the Bank account (`1100`) for bank-side adjustments (fees, unmatched deposits) — see [Daily Cash / Bank Reconciliation](#daily-cash--bank-reconciliation) below for how the variance is usually discovered.
+
+### Inventory Adjustments
+
+**With `laravel-inventory` installed** (recommended — keeps stock quantities and GL in sync): use `Inventory::createAdjustment()` / `postAdjustment()`. Posting auto-generates the GL entry against `INVENTORY_ACCOUNTING_GAIN` (default `4900`) for a count increase or `INVENTORY_ACCOUNTING_LOSS` (default `5000`) for a decrease:
+
+```php
+use Centrex\Inventory\Facades\Inventory;
+
+$adj = Inventory::createAdjustment([
+    'warehouse_id' => $warehouseId,
+    'reason'       => 'cycle_count',   // cycle_count | write_off | damage | theft | expiry | found_stock | other
+    'adjusted_at'  => today(),
+    'items' => [
+        ['product_id' => 1, 'qty_actual' => 95, 'notes' => 'Counted 95, system had 100'],
+    ],
+]);
+Inventory::postAdjustment($adj->id);
+// Shortage: DR Inventory Loss (5000) / CR Inventory (1300)
+// Surplus:  DR Inventory (1300) / CR Inventory Gain (4900)
+```
+
+**Without `laravel-inventory`** (accounting-only, e.g. physical stock count at period-end), post the same effect as a plain adjustment journal against the Inventory asset account:
+
+```php
+$inventoryShrinkageEntry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'SHRINK-' . today()->format('Ymd'),
+    'type'        => 'adjustment',
+    'description' => 'Inventory shrinkage — physical count variance',
+    'lines' => [
+        ['account_id' => $inventoryLossId,  'type' => 'debit',  'amount' => 37500],
+        ['account_id' => $inventoryAssetId, 'type' => 'credit', 'amount' => 37500],
+    ],
+]);
+$inventoryShrinkageEntry->post();
+```
+
+If `INVENTORY_ACCOUNTING_ENABLED=true`, prefer the `Inventory::` path — it also writes the underlying `StockMovement` row, so the physical count and the GL never drift apart. Reconciling the two independently (posting a manual JE while stock quantities are unchanged, or vice versa) is the single most common cause of a subsequent inventory variance at period close — see [Close the Period](#close-the-period) for the automated snapshot-vs-GL check.
+
+### Daily Cash / Bank Reconciliation
+
+Pull the day's posted GL activity for the Cash/Bank account and tie it to the physical count / bank statement:
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\Account;
+
+$bank = Account::where('code', '1100')->first();
+$today = today()->toDateString();
+
+$gl = Accounting::getGeneralLedger($bank->id, $today, $today);
+$section = $gl['accounts'][0] ?? null;
+
+if ($section) {
+    echo "Opening: " . number_format($section['opening_balance'], 2) . "\n";
+
+    foreach ($section['entries'] as $line) {
+        echo "{$line['entry_number']}  {$line['line_description']}  DR {$line['debit']}  CR {$line['credit']}  → {$line['running_balance']}\n";
+    }
+
+    echo "System closing balance: " . number_format($section['closing_balance'], 2) . "\n";
+    // Compare against the bank's own statement / the physical cash count.
+    // Any variance → post a Cash Adjustment (see above) dated today.
+}
+```
+
+Run this as a scheduled report (or a quick Artisan/Tinker check) at end-of-day for every cash-handling location and the operating bank account — catching a variance same-day is far cheaper than tracing it back weeks later.
+
+### Monthly Reconciliation
+
+Monthly reconciliation is the broader version of the daily check, run as part of the pre-close routine (see the [Week 4 Pre-Close Workflow](#week-4-pre-close-workflow-days-2730) for a full worked example):
+
+```php
+use Centrex\Accounting\Models\FiscalPeriod;
+
+$period = FiscalPeriod::where('name', 'April 2026')->first();
+
+// 1. Trial balance must balance before you even start reconciling
+$tb = Accounting::getTrialBalance($period->start_date, $period->end_date);
+abort_unless($tb['is_balanced'], 500, 'Trial balance out of balance — resolve before reconciling.');
+
+// 2. Tie Bank (1100) GL closing balance to the bank statement's closing balance
+$bank = Account::where('code', '1100')->first();
+$gl   = Accounting::getGeneralLedger($bank->id, $period->start_date, $period->end_date);
+$bankClosing = $gl['accounts'][0]['closing_balance'] ?? 0.0;
+// Compare $bankClosing to the statement; post a Cash Adjustment for any residual (bank fees,
+// unmatched deposits in transit, etc.) before closing the period.
+
+// 3. Tie AR / AP subledgers to their control accounts
+$arAging = Accounting::getArAging($period->end_date);
+$apAging = Accounting::getApAging($period->end_date);
+$ar = Account::where('code', '1200')->first()->getCurrentBalance();
+$ap = Account::where('code', '2000')->first()->getCurrentBalance();
+// $arAging['totals']['total'] should equal $ar; $apAging['totals']['total'] should equal $ap.
+// A mismatch usually means an invoice/bill was posted with the wrong account code.
+
+// 4. Inventory ties into physical count automatically when you close with a snapshot —
+//    see closeFiscalPeriod(snapshotInventory: true) below.
+```
+
+### Monthly Closing
+
+Monthly closing is the [Period Closing (Month-End)](#period-closing-month-end) workflow: run `getPeriodCloseChecks()`, resolve any blockers, then call `closeFiscalPeriod()`. It **locks the period** and (optionally) snapshots inventory — it does **not** post any journal entry of its own; it only freezes what's already posted:
+
+```php
+$checks = Accounting::getPeriodCloseChecks($period);
+if (!$checks['has_blockers']) {
+    Accounting::closeFiscalPeriod($period, snapshotInventory: true);
+}
+```
+
+### Closing Journal (Year-End)
+
+The **closing journal** — the entry that actually zeroes revenue/expense into equity — is only created once a year, by [Fiscal Year Closing](#fiscal-year-closing):
+
+```php
+Accounting::closeFiscalYear($fy);
+// DR Income Summary (3900)   ← revenue − expenses for the year
+// CR Retained Earnings (3100)
+```
+
+Monthly period closes never touch `3900`/`3100` — they just lock the period so nothing more can post into it. Revenue and expense account balances keep accumulating across every open month within the fiscal year until `closeFiscalYear()` runs; that's why `getBalanceSheet()` computes `equity.retained_earnings` as prior Retained Earnings **plus** cumulative net income to date, rather than reading `3100` alone.
+
+### Solving Balance Sheet Discrepancies
+
+Because `Accounting::createJournalEntry()` throws `UnbalancedJournalException` before an unbalanced entry can even be saved, `getBalanceSheet()['is_balanced']` being `false` is almost never "an entry doesn't balance." Work through these in order:
+
+```php
+use Centrex\Accounting\Models\{Account, JournalEntry};
+
+// 1. Confirm the trial balance itself balances first
+$tb = Accounting::getTrialBalance();
+if (!$tb['is_balanced']) {
+    // Only possible if a JournalEntry row was written outside the facade
+    // (direct ::create() bypasses the balance check). Find the culprit:
+    $unbalanced = JournalEntry::where('status', 'posted')
+        ->with('lines')
+        ->get()
+        ->reject(fn (JournalEntry $e) => $e->isBalanced());
+}
+
+// 2. Inactive accounts still carrying a posted balance.
+//    getBalanceSheet()/getTrialBalance()/getGeneralLedger() only look at
+//    is_active = true accounts, but getCurrentBalance() does not filter on
+//    is_active — so a deactivated account with historical postings becomes
+//    invisible to every report while its balance is still real.
+$orphaned = Account::where('is_active', false)->get()
+    ->map(fn (Account $a) => ['code' => $a->code, 'name' => $a->name, 'balance' => $a->getCurrentBalance()])
+    ->filter(fn (array $row) => abs($row['balance']) > 0.01);
+// Reactivate the account, or move its balance out with an adjustment JE, then reconcile.
+
+// 3. Wrong account `type` — the most common real cause. Assets/Expenses are
+//    debit-normal; Liabilities/Equity/Revenue are credit-normal (Account::isDebitAccount()).
+//    An account filed under the wrong `type` lands in the wrong Balance Sheet
+//    bucket even though total debits still equal total credits globally.
+Account::where('is_active', true)->get()->each(function (Account $a) {
+    // Spot-check: does the account's type match how it's actually used?
+    // e.g. a "Loan Payable" account accidentally created with type: asset
+});
+
+// 4. A posted entry was voided after the fact (e.g. after it had already been
+//    reconciled against a bank statement or shipped inventory). void() removes
+//    the entry from every report immediately — it does not create a reversing
+//    entry, so any downstream process that already relied on it is now stale.
+$recentlyVoided = JournalEntry::where('status', 'void')
+    ->where('updated_at', '>=', now()->subDays(7))
+    ->get();
+
+// 5. Rounding tolerance drift — many small entries can each pass individually
+//    (ACCOUNTING_ROUNDING_TOLERANCE, default 0.005) but sum to a visible variance.
+//    Tighten it temporarily to surface exactly where the drift accumulates:
+config(['accounting.rounding_tolerance' => 0.0001]);
+$tb = Accounting::getTrialBalance();
+```
+
+If none of the above turn anything up, drill into the specific account with `getGeneralLedger($accountId, ...)` and walk the `entries` array line by line — the discrepancy is always traceable to one posted (or missing) entry.
 
 ---
 
