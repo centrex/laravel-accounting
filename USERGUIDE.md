@@ -30,6 +30,8 @@ A comprehensive double-entry bookkeeping system with financial reporting, multi-
 - **Customer & Vendor Ledgers** — per-entity statement of account
 - **Budget Management** — create, approve, and track actual vs. budget variance
 - **Expenses** — direct expense recording with cash or credit posting
+- **Loan Facilities** — register lenders (term loans, working capital, director, inter-company, equipment, overdraft, bridge) and track drawdowns, monthly interest accrual, interest payments, and principal repayments per facility
+- **Owner's Equity** — record capital contributions and owner drawings against the standard Capital / Owner Drawings accounts
 
 ### QuickBooks Online (QBO)
 
@@ -126,6 +128,59 @@ Accounting::recordInvoicePayment($invoice, [
 ]);
 // Invoice status auto-updates: partially_settled → settled when fully paid
 ```
+
+### Registering and Drawing Down a Loan
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+
+$loan = Accounting::addLoanFacility(
+    lenderName:   'IDLC Finance Ltd',
+    loanType:     'term_loan',      // term_loan | working_capital | inter_company | director | equipment | overdraft | bridge
+    loanTerm:     'long_term',      // short_term | long_term
+    monthlyRate:  0.01,             // 1% per month
+    loanAmount:   10_000_000.00,
+    disbursedAt:  today(),
+    dueAt:        today()->addYears(5),
+    tenureMonths: 60,
+);
+// → auto-creates principal (250x) + accrued interest (252x) sub-accounts
+
+$entry = Accounting::drawdownLoan($loan, 10_000_000.00, today(), 'LOAN-001');
+$entry->post();
+// DR Bank 1100 / CR Loan Payable 250x
+
+// Month-end
+Accounting::accrueLoanInterest($loan)?->post();       // DR Interest Expense / CR Accrued Interest
+Accounting::payLoanInterest($loan, 100_000.00, today(), 'LOAN-INT-001')->post();
+Accounting::repayLoan($loan, 500_000.00, today(), 'LOAN-REPAY-001')->post();
+```
+
+Manage all of this from the UI at `/accounting/loans` — see [README.md § Organizational Loans](README.md#organizational-loans--sbu-wise-tracking).
+
+### Recording a Capital Contribution or Owner Drawing
+
+There's no dedicated facade method for equity — post directly against the standard accounts seeded by `initializeChartOfAccounts()` (Capital `3000`, Owner Drawings `3200`):
+
+```php
+use Centrex\Accounting\Models\Account;
+
+$bank    = Account::where('code', '1100')->first();
+$capital = Account::where('code', config('accounting.accounts.capital', '3000'))->first();
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'CAP-001',
+    'description' => 'Capital injection — opening equity',
+    'lines' => [
+        ['account_id' => $bank->id,    'type' => 'debit',  'amount' => 500_000.00],
+        ['account_id' => $capital->id, 'type' => 'credit', 'amount' => 500_000.00],
+    ],
+]);
+$entry->post();
+```
+
+Manage this from the UI at `/accounting/equity` — see [README.md § Owner's Equity](README.md#owners-equity).
 
 ### Generating Reports
 

@@ -181,6 +181,12 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.budget.manage',
             'accounting.budget.approve',
 
+            // Loans & owner's equity
+            'accounting.loans.view',
+            'accounting.loans.manage',
+            'accounting.equity.view',
+            'accounting.equity.manage',
+
             // Expenses
             'accounting.expense.view',
             'accounting.expense.delete',

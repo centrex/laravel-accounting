@@ -55,6 +55,13 @@ class AccountingWorkspace
                 ],
             ],
             [
+                'section' => 'Financing',
+                'items'   => [
+                    ['label' => 'Loan Facilities', 'route' => 'accounting.loans', 'icon' => 'o-banknotes', 'permission' => 'accounting.loans.view'],
+                    ['label' => "Owner's Equity", 'route' => 'accounting.equity', 'icon' => 'o-user-circle', 'permission' => 'accounting.equity.view'],
+                ],
+            ],
+            [
                 'section' => 'Admin',
                 'items'   => [
                     ['label' => 'Period Close', 'route' => 'accounting.period-close', 'icon' => 'o-lock-closed', 'permission' => 'accounting.fiscal-year.close'],
@@ -79,6 +86,7 @@ class AccountingWorkspace
             ['label' => 'Bill', 'description' => 'Record a vendor bill', 'route' => 'accounting.bills', 'icon' => 'o-inbox-arrow-down', 'permission' => 'accounting.bill.create'],
             ['label' => 'Expense', 'description' => 'Log a cash expense', 'route' => 'accounting.expenses', 'icon' => 'o-credit-card'],
             ['label' => 'Journal Entry', 'description' => 'Post a manual entry', 'route' => 'accounting.journal', 'icon' => 'o-pencil-square', 'permission' => 'accounting.journal.create'],
+            ['label' => 'Loan Facility', 'description' => 'Register a lender', 'route' => 'accounting.loans', 'icon' => 'o-banknotes', 'permission' => 'accounting.loans.manage'],
         ];
 
         return collect($actions)->map(self::mapItem(...))->all();

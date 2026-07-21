@@ -32,6 +32,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Fiscal Year Closing](#fiscal-year-closing)
 - [Inventory Financing](#inventory-financing)
 - [Organizational Loans & SBU-wise Tracking](#organizational-loans--sbu-wise-tracking)
+- [Owner's Equity](#owners-equity)
 - [Real-World Example — Trading Company Month-End Close](#real-world-example--trading-company-month-end-close)
 - [Authorization Gates](#authorization-gates)
 - [Web UI Routes](#web-ui-routes)
@@ -1511,6 +1512,80 @@ $tb = Accounting::getTrialBalance('2026-04-01', '2026-04-30');
 
 ---
 
+### Web UI
+
+`/accounting/loans` (route: `accounting.loans`, gated by `accounting.loans.view` / `.manage`) lists every facility with its live outstanding principal and accrued interest, pulled straight from the GL. From there you can:
+
+- **New Loan Facility** — registers a lender via `addLoanFacility()`; the monthly rate field takes a plain percentage (e.g. `1.5`) and is converted to the `0.015` fraction the facade expects.
+- **Drawdown / Pay Interest / Repay** — each opens a small amount + date + reference form that calls the matching facade method (`drawdownLoan()`, `payLoanInterest()`, `repayLoan()`) and posts the resulting entry immediately.
+- **Accrue Interest** — one click, calls `accrueLoanInterest()` for that facility only and posts it; shows an info toast instead of erroring when there's no outstanding principal to accrue.
+- **Mark Inactive / Reactivate** — toggles `is_active`; `drawdownLoan()` refuses further draws against an inactive facility.
+
+Add it to your app's navigation via `Centrex\Accounting\Support\AccountingWorkspace::sidebarNavigation()`, which already includes it under a "Financing" section.
+
+---
+
+## Owner's Equity
+
+There's no dedicated facade method for equity — contributions and drawings are posted as plain journal entries against the standard equity accounts seeded by `initializeChartOfAccounts()`:
+
+| Code | Name | Normal balance | Purpose |
+| --- | --- | --- | --- |
+| `3000` | Capital | Credit | Owner / shareholder contributions |
+| `3100` | Retained Earnings | Credit | Auto-updated by `closeFiscalYear()` |
+| `3200` | Owner Drawings | Debit (contra-equity) | Owner withdrawals |
+
+Both account codes are configurable — `ACCOUNTING_ACCOUNT_CAPITAL` (default `3000`) and `ACCOUNTING_ACCOUNT_OWNER_DRAWINGS` (default `3200`) — and resolved via `config('accounting.accounts.capital')` / `config('accounting.accounts.owner_drawings')`.
+
+### Record a Capital Contribution
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\Account;
+
+$bank    = Account::where('code', '1100')->first();
+$capital = Account::where('code', config('accounting.accounts.capital', '3000'))->first();
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'CAP-001',
+    'description' => 'Capital injection — founding shareholders',
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $bank->id,    'type' => 'debit',  'amount' => 500_000.00],
+        ['account_id' => $capital->id, 'type' => 'credit', 'amount' => 500_000.00],
+    ],
+]);
+$entry->post();
+```
+
+### Record an Owner Drawing
+
+```php
+$drawings = Account::where('code', config('accounting.accounts.owner_drawings', '3200'))->first();
+$bank     = Account::where('code', '1100')->first();
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'DRAW-001',
+    'description' => 'Owner withdrawal',
+    'currency'    => 'BDT',
+    'lines' => [
+        ['account_id' => $drawings->id, 'type' => 'debit',  'amount' => 50_000.00],
+        ['account_id' => $bank->id,     'type' => 'credit', 'amount' => 50_000.00],
+    ],
+]);
+$entry->post();
+```
+
+Retained Earnings rolls up automatically — `Accounting::closeFiscalYear($fiscalYear)` transfers net income into `3100` via a closing journal entry; it is never posted to directly.
+
+### Web UI
+
+`/accounting/equity` (route: `accounting.equity`, gated by `accounting.equity.view` / `.manage`) shows live Capital / Owner Drawings / Retained Earnings balances as stat cards, plus a feed of posted equity journal lines. **Record Contribution** and **Record Drawing** open a modal (amount, date, a cash/bank account picker restricted to active `10xx`/`11xx` accounts) and post the entry in one step — same pattern as the invoice/bill payment modals.
+
+---
+
 ## Real-World Example — Trading Company Month-End Close
 
 **Scenario:** ABC Trading Ltd imports electronics from South Korea and sells in Bangladesh. The company carries two active inventory financing facilities — BRAC Bank (৳50 lakh limit, 2%/month) and a private party Mr. Karim (৳15 lakh limit, 2%/month). April 2026 had 80 purchase transactions, 140 sales orders, and 6 stock adjustments.
@@ -1738,6 +1813,10 @@ Available gates:
 | `accounting.budget.manage` | Create/edit budgets |
 | `accounting.budget.approve` | Approve budgets |
 | `accounting.fiscal-year.close` | Close fiscal year |
+| `accounting.loans.view` | View loan facilities |
+| `accounting.loans.manage` | Register facilities; record drawdowns, interest, repayments |
+| `accounting.equity.view` | View owner's equity balances & activity |
+| `accounting.equity.manage` | Record capital contributions & owner drawings |
 | `accounting.qbo.connect` | Initiate QBO OAuth2 connect / disconnect |
 | `accounting.qbo.sync` | Trigger push sync to QBO or pull QBO reports |
 
@@ -1768,6 +1847,8 @@ All routes are protected by `web_middleware` (default `['web', 'auth']`) under `
 | `accounting.requisitions` | `/accounting/requisitions` | Purchase & expense requisitions |
 | `accounting.reports` | `/accounting/reports` | Financial reports (trial balance, P&L, balance sheet, cash flow) |
 | `accounting.budgets` | `/accounting/budgets` | Budget management |
+| `accounting.loans` | `/accounting/loans` | Loan facilities — register lenders, drawdown, accrue/pay interest, repay |
+| `accounting.equity` | `/accounting/equity` | Owner's equity — capital contributions & drawings |
 | `accounting.period-close` | `/accounting/period-close` | Month-end period close wizard |
 
 ---
