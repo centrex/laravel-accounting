@@ -30,6 +30,9 @@
         @can('accounting.bill.view')
         <x-tallui-button label="Bill" icon="o-inbox-arrow-down" :link="route('accounting.bills')" class="btn-outline btn-sm" />
         @endcan
+        @can('accounting.credit-memo.view')
+        <x-tallui-button label="Credit Memo" icon="o-receipt-refund" :link="route('accounting.credit-memos')" class="btn-outline btn-sm" />
+        @endcan
         @can('accounting.expense.view')
         <x-tallui-button label="Expense" icon="o-credit-card" :link="route('accounting.expenses')" class="btn-outline btn-sm" />
         @endcan
@@ -121,6 +124,13 @@
         class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
         <x-heroicon-o-inbox-arrow-down class="w-7 h-7 text-warning" />
         <span class="text-sm font-medium">Bills</span>
+    </a>
+    @endcan
+    @can('accounting.credit-memo.view')
+    <a href="{{ route('accounting.credit-memos') }}" wire:navigate
+        class="flex flex-col items-center gap-2 p-4 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition cursor-pointer text-center">
+        <x-heroicon-o-receipt-refund class="w-7 h-7 text-secondary" />
+        <span class="text-sm font-medium">Credit Memos</span>
     </a>
     @endcan
     @can('accounting.expense.view')
