@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
-use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem};
+use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem, TaxRate};
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\{Computed, On};
 use Livewire\Component;
@@ -104,6 +104,7 @@ class Invoices extends Component
             'quantity'    => 1,
             'unit_price'  => 0,
             'tax_rate'    => 0,
+            'tax_rate_id' => null,
         ];
     }
 
@@ -132,6 +133,7 @@ class Invoices extends Component
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0',
+            'items.*.tax_rate_id' => 'nullable|integer|exists:' . config('accounting.table_prefix', 'acct_') . 'tax_rates,id',
         ]);
 
         DB::transaction(function (): void {
@@ -140,7 +142,7 @@ class Invoices extends Component
 
             foreach ($this->items as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
-                $itemTax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $itemTax = $amount * ($this->effectiveTaxRate($item) / 100);
                 $subtotal += $amount;
                 $taxAmount += $itemTax;
             }
@@ -160,7 +162,8 @@ class Invoices extends Component
 
             foreach ($this->items as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
-                $tax = $amount * (($item['tax_rate'] ?? 0) / 100);
+                $taxRate = $this->effectiveTaxRate($item);
+                $tax = $amount * ($taxRate / 100);
 
                 InvoiceItem::create([
                     'invoice_id'  => $invoice->id,
@@ -168,7 +171,8 @@ class Invoices extends Component
                     'quantity'    => $item['quantity'],
                     'unit_price'  => $item['unit_price'],
                     'amount'      => $amount,
-                    'tax_rate'    => $item['tax_rate'] ?? 0,
+                    'tax_rate'    => $taxRate,
+                    'tax_rate_id' => $item['tax_rate_id'] ?? null,
                     'tax_amount'  => $tax,
                 ]);
             }
@@ -199,6 +203,26 @@ class Invoices extends Component
     {
         $invoice = Invoice::findOrFail($id);
         $this->openAuditTrail($invoice::class, $invoice->id, $invoice->invoice_number);
+    }
+
+    #[Computed]
+    public function activeTaxRates(): \Illuminate\Database\Eloquent\Collection
+    {
+        return TaxRate::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code', 'rate', 'is_compound']);
+    }
+
+    /** Resolve the percentage to apply for a line: the linked TaxRate's current rate, or the free-typed fallback. */
+    protected function effectiveTaxRate(array $item): float
+    {
+        if (!empty($item['tax_rate_id'])) {
+            $rate = TaxRate::find($item['tax_rate_id']);
+
+            if ($rate !== null) {
+                return (float) $rate->rate;
+            }
+        }
+
+        return (float) ($item['tax_rate'] ?? 0);
     }
 
     #[Computed]
@@ -293,7 +317,7 @@ class Invoices extends Component
         return collect($this->items)->sum(function ($i): float {
             $amount = ($i['quantity'] ?? 0) * ($i['unit_price'] ?? 0);
 
-            return $amount * (($i['tax_rate'] ?? 0) / 100);
+            return $amount * ($this->effectiveTaxRate($i) / 100);
         });
     }
 

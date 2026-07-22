@@ -16,6 +16,7 @@
                 <option value="balance_sheet">Balance Sheet</option>
                 <option value="income_statement">Income Statement (P&L)</option>
                 <option value="cash_flow">Cash Flow Statement</option>
+                <option value="sales_tax_liability">Sales Tax Liability</option>
             </x-tallui-select>
         </x-tallui-form-group>
 
@@ -67,6 +68,7 @@
                 @elseif($reportType === 'balance_sheet')    Balance Sheet
                 @elseif($reportType === 'income_statement') Income Statement
                 @elseif($reportType === 'cash_flow')        Cash Flow Statement
+                @elseif($reportType === 'sales_tax_liability') Sales Tax Liability Report
                 @endif
             </h3>
             <p class="text-sm text-base-content/50 mt-0.5">
@@ -347,6 +349,44 @@
                         </span>
                     </div>
                 </div>
+            </div>
+        @endif
+
+        {{-- ── Sales Tax Liability ────────────────────────────────────────── --}}
+        @if($reportType === 'sales_tax_liability' && isset($reportData['rows']))
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
+                            <th class="py-3">Tax Rate</th>
+                            <th>Code</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Collected (Output)</th>
+                            <th class="text-right">Paid (Input)</th>
+                            <th class="text-right">Net Payable</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-base-200">
+                        @foreach($reportData['rows'] as $row)
+                            <tr class="even:bg-base-200/50 hover:bg-base-200">
+                                <td class="text-sm">{{ $row['name'] }}</td>
+                                <td class="font-mono text-sm text-primary">{{ $row['code'] ?? '—' }}</td>
+                                <td class="text-right text-sm font-mono">{{ $row['rate'] !== null ? number_format($row['rate'], 2) . '%' : '—' }}</td>
+                                <td class="text-right text-sm font-mono">{{ $currency }} {{ number_format($row['collected'], 2) }}</td>
+                                <td class="text-right text-sm font-mono">{{ $currency }} {{ number_format($row['paid'], 2) }}</td>
+                                <td class="text-right text-sm font-mono font-semibold">{{ $currency }} {{ number_format($row['net_payable'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t-2 border-base-300 font-bold bg-base-200/50">
+                            <td colspan="3" class="py-3 text-sm">TOTAL</td>
+                            <td class="text-right text-sm font-mono">{{ $currency }} {{ number_format($reportData['total_collected'], 2) }}</td>
+                            <td class="text-right text-sm font-mono">{{ $currency }} {{ number_format($reportData['total_paid'], 2) }}</td>
+                            <td class="text-right text-sm font-mono">{{ $currency }} {{ number_format($reportData['total_net_payable'], 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         @endif
 

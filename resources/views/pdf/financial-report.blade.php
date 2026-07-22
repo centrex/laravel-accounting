@@ -254,5 +254,44 @@
         </table>
     @endif
 
+    @if($reportType === 'sales_tax_liability' && isset($reportData['rows']))
+        <table>
+            <thead>
+                <tr>
+                    <th>Tax Rate</th>
+                    <th style="width: 12%;">Code</th>
+                    <th style="width: 10%;" class="text-right">Rate</th>
+                    <th style="width: 16%;" class="text-right">Collected</th>
+                    <th style="width: 16%;" class="text-right">Paid</th>
+                    <th style="width: 16%;" class="text-right">Net Payable</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($reportData['rows'] as $row)
+                    <tr>
+                        <td>{{ $row['name'] }}</td>
+                        <td class="mono">{{ $row['code'] ?? '—' }}</td>
+                        <td class="text-right mono">{{ $row['rate'] !== null ? number_format($row['rate'], 2) . '%' : '—' }}</td>
+                        <td class="text-right mono">{{ number_format($row['collected'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($row['paid'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($row['net_payable'], 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="empty">No tax activity matched the selected filters.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+            <tfoot>
+                <tr class="totals">
+                    <td colspan="3">Total</td>
+                    <td class="text-right mono">{{ number_format($reportData['total_collected'] ?? 0, 2) }}</td>
+                    <td class="text-right mono">{{ number_format($reportData['total_paid'] ?? 0, 2) }}</td>
+                    <td class="text-right mono">{{ number_format($reportData['total_net_payable'] ?? 0, 2) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    @endif
+
 </body>
 </html>

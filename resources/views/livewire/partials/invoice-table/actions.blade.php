@@ -8,6 +8,13 @@
         <button type="button" @click="open = !open" class="btn btn-ghost btn-xs btn-circle" aria-label="Row actions">
             <x-tallui-icon name="o-ellipsis-horizontal" class="h-4 w-4" />
         </button>
+
+        @if($status === 'draft')
+                <button type="button" @click="open = false; $dispatch('open-dialog', 'confirm-post-{{ $row->id }}')" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-info transition hover:bg-info/10">
+                    <x-tallui-icon name="o-paper-airplane" class="h-4 w-4" /> Post
+                </button>
+        @endif
+
         <div
             x-show="open"
             x-transition.opacity
@@ -16,11 +23,6 @@
             class="absolute right-0 top-9 z-50 w-52 rounded-xl border border-base-300 bg-base-100 p-1.5 shadow-theme-xl"
             style="display: none;"
         >
-            @if($status === 'draft')
-                <button type="button" @click="open = false; $dispatch('open-dialog', 'confirm-post-{{ $row->id }}')" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-info transition hover:bg-info/10">
-                    <x-tallui-icon name="o-paper-airplane" class="h-4 w-4" /> Post
-                </button>
-            @endif
                         
             @if(in_array($status, ['sent', 'issued', 'partially_settled', 'overdue'], true) && $row->base_balance > 0)
                 <button type="button" wire:click="$dispatch('invoice-table:pay', { id: {{ $row->id }} })" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-success transition hover:bg-success/10">

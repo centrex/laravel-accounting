@@ -72,6 +72,13 @@ Gates are only defined by the package if the host app has **not** already regist
 | `accounting.budget.view` | View budgets and variance reports |
 | `accounting.budget.manage` | Create and update budgets |
 | `accounting.budget.approve` | Approve budgets |
+| **Tax Rates** | |
+| `accounting.tax-rates.view` | View tax rates |
+| `accounting.tax-rates.manage` | Create / edit / deactivate tax rates |
+| **Bank Reconciliation** | |
+| `accounting.bank-reconciliation.view` | View bank reconciliations |
+| `accounting.bank-reconciliation.create` | Start a new reconciliation |
+| `accounting.bank-reconciliation.reconcile` | Complete a reconciliation |
 
 ## Check gates in code
 

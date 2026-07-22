@@ -81,6 +81,26 @@ $invoice = Invoice::create([
 Accounting::postInvoice($invoice);
 ```
 
+### Using managed tax rates
+
+Line items can link to a `TaxRate` instead of a free-typed percentage — the rate is snapshotted into `tax_rate`/`tax_amount` at save time, so a later edit to the rate never changes an already-saved line:
+
+```php
+use Centrex\Accounting\Models\{InvoiceItem, TaxRate};
+
+$vat = TaxRate::create(['name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00, 'is_active' => true]);
+
+InvoiceItem::create([
+    'invoice_id'  => $invoice->id,
+    'description' => 'Samsung TV 55"',
+    'quantity'    => 10,
+    'unit_price'  => 15000,
+    'tax_rate_id' => $vat->id,   // tax_rate = 15.00, tax_amount computed automatically
+]);
+```
+
+Full write-up: [tax-rates.md](tax-rates.md).
+
 ---
 
 ## Bills (vendor invoices)

@@ -36,6 +36,9 @@ All routes are prefixed with `web_prefix` (default `accounting`) and protected b
 | `accounting.vendors.ledger` | GET | `/accounting/vendors/{vendor}/ledger` | `VendorLedger` |
 | `accounting.expenses` | GET | `/accounting/expenses` | `Expenses` |
 | `accounting.period-close` | GET | `/accounting/period-close` | `PeriodClose` |
+| `accounting.tax-rates` | GET | `/accounting/tax-rates` | `TaxRates` |
+| `accounting.bank-reconciliations` | GET | `/accounting/bank-reconciliations` | `BankReconciliations` |
+| `accounting.bank-reconciliations.show` | GET | `/accounting/bank-reconciliations/{bankReconciliation}` | `BankReconciliationDetails` |
 | `accounting.qbo.connect` | GET | `/accounting/qbo/connect` | OAuth2 connect to QBO |
 | `accounting.qbo.callback` | GET | `/accounting/qbo/callback` | OAuth2 callback (Intuit redirect) |
 
@@ -132,8 +135,31 @@ All report endpoints accept optional query parameters: `start_date`, `end_date`,
 | GET | `/api/accounting/reports/general-ledger` | General ledger (per-account) |
 | GET | `/api/accounting/reports/ar-aging` | A/R aging (QBO-compatible buckets); `?format=qbo` for QBO structure |
 | GET | `/api/accounting/reports/ap-aging` | A/P aging (QBO-compatible buckets); `?format=qbo` for QBO structure |
+| GET | `/api/accounting/reports/sales-tax-liability` | Sales tax liability by rate (`start_date`/`end_date` required) |
 
 Report query parameters: `start_date`, `end_date`, `date`, `as_of_date`, `sbu_code`, `format` (`raw` or `qbo`).
+
+### Tax Rates
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| GET | `/api/accounting/tax-rates` | List tax rates (`?search=&active=`) |
+| POST | `/api/accounting/tax-rates` | Create tax rate |
+| GET | `/api/accounting/tax-rates/{id}` | Get tax rate |
+| PUT | `/api/accounting/tax-rates/{id}` | Update tax rate |
+| DELETE | `/api/accounting/tax-rates/{id}` | Delete tax rate (422 if referenced by an invoice/bill line) |
+
+### Bank Reconciliation
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| GET | `/api/accounting/bank-reconciliations` | List reconciliations (`?account_id=`) |
+| POST | `/api/accounting/bank-reconciliations` | Start a reconciliation |
+| GET | `/api/accounting/bank-reconciliations/{id}` | Get reconciliation with statement lines |
+| POST | `/api/accounting/bank-reconciliations/{id}/statement-lines` | Import statement lines (`rows: [...]`) |
+| POST | `/api/accounting/bank-reconciliations/{id}/match` | Match a statement line to a GL line |
+| POST | `/api/accounting/bank-reconciliations/{id}/unmatch` | Unmatch a statement line |
+| POST | `/api/accounting/bank-reconciliations/{id}/complete` | Complete the reconciliation (balance check) |
 
 ### Budgets
 

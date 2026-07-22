@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/centrex/laravel-accounting/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/centrex/laravel-accounting/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/centrex/laravel-accounting?style=flat-square)](https://packagist.org/packages/centrex/laravel-accounting)
 
-Full double-entry accounting system for Laravel. Includes a chart of accounts, journal entries with two-step approval workflow, invoices, bills, expenses, customer/vendor ledgers, financial reports (including A/R and A/P aging), month-end period closing with inventory reconciliation, fiscal year closing, budgets, QuickBooks Online two-way sync, and a Livewire UI with a complete REST API layer.
+Full double-entry accounting system for Laravel. Includes a chart of accounts, journal entries with two-step approval workflow, invoices, bills, expenses, customer/vendor ledgers, managed tax rates with a sales tax liability report, bank reconciliation (statement import, matching, adjusting entries), financial reports (including A/R and A/P aging), month-end period closing with inventory reconciliation, fiscal year closing, budgets, QuickBooks Online two-way sync, and a Livewire UI with a complete REST API layer.
 
 Developer architecture notes live in [docs/developer-architecture.md](docs/developer-architecture.md).
 
@@ -21,6 +21,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Invoices & Payments](#invoices--payments)
 - [Bills & Vendor Payments](#bills--vendor-payments)
 - [Invoice & Bill Charges / Discounts](#invoice--bill-charges--discounts)
+- [Tax Rates & Sales Tax Liability](#tax-rates--sales-tax-liability)
 - [Expenses](#expenses)
 - [Requisitions](#requisitions)
 - [Customer & Vendor Ledger](#customer--vendor-ledger)
@@ -31,6 +32,7 @@ Developer architecture notes live in [docs/developer-architecture.md](docs/devel
 - [Period Closing (Month-End)](#period-closing-month-end)
 - [Fiscal Year Closing](#fiscal-year-closing)
 - [Adjustments, Reconciliation & Closing](#adjustments-reconciliation--closing)
+- [Bank Reconciliation](#bank-reconciliation)
 - [Inventory Financing](#inventory-financing)
 - [Organizational Loans & SBU-wise Tracking](#organizational-loans--sbu-wise-tracking)
 - [Owner's Equity](#owners-equity)
@@ -82,6 +84,11 @@ ACCOUNTING_ENFORCE_PERIOD_LOCK=true     # block posting to closed periods
 ACCOUNTING_ROUNDING_TOLERANCE=0.005     # max debit/credit mismatch allowed
 ACCOUNTING_ADMIN_ROLES=administrator,admin,superadmin
 ACCOUNTING_ADMIN_ROLE_ATTRIBUTE=        # fallback role attribute name
+
+# Pre-selected default accounts for the bank reconciliation adjusting-entry mini-form
+# (any active account can still be picked — these just save a click)
+ACCOUNTING_ACCOUNT_BANK_FEES_EXPENSE=6800
+ACCOUNTING_ACCOUNT_INTEREST_INCOME=4900
 
 # QuickBooks Online integration (optional)
 QBO_CLIENT_ID=
@@ -633,6 +640,82 @@ Both methods return the persisted `Expense` model with `journal_entry_id` alread
 
 ---
 
+## Tax Rates & Sales Tax Liability
+
+Invoice and bill line items have always had a per-line `tax_rate`/`tax_amount` pair, but historically that percentage was just typed in freehand. `TaxRate` turns it into a governed, reportable entity — a named rate (VAT, GST, a reduced rate, whatever your jurisdiction needs) that line items can select from a dropdown instead of retyping a number every time. **The free-typed percentage still works** — `tax_rate_id` is optional, so nothing breaks for existing data or ad-hoc one-off rates.
+
+### Managing Tax Rates
+
+```php
+use Centrex\Accounting\Models\TaxRate;
+
+$vat = TaxRate::create([
+    'name'        => 'VAT Standard',
+    'code'        => 'VAT',
+    'rate'        => 15.00,
+    'is_compound' => false,
+    'is_active'   => true,
+]);
+```
+
+Manage rates from the UI at `/accounting/tax-rates`, or via the REST API (see [Tax Rates](#tax-rates) below).
+
+### Using a Tax Rate on a Line Item
+
+Pass `tax_rate_id` when creating an `InvoiceItem`/`BillItem` — the current rate is **snapshotted** into the line's own `tax_rate`/`tax_amount` columns at save time, so a later edit to `TaxRate::rate` never retroactively changes an already-saved line:
+
+```php
+use Centrex\Accounting\Models\{Invoice, InvoiceItem};
+
+$item = InvoiceItem::create([
+    'invoice_id'  => $invoice->id,
+    'description' => 'Samsung TV 55"',
+    'quantity'    => 10,
+    'unit_price'  => 15000,
+    'tax_rate_id' => $vat->id,   // amount = 150000, tax_rate = 15.00, tax_amount = 22500 — computed automatically
+]);
+
+// Free-typed fallback still works exactly as before — just omit tax_rate_id:
+InvoiceItem::create([
+    'invoice_id'  => $invoice->id,
+    'description' => 'One-off negotiated rate',
+    'quantity'    => 1,
+    'unit_price'  => 1000,
+    'tax_rate'    => 7.5,        // tax_amount = 75.00
+]);
+```
+
+The Invoices/Bills create screens expose this as a tax-rate dropdown per line with an "Other %" option that reveals the free-text field. `TaxRate::is_compound` is stored for reporting, but since the schema allows only one rate per line, it doesn't change the per-line math today — there's no second rate for it to compound on top of yet.
+
+### Sales Tax Liability Report
+
+Groups output tax (invoices) against input tax (bills) by rate over a period, with an "Unassigned / Ad-hoc" bucket for free-typed lines:
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+
+$report = Accounting::getSalesTaxLiabilityReport('2026-04-01', '2026-04-30');
+// [
+//   'rows' => [
+//     ['tax_rate_id' => 1, 'name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00,
+//      'collected' => 33750.00, 'paid' => 4500.00, 'net_payable' => 29250.00],
+//     ['tax_rate_id' => null, 'name' => 'Unassigned / Ad-hoc', 'code' => null, 'rate' => null,
+//      'collected' => 75.00, 'paid' => 0.00, 'net_payable' => 75.00],
+//   ],
+//   'total_collected'   => 33825.00,
+//   'total_paid'        => 4500.00,
+//   'total_net_payable' => 29325.00,
+// ]
+```
+
+Available from the Financial Reports page (`sales_tax_liability` report type), the REST API, and:
+
+```bash
+php artisan accounting:report sales-tax-liability --start=2026-04-01 --end=2026-04-30
+```
+
+---
+
 ## Expenses
 
 ```php
@@ -881,7 +964,17 @@ $arAging = Accounting::getArAging('2026-04-30');
 
 // A/P Aging
 $apAging = Accounting::getApAging('2026-04-30');
+
+// Sales Tax Liability — output tax collected (invoices) vs input tax paid (bills), by rate
+$taxLiability = Accounting::getSalesTaxLiabilityReport('2026-04-01', '2026-04-30');
+// [
+//   'rows' => [['tax_rate_id' => 1, 'name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00,
+//               'collected' => 33750.00, 'paid' => 4500.00, 'net_payable' => 29250.00], ...],
+//   'total_collected' => 33825.00, 'total_paid' => 4500.00, 'total_net_payable' => 29325.00,
+// ]
 ```
+
+See [Tax Rates & Sales Tax Liability](#tax-rates--sales-tax-liability) above for how line items get linked to a rate.
 
 ---
 
@@ -1164,7 +1257,7 @@ if ($section) {
 }
 ```
 
-Run this as a scheduled report (or a quick Artisan/Tinker check) at end-of-day for every cash-handling location and the operating bank account — catching a variance same-day is far cheaper than tracing it back weeks later.
+Run this as a scheduled report (or a quick Artisan/Tinker check) at end-of-day for every cash-handling location and the operating bank account — catching a variance same-day is far cheaper than tracing it back weeks later. This is a same-day sanity check, not a substitute for formally reconciling the month — see [Bank Reconciliation](#bank-reconciliation) below for matching against an actual imported statement.
 
 ### Monthly Reconciliation
 
@@ -1179,9 +1272,19 @@ $period = FiscalPeriod::where('name', 'April 2026')->first();
 $tb = Accounting::getTrialBalance($period->start_date, $period->end_date);
 abort_unless($tb['is_balanced'], 500, 'Trial balance out of balance — resolve before reconciling.');
 
-// 2. Tie Bank (1100) GL closing balance to the bank statement's closing balance
+// 2. Tie Bank (1100) to the bank statement — prefer the automated Bank Reconciliation
+//    workflow below (matches every statement line, resolves unmatched ones via an
+//    adjusting entry, and enforces the balance check before you can complete it):
 $bank = Account::where('code', '1100')->first();
-$gl   = Accounting::getGeneralLedger($bank->id, $period->start_date, $period->end_date);
+$recon = Accounting::createBankReconciliation([
+    'account_id'               => $bank->id,
+    'statement_date'           => $period->end_date,
+    'opening_balance'          => $bank->getCurrentBalance(),
+    'statement_ending_balance' => 5_432_100.00, // from the bank's statement
+]);
+// ...import statement lines, match, resolve, then Accounting::completeBankReconciliation($recon)
+// — see Bank Reconciliation below for the full workflow. Or, for a quick manual pull:
+$gl = Accounting::getGeneralLedger($bank->id, $period->start_date, $period->end_date);
 $bankClosing = $gl['accounts'][0]['closing_balance'] ?? 0.0;
 // Compare $bankClosing to the statement; post a Cash Adjustment for any residual (bank fees,
 // unmatched deposits in transit, etc.) before closing the period.
@@ -1274,6 +1377,86 @@ $tb = Accounting::getTrialBalance();
 ```
 
 If none of the above turn anything up, drill into the specific account with `getGeneralLedger($accountId, ...)` and walk the `entries` array line by line — the discrepancy is always traceable to one posted (or missing) entry.
+
+---
+
+## Bank Reconciliation
+
+Matches the GL activity on a bank/cash account against an actual bank statement — one `BankReconciliation` session per statement period, with `BankStatementLine` rows imported from the statement and matched against `JournalEntryLine`s one at a time. Unmatched lines (bank fees, interest earned) get resolved with an adjusting entry created directly from the reconciliation, and the session can't be completed until every statement line is accounted for and the running balance ties to the statement's ending balance within `ACCOUNTING_ROUNDING_TOLERANCE`.
+
+### Start a Reconciliation
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+use Centrex\Accounting\Models\Account;
+
+$bank = Account::where('code', '1100')->first();
+
+$reconciliation = Accounting::createBankReconciliation([
+    'account_id'               => $bank->id,
+    'statement_date'           => '2026-04-30',
+    'opening_balance'          => 1_200_000.00,
+    'statement_ending_balance' => 1_487_650.00,
+]);
+```
+
+### Import Statement Lines
+
+The facade takes plain, already-parsed rows — the Livewire workspace parses a pasted CSV (`date,description,amount,type,reference`) before calling this, so any source (a bank's export, a manual entry form) can feed it the same shape:
+
+```php
+Accounting::importBankStatementLines($reconciliation, [
+    ['transaction_date' => '2026-04-02', 'description' => 'Customer wire — Rahman Brothers', 'amount' => 220000.00, 'type' => 'debit'],
+    ['transaction_date' => '2026-04-15', 'description' => 'Monthly service charge',           'amount' => 250.00,    'type' => 'credit'],
+]);
+```
+
+### Match Statement Lines to GL Lines
+
+```php
+use Centrex\Accounting\Models\JournalEntryLine;
+
+$unreconciled = Accounting::getUnreconciledLines($bank->id);   // posted GL lines not yet tied to a statement
+$statementLine = $reconciliation->statementLines()->first();
+$glLine = $unreconciled->first();
+
+Accounting::matchStatementLine($statementLine, $glLine);
+// Validates: neither side already matched, amounts agree within tolerance, and the
+// debit/credit polarity matches exactly (a statement debit pairs with a GL debit line).
+
+// Made a mistake? Unmatch while the reconciliation is still draft:
+Accounting::unmatchStatementLine($statementLine);
+```
+
+### Resolve Unmatched Lines with an Adjusting Entry
+
+For statement activity with no corresponding GL line yet — bank fees, interest earned — post one directly from the reconciliation. It creates a balanced two-line journal entry (the bank leg + an offset expense/revenue account) and matches the bank leg to the statement line in the same transaction:
+
+```php
+use Centrex\Accounting\Models\Account;
+
+$bankFees = Account::where('code', config('accounting.accounts.bank_fees_expense', '6800'))->first();
+
+$entry = Accounting::createAdjustingJournalEntryForStatementLine($statementLine, [
+    'offset_account_id' => $bankFees->id,
+    'description'       => 'Monthly service charge',
+]);
+// DR/CR the bank account (matching the statement line's type) / CR/DR the offset account
+```
+
+### Complete the Reconciliation
+
+```php
+Accounting::completeBankReconciliation($reconciliation);
+// Throws if any statement line is still unmatched, or if
+// opening_balance + reconciled debits − reconciled credits ≠ statement_ending_balance
+// (within tolerance) — throws ReconciliationBalanceMismatchException with the variance.
+// On success: status → completed, reconciled_by/reconciled_at stamped.
+```
+
+Once completed, matched lines can no longer be unmatched — `unmatchStatementLine()` refuses to touch a line belonging to a completed reconciliation. (Voiding the underlying `JournalEntry` after completion is not separately blocked — treat a completed reconciliation's entries as final.)
+
+Manage all of this from the UI at `/accounting/bank-reconciliations` — a two-column workspace (unreconciled GL lines vs. imported statement lines) with CSV paste-import, one-click matching, and the adjusting-entry mini-form built in.
 
 ---
 
@@ -2070,6 +2253,11 @@ Available gates:
 | `accounting.equity.manage` | Record capital contributions & owner drawings |
 | `accounting.qbo.connect` | Initiate QBO OAuth2 connect / disconnect |
 | `accounting.qbo.sync` | Trigger push sync to QBO or pull QBO reports |
+| `accounting.tax-rates.view` | View tax rates |
+| `accounting.tax-rates.manage` | Create/edit/deactivate tax rates |
+| `accounting.bank-reconciliation.view` | View bank reconciliations |
+| `accounting.bank-reconciliation.create` | Start a new reconciliation |
+| `accounting.bank-reconciliation.reconcile` | Complete a reconciliation |
 
 ---
 
@@ -2101,6 +2289,9 @@ All routes are protected by `web_middleware` (default `['web', 'auth']`) under `
 | `accounting.loans` | `/accounting/loans` | Loan facilities — register lenders, drawdown, accrue/pay interest, repay |
 | `accounting.equity` | `/accounting/equity` | Owner's equity — capital contributions & drawings |
 | `accounting.period-close` | `/accounting/period-close` | Month-end period close wizard |
+| `accounting.tax-rates` | `/accounting/tax-rates` | Tax rate management |
+| `accounting.bank-reconciliations` | `/accounting/bank-reconciliations` | Bank reconciliation list |
+| `accounting.bank-reconciliations.show` | `/accounting/bank-reconciliations/{bankReconciliation}` | Reconciliation workspace — import, match, adjust, complete |
 
 ---
 
@@ -2196,6 +2387,28 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | `POST` | `/api/accounting/budgets/{id}/approve` | Approve budget |
 | `GET` | `/api/accounting/budgets/{id}/vs-actual` | Budget vs actual comparison |
 
+### Tax Rates
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| `GET` | `/api/accounting/tax-rates` | List tax rates (`?search=&active=`) |
+| `POST` | `/api/accounting/tax-rates` | Create tax rate |
+| `GET` | `/api/accounting/tax-rates/{id}` | Get tax rate |
+| `PUT` | `/api/accounting/tax-rates/{id}` | Update tax rate |
+| `DELETE` | `/api/accounting/tax-rates/{id}` | Delete tax rate (422 if referenced by an invoice/bill line — deactivate instead) |
+
+### Bank Reconciliation
+
+| Method | Endpoint | Action |
+| --- | --- | --- |
+| `GET` | `/api/accounting/bank-reconciliations` | List reconciliations (`?account_id=`) |
+| `POST` | `/api/accounting/bank-reconciliations` | Start a reconciliation |
+| `GET` | `/api/accounting/bank-reconciliations/{id}` | Get reconciliation with statement lines |
+| `POST` | `/api/accounting/bank-reconciliations/{id}/statement-lines` | Import statement lines (`rows: [...]`) |
+| `POST` | `/api/accounting/bank-reconciliations/{id}/match` | Match a statement line to a GL line |
+| `POST` | `/api/accounting/bank-reconciliations/{id}/unmatch` | Unmatch a statement line |
+| `POST` | `/api/accounting/bank-reconciliations/{id}/complete` | Complete the reconciliation (balance check) |
+
 ### Reports
 
 | Method | Endpoint | Action |
@@ -2207,6 +2420,7 @@ Base prefix: `api/accounting`. Default middleware: `['api', 'auth:sanctum']`.
 | `GET` | `/api/accounting/reports/general-ledger` | General ledger (`?account_id=&start=&end=&sbu=`) |
 | `GET` | `/api/accounting/reports/ar-aging` | A/R aging (`?as_of_date=&sbu_code=`) |
 | `GET` | `/api/accounting/reports/ap-aging` | A/P aging (`?as_of_date=&sbu_code=`) |
+| `GET` | `/api/accounting/reports/sales-tax-liability` | Sales tax liability (`?start_date=&end_date=&sbu_code=`) |
 
 ---
 
@@ -2229,9 +2443,12 @@ php artisan accounting:report trial-balance    --start=2026-01-01 --end=2026-04-
 
 # Export to file
 php artisan accounting:report all --start=2026-01-01 --end=2026-12-31 --format=csv --output=reports/fy2026.csv
+
+# Sales tax liability (requires --start/--end, same as income-statement/cash-flow)
+php artisan accounting:report sales-tax-liability --start=2026-04-01 --end=2026-04-30
 ```
 
-Available types: `all` (default) | `trial-balance` | `balance-sheet` | `income-statement` | `cash-flow`
+Available types: `all` (default) | `trial-balance` | `balance-sheet` | `income-statement` | `cash-flow` | `sales-tax-liability`
 
 Available formats: `table` | `csv` | `json`
 

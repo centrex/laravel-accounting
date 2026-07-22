@@ -104,6 +104,7 @@ class FinancialReports extends Component
             'balance_sheet'    => $service->getBalanceSheet($this->endDate, $this->normalizedSbuCode()),
             'income_statement' => $service->getIncomeStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
             'cash_flow'        => $service->getCashFlowStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'sales_tax_liability' => $service->getSalesTaxLiabilityReport($this->startDate, $this->endDate, $this->normalizedSbuCode()),
             default            => null,
         };
     }
@@ -122,6 +123,7 @@ class FinancialReports extends Component
             'balance_sheet'    => 'Balance Sheet',
             'income_statement' => 'Income Statement',
             'cash_flow'        => 'Cash Flow Statement',
+            'sales_tax_liability' => 'Sales Tax Liability Report',
             default            => 'Financial Report',
         };
     }

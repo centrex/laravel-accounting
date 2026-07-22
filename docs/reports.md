@@ -221,6 +221,48 @@ GET /api/accounting/reports/ap-aging?as_of_date=2026-04-30&format=qbo
 
 ---
 
+## Sales Tax Liability
+
+Groups output tax collected on invoices against input tax paid on bills, by `TaxRate`, over a period. Lines with no linked `TaxRate` (the free-typed percentage fallback) are grouped into an "Unassigned / Ad-hoc" bucket. Draft and void invoices/bills are excluded.
+
+```php
+$report = Accounting::getSalesTaxLiabilityReport(
+    startDate: '2026-04-01',
+    endDate:   '2026-04-30',
+    sbuCode:   null,
+);
+
+// [
+//   'period' => ['start' => '2026-04-01', 'end' => '2026-04-30'],
+//   'rows' => [
+//     ['tax_rate_id' => 1, 'name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00,
+//      'collected' => 33750.00, 'paid' => 4500.00, 'net_payable' => 29250.00],
+//     ['tax_rate_id' => null, 'name' => 'Unassigned / Ad-hoc', 'code' => null, 'rate' => null,
+//      'collected' => 75.00, 'paid' => 0.00, 'net_payable' => 75.00],
+//   ],
+//   'total_collected'   => 33825.00,
+//   'total_paid'        => 4500.00,
+//   'total_net_payable' => 29325.00,
+//   'sbu_code'          => null,
+// ]
+```
+
+Via REST API:
+
+```http
+GET /api/accounting/reports/sales-tax-liability?start_date=2026-04-01&end_date=2026-04-30
+```
+
+Via Artisan:
+
+```bash
+php artisan accounting:report sales-tax-liability --start=2026-04-01 --end=2026-04-30
+```
+
+See [invoices-bills.md § Using managed tax rates](invoices-bills.md#using-managed-tax-rates) for how line items get linked to a `TaxRate`.
+
+---
+
 ## Chart of Accounts queries
 
 ```php

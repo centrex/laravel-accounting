@@ -6,32 +6,43 @@ namespace Centrex\Accounting;
 
 use Carbon\Carbon;
 use Centrex\Accounting\Contracts\InventorySnapshotProvider;
-use Centrex\Accounting\Enums\{RequisitionStatus, RequisitionType};
+use Centrex\Accounting\Enums\{BankReconciliationStatus, RequisitionStatus, RequisitionType};
 use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
     AccountingException,
+    AmountToleranceExceededException,
     DuplicatePaymentException,
     InvalidStatusTransitionException,
     OverpaymentException,
+    ReconciliationBalanceMismatchException,
+    StatementLineAlreadyMatchedException,
+    StatementLinePolarityMismatchException,
     UnbalancedJournalException
 };
 use Centrex\Accounting\Models\{
     Account,
     AccountBalance,
+    BankReconciliation,
+    BankStatementLine,
     Bill,
+    BillItem,
     Budget,
     BudgetItem,
     CreditMemo,
     FiscalPeriod,
     FiscalYear,
+    FixedAsset,
     InventoryFinancingFacility,
     Invoice,
+    InvoiceItem,
     JournalEntry,
+    JournalEntryLine,
     LoanFacility,
     Payment,
     PeriodInventorySnapshot,
     Requisition,
-    RequisitionItem
+    RequisitionItem,
+    TaxRate
 };
 use Centrex\Accounting\Models\Expense;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -1495,6 +1506,76 @@ class Accounting
         ];
     }
 
+    /**
+     * Sales tax liability report: output tax collected (invoices) vs input tax paid
+     * (bills) over a period, grouped by TaxRate. Lines with no linked TaxRate (the
+     * free-typed fallback) are grouped into an "Unassigned / Ad-hoc" bucket.
+     *
+     * Read-only aggregation over invoice_items/bill_items.tax_amount — does not
+     * touch postInvoice()/postBill() or the tax_payable GL account.
+     */
+    public function getSalesTaxLiabilityReport(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
+    {
+        $sbuCode = $this->normalizeSbuCode($sbuCode);
+
+        $collected = DB::table((new InvoiceItem())->getTable() . ' as ii')
+            ->join((new Invoice())->getTable() . ' as i', 'i.id', '=', 'ii.invoice_id')
+            ->whereNotIn('i.status', ['draft', 'void'])
+            ->whereBetween('i.invoice_date', [$startDate, $endDate])
+            ->when($sbuCode !== null, fn ($q) => $q->where('i.sbu_code', $sbuCode))
+            ->groupBy('ii.tax_rate_id')
+            ->selectRaw('ii.tax_rate_id, SUM(ii.tax_amount) as total')
+            ->get()
+            ->keyBy(fn ($row) => $row->tax_rate_id ?? 0);
+
+        $paid = DB::table((new BillItem())->getTable() . ' as bi')
+            ->join((new Bill())->getTable() . ' as b', 'b.id', '=', 'bi.bill_id')
+            ->whereNotIn('b.status', ['draft', 'void'])
+            ->whereBetween('b.bill_date', [$startDate, $endDate])
+            ->when($sbuCode !== null, fn ($q) => $q->where('b.sbu_code', $sbuCode))
+            ->groupBy('bi.tax_rate_id')
+            ->selectRaw('bi.tax_rate_id, SUM(bi.tax_amount) as total')
+            ->get()
+            ->keyBy(fn ($row) => $row->tax_rate_id ?? 0);
+
+        $taxRateIds = $collected->keys()->merge($paid->keys())->filter(fn ($id) => $id !== 0)->unique();
+        $taxRates = TaxRate::whereIn('id', $taxRateIds)->get()->keyBy('id');
+
+        $rows = [];
+        $totalCollected = 0.0;
+        $totalPaid = 0.0;
+
+        foreach ($collected->keys()->merge($paid->keys())->unique() as $key) {
+            $taxRate = $key !== 0 ? $taxRates->get($key) : null;
+            $rowCollected = (float) ($collected->get($key)?->total ?? 0);
+            $rowPaid = (float) ($paid->get($key)?->total ?? 0);
+
+            $rows[] = [
+                'tax_rate_id' => $taxRate?->id,
+                'name'        => $taxRate?->name ?? 'Unassigned / Ad-hoc',
+                'code'        => $taxRate?->code,
+                'rate'        => $taxRate?->rate,
+                'collected'   => $rowCollected,
+                'paid'        => $rowPaid,
+                'net_payable' => round($rowCollected - $rowPaid, 2),
+            ];
+
+            $totalCollected += $rowCollected;
+            $totalPaid += $rowPaid;
+        }
+
+        usort($rows, fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
+
+        return [
+            'period'            => ['start' => $startDate, 'end' => $endDate],
+            'rows'              => $rows,
+            'total_collected'   => round($totalCollected, 2),
+            'total_paid'        => round($totalPaid, 2),
+            'total_net_payable' => round($totalCollected - $totalPaid, 2),
+            'sbu_code'          => $sbuCode,
+        ];
+    }
+
     // -------------------------------------------------------------------------
     // Chart of Accounts
     // -------------------------------------------------------------------------
@@ -1527,6 +1608,7 @@ class Accounting
             ['code' => '4000', 'name' => 'Sales Revenue',           'type' => 'revenue',   'subtype' => 'operating_revenue'],
             ['code' => '4100', 'name' => 'Service Revenue',         'type' => 'revenue',   'subtype' => 'operating_revenue'],
             ['code' => '4900', 'name' => 'Other Income',            'type' => 'revenue',   'subtype' => 'non_operating_revenue'],
+            ['code' => '4910', 'name' => 'Gain/Loss on Disposal of Fixed Assets', 'type' => 'revenue', 'subtype' => 'non_operating_revenue'],
             ['code' => '4210', 'name' => 'Delivery Charge',         'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
             ['code' => '4220', 'name' => 'Cash on Delivery Charge', 'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],
             ['code' => '5000', 'name' => 'Cost of Goods Sold',      'type' => 'expense',   'subtype' => 'cost_of_goods_sold'],
@@ -2687,6 +2769,279 @@ class Accounting
     }
 
     // -------------------------------------------------------------------------
+    // Fixed Assets (Property, Plant & Equipment — IAS 16)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Register a fixed asset and auto-create its dedicated GL sub-accounts.
+     *
+     * Cost sub-accounts allocate under parent 1700 ("Fixed Assets"), range 1701–1799.
+     * Accumulated-depreciation sub-accounts allocate under parent 1800, range 1801–1899.
+     * Does not post a journal entry — see capitalizeFixedAsset() for that.
+     */
+    public function addFixedAsset(
+        string $name,
+        float $acquisitionCost,
+        int $usefulLifeMonths,
+        float $salvageValue = 0.0,
+        ?string $acquiredAt = null,
+        ?string $assetClass = null,
+        ?string $sbuCode = null,
+        ?string $location = null,
+        ?string $serialNumber = null,
+        ?string $notes = null,
+    ): FixedAsset {
+        return DB::transaction(function () use (
+            $name, $acquisitionCost, $usefulLifeMonths, $salvageValue,
+            $acquiredAt, $assetClass, $sbuCode, $location, $serialNumber, $notes,
+        ): FixedAsset {
+            $assetParent = $this->requireAccount('1700');
+            $contraParent = $this->requireAccount('1800');
+
+            $assetCode = $this->nextSubAccountCode('1700', '1799');
+            $contraCode = $this->nextSubAccountCode('1800', '1899');
+
+            $shortName = Str::limit($name, 40, '');
+
+            $assetAccount = Account::create([
+                'code'      => $assetCode,
+                'name'      => $shortName,
+                'type'      => 'asset',
+                'subtype'   => 'fixed_asset',
+                'parent_id' => $assetParent->id,
+                'is_system' => false,
+            ]);
+
+            $contraAccount = Account::create([
+                'code'      => $contraCode,
+                'name'      => "Accum. Depr. — {$shortName}",
+                'type'      => 'asset',
+                'subtype'   => 'contra_account',
+                'parent_id' => $contraParent->id,
+                'is_system' => false,
+            ]);
+
+            return FixedAsset::create([
+                'name'                                => $name,
+                'asset_class'                         => $assetClass,
+                'sbu_code'                            => $sbuCode ? strtoupper(trim($sbuCode)) : null,
+                'asset_account_id'                    => $assetAccount->id,
+                'accumulated_depreciation_account_id' => $contraAccount->id,
+                'acquisition_cost'                    => $acquisitionCost,
+                'salvage_value'                       => $salvageValue,
+                'useful_life_months'                  => $usefulLifeMonths,
+                'depreciation_method'                 => 'straight_line',
+                'acquired_at'                         => $acquiredAt ?? now()->toDateString(),
+                'location'                            => $location,
+                'serial_number'                       => $serialNumber,
+                'notes'                               => $notes,
+                'is_active'                           => true,
+                'created_by'                          => auth()->id(),
+            ]);
+        });
+    }
+
+    /**
+     * Capitalize the asset: record the outlay against its GL cost account.
+     *
+     * DR asset account (its own 170x code) / CR payment source (bank by default,
+     * or another account code such as accounts_payable for credit purchases).
+     */
+    public function capitalizeFixedAsset(
+        FixedAsset $asset,
+        string $date,
+        string $reference,
+        ?string $paymentAccountCode = null,
+        ?string $description = null,
+    ): JournalEntry {
+        $paymentAccount = $this->requireAccount($paymentAccountCode ?? $this->accountCode('bank'));
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => $reference,
+            'type'        => 'general',
+            'sbu_code'    => $asset->sbu_code,
+            'description' => $description ?? "Fixed asset capitalized — {$asset->name} ({$asset->asset_code})",
+            'lines'       => [
+                ['account_id' => $asset->asset_account_id, 'type' => 'debit',  'amount' => (float) $asset->acquisition_cost],
+                ['account_id' => $paymentAccount->id,       'type' => 'credit', 'amount' => (float) $asset->acquisition_cost],
+            ],
+        ]);
+    }
+
+    /**
+     * Post one period's straight-line depreciation for a single asset.
+     *
+     * DR Depreciation Expense (config: depreciation_expense, default 6600) / CR the
+     * asset's own accumulated-depreciation account. Returns null when the asset is
+     * inactive, already disposed, or fully depreciated. The final period is capped so
+     * accumulated depreciation never exceeds the depreciable base.
+     */
+    public function depreciateAsset(FixedAsset $asset, ?string $date = null): ?JournalEntry
+    {
+        if (!$asset->is_active || $asset->isDisposed() || $asset->isFullyDepreciated()) {
+            return null;
+        }
+
+        $remaining = round($asset->depreciableBase() - $asset->accumulatedDepreciation(), 2);
+        $amount = min($asset->monthlyDepreciationAmount(), $remaining);
+
+        if ($amount <= 0.0) {
+            return null;
+        }
+
+        $date ??= now()->endOfMonth()->toDateString();
+        $expenseAccount = $this->requireAccount($this->accountCode('depreciation_expense'));
+
+        return $this->createJournalEntry([
+            'date'        => $date,
+            'reference'   => 'FA-DEPR-' . now()->format('Y-m') . '-' . $asset->id,
+            'type'        => 'general',
+            'sbu_code'    => $asset->sbu_code,
+            'description' => sprintf(
+                'Depreciation — %s (%s) — %s',
+                $asset->name,
+                $asset->asset_code,
+                now()->format('F Y'),
+            ),
+            'lines' => [
+                ['account_id' => $expenseAccount->id,                          'type' => 'debit',  'amount' => $amount],
+                ['account_id' => $asset->accumulated_depreciation_account_id,  'type' => 'credit', 'amount' => $amount],
+            ],
+        ]);
+    }
+
+    /**
+     * Depreciate all active, non-disposed assets.
+     * Returns array keyed by asset id → JournalEntry|null.
+     */
+    public function depreciateAllAssets(?string $date = null): array
+    {
+        $results = [];
+
+        FixedAsset::where('is_active', true)->whereNull('disposed_at')
+            ->each(function (FixedAsset $asset) use ($date, &$results): void {
+                $results[$asset->id] = $this->depreciateAsset($asset, $date);
+            });
+
+        return $results;
+    }
+
+    /**
+     * Dispose of an asset: remove it and its accumulated depreciation from the GL,
+     * record any cash proceeds, and plug the gain or loss on disposal.
+     *
+     * netBookValue = acquisition_cost − accumulated_depreciation
+     * gainOrLoss   = proceeds − netBookValue   (positive = gain, negative = loss)
+     *
+     * Lines: CR asset account (acquisition_cost) / DR accumulated-depreciation account
+     * (its balance, if any) / DR bank (proceeds, if any) / plug the gain (credit) or
+     * loss (debit) to config('accounting.accounts.gain_loss_on_disposal') (default 4910).
+     */
+    public function disposeAsset(
+        FixedAsset $asset,
+        string $date,
+        float $proceeds = 0.0,
+        ?string $reference = null,
+    ): JournalEntry {
+        if ($asset->isDisposed()) {
+            throw new \RuntimeException("Fixed asset '{$asset->asset_code}' has already been disposed.");
+        }
+
+        return DB::transaction(function () use ($asset, $date, $proceeds, $reference): JournalEntry {
+            $accumulatedDepreciation = $asset->accumulatedDepreciation();
+            $acquisitionCost = (float) $asset->acquisition_cost;
+            $bookValue = round($acquisitionCost - $accumulatedDepreciation, 2);
+            $gainOrLoss = round($proceeds - $bookValue, 2);
+
+            $lines = [
+                ['account_id' => $asset->asset_account_id, 'type' => 'credit', 'amount' => $acquisitionCost],
+            ];
+
+            if ($accumulatedDepreciation > 0) {
+                $lines[] = ['account_id' => $asset->accumulated_depreciation_account_id, 'type' => 'debit', 'amount' => $accumulatedDepreciation];
+            }
+
+            if ($proceeds > 0) {
+                $bank = $this->requireAccount($this->accountCode('bank'));
+                $lines[] = ['account_id' => $bank->id, 'type' => 'debit', 'amount' => $proceeds];
+            }
+
+            if (abs($gainOrLoss) > 0.001) {
+                $gainLossAccount = $this->requireAccount($this->accountCode('gain_loss_on_disposal'));
+                $lines[] = $gainOrLoss > 0
+                    ? ['account_id' => $gainLossAccount->id, 'type' => 'credit', 'amount' => $gainOrLoss]
+                    : ['account_id' => $gainLossAccount->id, 'type' => 'debit',  'amount' => abs($gainOrLoss)];
+            }
+
+            $entry = $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => $reference ?? 'FA-DISPOSAL-' . now()->format('Y-m') . '-' . $asset->id,
+                'type'        => 'general',
+                'sbu_code'    => $asset->sbu_code,
+                'description' => sprintf(
+                    'Disposal of %s (%s) — book value %s, proceeds %s, %s %s',
+                    $asset->name,
+                    $asset->asset_code,
+                    number_format($bookValue, 2),
+                    number_format($proceeds, 2),
+                    $gainOrLoss >= 0 ? 'gain' : 'loss',
+                    number_format(abs($gainOrLoss), 2),
+                ),
+                'lines' => $lines,
+            ]);
+
+            $asset->update([
+                'disposed_at'               => $date,
+                'disposal_proceeds'         => $proceeds,
+                'disposal_journal_entry_id' => $entry->id,
+                'is_active'                 => false,
+                'disposed_by'               => auth()->id(),
+            ]);
+
+            return $entry;
+        });
+    }
+
+    /**
+     * Fixed asset register: all assets with live GL-computed depreciation figures,
+     * optionally filtered by SBU.
+     */
+    public function getFixedAssetRegister(?string $sbuCode = null): array
+    {
+        $query = FixedAsset::with(['assetAccount', 'accumulatedDepreciationAccount'])
+            ->orderBy('asset_class')
+            ->orderBy('name');
+
+        if ($sbuCode !== null) {
+            $query->where('sbu_code', strtoupper(trim($sbuCode)));
+        }
+
+        return $query->get()
+            ->map(fn (FixedAsset $a): array => [
+                'id'                               => $a->id,
+                'asset_code'                       => $a->asset_code,
+                'name'                             => $a->name,
+                'asset_class'                      => $a->asset_class,
+                'sbu_code'                         => $a->sbu_code,
+                'is_active'                        => $a->is_active,
+                'acquisition_cost'                 => (float) $a->acquisition_cost,
+                'salvage_value'                    => (float) $a->salvage_value,
+                'useful_life_months'               => $a->useful_life_months,
+                'depreciation_method'              => $a->depreciation_method,
+                'acquired_at'                      => $a->acquired_at?->toDateString(),
+                'disposed_at'                      => $a->disposed_at?->toDateString(),
+                'accumulated_depreciation'         => $a->accumulatedDepreciation(),
+                'monthly_depreciation'             => $a->monthlyDepreciationAmount(),
+                'net_book_value'                   => $a->netBookValue(),
+                'is_fully_depreciated'             => $a->isFullyDepreciated(),
+                'asset_account'                    => $a->assetAccount?->code . ' ' . $a->assetAccount?->name,
+                'accumulated_depreciation_account' => $a->accumulatedDepreciationAccount?->code . ' ' . $a->accumulatedDepreciationAccount?->name,
+            ])
+            ->all();
+    }
+
+    // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
 
@@ -2813,6 +3168,208 @@ class Accounting
             'rows'       => $rows,
             'totals'     => $totals,
         ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Bank Reconciliation
+    // -------------------------------------------------------------------------
+
+    public function createBankReconciliation(array $data): BankReconciliation
+    {
+        return DB::transaction(fn (): BankReconciliation => BankReconciliation::create([
+            'account_id'               => $data['account_id'],
+            'statement_date'           => $data['statement_date'],
+            'opening_balance'          => $data['opening_balance'] ?? 0,
+            'statement_ending_balance' => $data['statement_ending_balance'] ?? 0,
+            'status'                   => BankReconciliationStatus::DRAFT->value,
+            'notes'                    => $data['notes'] ?? null,
+        ]));
+    }
+
+    /**
+     * Import already-parsed statement rows (CSV parsing happens in the Livewire layer).
+     *
+     * @param  array<int, array{transaction_date: string, description: string, amount: float,
+     *               type: string, external_reference?: string|null}>  $rows
+     */
+    public function importBankStatementLines(BankReconciliation $reconciliation, array $rows): Collection
+    {
+        if ($reconciliation->status === BankReconciliationStatus::COMPLETED) {
+            throw new AccountingException('Cannot import statement lines into a completed reconciliation.');
+        }
+
+        return DB::transaction(function () use ($reconciliation, $rows): Collection {
+            $lines = new Collection();
+
+            foreach ($rows as $row) {
+                $lines->push(BankStatementLine::create([
+                    'bank_reconciliation_id' => $reconciliation->id,
+                    'transaction_date'       => $row['transaction_date'],
+                    'description'            => $row['description'],
+                    'amount'                 => $row['amount'],
+                    'type'                   => strtolower((string) $row['type']),
+                    'external_reference'     => $row['external_reference'] ?? null,
+                ]));
+            }
+
+            return $lines;
+        });
+    }
+
+    /** GL lines for an account that haven't yet been reconciled against a bank statement. */
+    public function getUnreconciledLines(int $accountId): Collection
+    {
+        return Account::findOrFail($accountId)->journalEntryLines()
+            ->whereNull('bank_reconciliation_id')
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'))
+            ->orderBy('created_at')
+            ->get();
+    }
+
+    /**
+     * Match a statement line to a GL line: validates neither side is already matched,
+     * the amounts agree within tolerance, and the debit/credit polarity matches exactly.
+     */
+    public function matchStatementLine(BankStatementLine $statementLine, JournalEntryLine $glLine): void
+    {
+        DB::transaction(function () use ($statementLine, $glLine): void {
+            $statementLine = BankStatementLine::lockForUpdate()->findOrFail($statementLine->id);
+            $glLine = JournalEntryLine::lockForUpdate()->findOrFail($glLine->id);
+
+            if ($statementLine->matched_journal_entry_line_id !== null) {
+                throw StatementLineAlreadyMatchedException::forLine($statementLine->id);
+            }
+
+            if ($glLine->bank_reconciliation_id !== null) {
+                throw StatementLineAlreadyMatchedException::forGlLine($glLine->id);
+            }
+
+            $statementType = strtolower((string) $statementLine->type);
+            $glType = strtolower((string) $glLine->type);
+
+            if ($statementType !== $glType) {
+                throw StatementLinePolarityMismatchException::make($statementType, $glType);
+            }
+
+            $variance = abs((float) $statementLine->amount - (float) $glLine->amount);
+
+            if ($variance > $this->tolerance()) {
+                throw AmountToleranceExceededException::make((float) $statementLine->amount, (float) $glLine->amount, $this->tolerance());
+            }
+
+            $now = now();
+
+            $statementLine->update(['matched_journal_entry_line_id' => $glLine->id, 'matched_at' => $now]);
+            $glLine->update(['bank_reconciliation_id' => $statementLine->bank_reconciliation_id, 'reconciled_at' => $now]);
+        });
+    }
+
+    public function unmatchStatementLine(BankStatementLine $statementLine): void
+    {
+        DB::transaction(function () use ($statementLine): void {
+            $statementLine = BankStatementLine::lockForUpdate()->findOrFail($statementLine->id);
+            $reconciliation = BankReconciliation::findOrFail($statementLine->bank_reconciliation_id);
+
+            if ($reconciliation->status === BankReconciliationStatus::COMPLETED) {
+                throw new AccountingException('Cannot unmatch a line on a completed reconciliation.');
+            }
+
+            if ($statementLine->matched_journal_entry_line_id === null) {
+                return;
+            }
+
+            $glLine = JournalEntryLine::lockForUpdate()->find($statementLine->matched_journal_entry_line_id);
+
+            $statementLine->update(['matched_journal_entry_line_id' => null, 'matched_at' => null]);
+            $glLine?->update(['bank_reconciliation_id' => null, 'reconciled_at' => null]);
+        });
+    }
+
+    /**
+     * Wraps createJournalEntry() with a bank-account leg + an offset leg (bank fees,
+     * interest, etc.), posts it, then matches the bank leg to the unmatched statement
+     * line in the same transaction — resolving lines that have no counterpart GL entry.
+     */
+    public function createAdjustingJournalEntryForStatementLine(BankStatementLine $statementLine, array $data): JournalEntry
+    {
+        return DB::transaction(function () use ($statementLine, $data): JournalEntry {
+            $statementLine = BankStatementLine::lockForUpdate()->findOrFail($statementLine->id);
+
+            if ($statementLine->matched_journal_entry_line_id !== null) {
+                throw StatementLineAlreadyMatchedException::forLine($statementLine->id);
+            }
+
+            $reconciliation = BankReconciliation::findOrFail($statementLine->bank_reconciliation_id);
+            $bankAccount = Account::findOrFail($reconciliation->account_id);
+            $offsetAccount = $this->requireAccountById((int) $data['offset_account_id']);
+
+            $type = strtolower((string) $statementLine->type);
+            $amount = (float) $statementLine->amount;
+
+            $entry = $this->createJournalEntry([
+                'date'        => $statementLine->transaction_date,
+                'reference'   => $statementLine->external_reference,
+                'type'        => 'general',
+                'description' => $data['description'] ?? "Bank reconciliation adjustment — {$statementLine->description}",
+                'source_type' => BankReconciliation::class,
+                'source_id'   => $reconciliation->id,
+                'lines'       => [
+                    ['account_id' => $bankAccount->id, 'type' => $type, 'amount' => $amount, 'description' => $statementLine->description],
+                    ['account_id' => $offsetAccount->id, 'type' => $type === 'debit' ? 'credit' : 'debit', 'amount' => $amount, 'description' => $data['description'] ?? $statementLine->description],
+                ],
+            ]);
+
+            $entry->post();
+
+            $bankLine = $entry->lines()->where('account_id', $bankAccount->id)->first();
+            $this->matchStatementLine($statementLine, $bankLine);
+
+            return $entry;
+        });
+    }
+
+    /**
+     * Completes a reconciliation: every statement line must already be matched, and the
+     * opening balance plus reconciled debits/credits must agree with the statement's
+     * ending balance within tolerance.
+     */
+    public function completeBankReconciliation(BankReconciliation $reconciliation): void
+    {
+        DB::transaction(function () use ($reconciliation): void {
+            $reconciliation = BankReconciliation::lockForUpdate()->findOrFail($reconciliation->id);
+
+            if ($reconciliation->statementLines()->whereNull('matched_journal_entry_line_id')->exists()) {
+                throw new AccountingException('All statement lines must be matched or resolved via an adjusting entry before completing.');
+            }
+
+            $reconciledDebits = (float) $reconciliation->reconciledLines()->where('type', 'debit')->sum('amount');
+            $reconciledCredits = (float) $reconciliation->reconciledLines()->where('type', 'credit')->sum('amount');
+
+            $expected = round((float) $reconciliation->opening_balance + $reconciledDebits - $reconciledCredits, 2);
+            $actual = round((float) $reconciliation->statement_ending_balance, 2);
+            $variance = round(abs($expected - $actual), 2);
+
+            if ($variance > $this->tolerance()) {
+                throw ReconciliationBalanceMismatchException::make($expected, $actual, $variance);
+            }
+
+            $reconciliation->update([
+                'status'        => BankReconciliationStatus::COMPLETED->value,
+                'reconciled_by' => auth()->id(),
+                'reconciled_at' => now(),
+            ]);
+        });
+    }
+
+    private function requireAccountById(int $accountId): Account
+    {
+        $account = Account::find($accountId);
+
+        if ($account === null) {
+            throw AccountNotFoundException::forCode((string) $accountId);
+        }
+
+        return $account;
     }
 
     protected function getNetIncome(mixed $startDate, mixed $endDate, ?string $sbuCode = null): float

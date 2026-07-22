@@ -74,6 +74,10 @@ ACCOUNTING_ROUNDING_TOLERANCE=0.005     # max debit/credit imbalance allowed
 ACCOUNTING_ADMIN_ROLES=administrator,admin,superadmin
 ACCOUNTING_ADMIN_ROLE_ATTRIBUTE=        # fallback attribute for role checking
 ACCOUNTING_USER_FOREIGN_KEYS=false      # add FK constraints on created_by columns
+
+# Pre-selected default accounts for the bank reconciliation adjusting-entry mini-form
+ACCOUNTING_ACCOUNT_BANK_FEES_EXPENSE=6800
+ACCOUNTING_ACCOUNT_INTEREST_INCOME=4900
 ```
 
 ## Artisan commands
@@ -86,6 +90,7 @@ php artisan accounting:demo
 php artisan accounting:report income-statement --start=2026-01-01 --end=2026-04-30
 php artisan accounting:report balance-sheet    --date=2026-04-30  --format=csv --output=bs.csv
 php artisan accounting:report trial-balance    --start=2026-01-01 --end=2026-04-30 --format=json
-# --type options: all | trial-balance | balance-sheet | income-statement | cash-flow
+php artisan accounting:report sales-tax-liability --start=2026-04-01 --end=2026-04-30
+# --type options: all | trial-balance | balance-sheet | income-statement | cash-flow | sales-tax-liability
 # --format:       table | csv | json
 ```

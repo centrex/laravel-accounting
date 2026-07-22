@@ -81,13 +81,14 @@ What `closeFiscalYear()` does:
 ## Period close workflow checklist
 
 1. **Day 27–28** — Cut-off: ensure all GRNs, fulfillments, invoices, bills, and bank transactions for the period are posted
-2. **Day 29** — Adjusting entries: accruals, depreciation, prepayment amortisation, financing interest accrual
-3. **Day 30** — Run `getPeriodCloseChecks()` — resolve any blockers
-4. **Day 30** — Review Income Statement: verify revenue, COGS, and expenses
-5. **Day 30** — Physical stock count: post any adjustments via `laravel-inventory`
-6. **Day 30** — Close the period with `closeFiscalPeriod(snapshotInventory: true)`
-7. **Day 30** — Verify inventory reconciliation is zero variance
-8. **Day 1 (next month)** — New period opens automatically
+2. **Day 29** — Bank reconciliation: import the statement, match lines, resolve the rest with an adjusting entry, then `completeBankReconciliation()` — see [bank-reconciliation.md](bank-reconciliation.md)
+3. **Day 29** — Adjusting entries: accruals, depreciation, prepayment amortisation, financing interest accrual
+4. **Day 30** — Run `getPeriodCloseChecks()` — resolve any blockers
+5. **Day 30** — Review Income Statement: verify revenue, COGS, and expenses
+6. **Day 30** — Physical stock count: post any adjustments via `laravel-inventory`
+7. **Day 30** — Close the period with `closeFiscalPeriod(snapshotInventory: true)`
+8. **Day 30** — Verify inventory reconciliation is zero variance
+9. **Day 1 (next month)** — New period opens automatically
 
 See [real-world-example.md](real-world-example.md) for a fully worked month-end close.
 

@@ -64,15 +64,18 @@ return [
     |--------------------------------------------------------------------------
     */
     'per_page' => [
-        'accounts'        => 50,
-        'journal_entries' => 15,
-        'invoices'        => 15,
-        'bills'           => 15,
-        'expenses'        => 15,
-        'customers'       => 20,
-        'vendors'         => 20,
-        'loans'           => 15,
-        'equity_entries'  => 15,
+        'accounts'             => 50,
+        'journal_entries'      => 15,
+        'invoices'             => 15,
+        'bills'                => 15,
+        'expenses'             => 15,
+        'customers'            => 20,
+        'vendors'              => 20,
+        'loans'                => 15,
+        'equity_entries'       => 15,
+        'fixed_assets'         => 15,
+        'tax_rates'            => 20,
+        'bank_reconciliations' => 15,
     ],
 
     /*
@@ -179,6 +182,12 @@ return [
         'local_delivery'          => env('ACCOUNTING_ACCOUNT_LOCAL_DELIVERY', '6330'),
         'return_charge'           => env('ACCOUNTING_ACCOUNT_RETURN_CHARGE', '6340'),
         'financing_interest'      => env('ACCOUNTING_ACCOUNT_FINANCING_INTEREST', '6710'),
+        'depreciation_expense'    => env('ACCOUNTING_ACCOUNT_DEPRECIATION_EXPENSE', '6600'),
+        'gain_loss_on_disposal'   => env('ACCOUNTING_ACCOUNT_GAIN_LOSS_ON_DISPOSAL', '4910'),
+        // Pre-selected defaults for the bank reconciliation adjusting-entry mini-form —
+        // the user can still pick any active account, these just save a click.
+        'bank_fees_expense' => env('ACCOUNTING_ACCOUNT_BANK_FEES_EXPENSE', '6800'),
+        'interest_income'   => env('ACCOUNTING_ACCOUNT_INTEREST_INCOME', '4900'),
     ],
 
 ];

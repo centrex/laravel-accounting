@@ -32,6 +32,8 @@ A comprehensive double-entry bookkeeping system with financial reporting, multi-
 - **Expenses** — direct expense recording with cash or credit posting
 - **Loan Facilities** — register lenders (term loans, working capital, director, inter-company, equipment, overdraft, bridge) and track drawdowns, monthly interest accrual, interest payments, and principal repayments per facility
 - **Owner's Equity** — record capital contributions and owner drawings against the standard Capital / Owner Drawings accounts
+- **Tax Rates** — managed, reportable tax rates selectable per invoice/bill line item (the free-typed percentage still works as a fallback), plus a Sales Tax Liability report netting output vs. input tax
+- **Bank Reconciliation** — import a bank statement, match lines against posted GL activity, resolve unmatched lines with an adjusting entry, and complete the session under an enforced balance check
 
 ### QuickBooks Online (QBO)
 
@@ -209,9 +211,44 @@ $arAging = Accounting::getArAging(asOfDate: '2026-12-31');
 
 // A/P Aging
 $apAging = Accounting::getApAging(asOfDate: '2026-12-31');
+
+// Sales Tax Liability — output tax collected (invoices) vs input tax paid (bills), by rate
+$taxLiability = Accounting::getSalesTaxLiabilityReport('2026-01-01', '2026-12-31');
+// ['rows' => [['name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00,
+//              'collected' => x, 'paid' => x, 'net_payable' => x], ...],
+//  'total_collected' => x, 'total_paid' => x, 'total_net_payable' => x]
 ```
 
 All report methods accept an optional `sbuCode` parameter to filter by Strategic Business Unit.
+
+### Using Tax Rates on Invoice/Bill Line Items
+
+```php
+use Centrex\Accounting\Models\{InvoiceItem, TaxRate};
+
+$vat = TaxRate::create(['name' => 'VAT Standard', 'code' => 'VAT', 'rate' => 15.00, 'is_active' => true]);
+
+// tax_rate_id snapshots the current rate into tax_rate/tax_amount at save time — a later
+// edit to TaxRate::rate never changes an already-saved line.
+InvoiceItem::create([
+    'invoice_id'  => $invoice->id,
+    'description' => 'Web Development Services',
+    'quantity'    => 10,
+    'unit_price'  => 100.00,
+    'tax_rate_id' => $vat->id,   // tax_rate = 15.00, tax_amount computed automatically
+]);
+
+// Free-typed percentage still works — just omit tax_rate_id:
+InvoiceItem::create([
+    'invoice_id'  => $invoice->id,
+    'description' => 'One-off item',
+    'quantity'    => 1,
+    'unit_price'  => 50.00,
+    'tax_rate'    => 5,
+]);
+```
+
+Manage rates from the UI at `/accounting/tax-rates`. Full write-up: [README.md § Tax Rates & Sales Tax Liability](README.md#tax-rates--sales-tax-liability).
 
 ### Working with Accounts
 
@@ -264,13 +301,26 @@ $entry = Accounting::createJournalEntry([
 ]);
 $entry->post();
 
-// Daily bank reconciliation — tie GL activity to the bank statement
+// Quick daily check — tie GL activity to the bank statement without a formal session
 $bank = Account::where('code', '1100')->first();
 $gl   = Accounting::getGeneralLedger($bank->id, today()->toDateString(), today()->toDateString());
 $closingBalance = $gl['accounts'][0]['closing_balance'] ?? 0.0; // compare to the statement
+
+// Formal reconciliation — import a statement, match lines, resolve the rest, then complete
+$reconciliation = Accounting::createBankReconciliation([
+    'account_id'               => $bank->id,
+    'statement_date'           => today()->toDateString(),
+    'opening_balance'          => $bank->getCurrentBalance(),
+    'statement_ending_balance' => 1_487_650.00,
+]);
+Accounting::importBankStatementLines($reconciliation, [
+    ['transaction_date' => today()->toDateString(), 'description' => 'Wire in', 'amount' => 220000.00, 'type' => 'debit'],
+]);
+Accounting::matchStatementLine($reconciliation->statementLines->first(), $unmatchedGlLine);
+Accounting::completeBankReconciliation($reconciliation); // throws if unmatched lines remain or the balance doesn't tie
 ```
 
-Full write-up — including inventory adjustments, monthly reconciliation, the distinction between monthly period-close and the year-end closing journal, and a step-by-step guide for balance sheet discrepancies — lives in [README.md § Adjustments, Reconciliation & Closing](README.md#adjustments-reconciliation--closing).
+Full write-up — including inventory adjustments, monthly reconciliation, the distinction between monthly period-close and the year-end closing journal, and a step-by-step guide for balance sheet discrepancies — lives in [README.md § Adjustments, Reconciliation & Closing](README.md#adjustments-reconciliation--closing). The formal bank reconciliation workflow (statement import, matching, adjusting entries for unmatched lines) is documented in full at [README.md § Bank Reconciliation](README.md#bank-reconciliation).
 
 ---
 
@@ -448,5 +498,7 @@ if (!$tb['is_balanced']) {
 **Cannot post to a period** — `ACCOUNTING_ENFORCE_PERIOD_LOCK=true` blocks posting to closed periods. Pass `bypassPeriodLock: true` if you have permission, or re-open the period first.
 
 **Fiscal year won't close** — all fiscal periods for the year must be closed first, and there must be no unposted entries dated within the year.
+
+**Bank reconciliation won't complete** — `completeBankReconciliation()` throws if any imported statement line is still unmatched (match it or resolve it with an adjusting entry first), or if `opening_balance + reconciled debits − reconciled credits` doesn't equal `statement_ending_balance` within `ACCOUNTING_ROUNDING_TOLERANCE` — the exception message reports the exact variance to help you find it.
 
 **QBO sync failing** — check that `QBO_REALM_ID` is set and the token has not expired. Run `php artisan accounting:qbo-sync --realm=<id>` to test connectivity. Access tokens auto-refresh, but if the refresh token (100-day TTL) expires, the user must re-connect via `/accounting/qbo/connect`.

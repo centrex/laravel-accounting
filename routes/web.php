@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, LoanFacilities, OwnerEquity, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Livewire\{AccountingDashboard, BankReconciliationDetails, BankReconciliations, BillDetails, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, FixedAssets, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, LoanFacilities, OwnerEquity, PeriodClose, Requisitions, TaxRates, VendorLedger, VendorLedgerIndex, Vendors};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
@@ -25,6 +25,7 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/budgets', Budgets::class)->name('budgets');
         Route::get('/loans', LoanFacilities::class)->name('loans');
         Route::get('/equity', OwnerEquity::class)->name('equity');
+        Route::get('/fixed-assets', FixedAssets::class)->name('fixed-assets');
         Route::get('/customers', Customers::class)->name('customers');
         Route::get('/customers/{customer}/ledger', CustomerLedger::class)->name('customers.ledger');
         Route::get('/vendors', Vendors::class)->name('vendors');
@@ -33,4 +34,7 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/expenses/{expense}', ExpenseDetails::class)->name('expenses.show');
         Route::get('/period-close', PeriodClose::class)->name('period-close');
         Route::get('/requisitions', Requisitions::class)->name('requisitions');
+        Route::get('/tax-rates', TaxRates::class)->name('tax-rates');
+        Route::get('/bank-reconciliations', BankReconciliations::class)->name('bank-reconciliations');
+        Route::get('/bank-reconciliations/{bankReconciliation}', BankReconciliationDetails::class)->name('bank-reconciliations.show');
     });

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 use Centrex\Accounting\Http\Controllers\Api\{
     AccountController,
+    BankReconciliationController,
     BillController,
     BudgetController,
     CustomerController,
@@ -11,6 +12,7 @@ use Centrex\Accounting\Http\Controllers\Api\{
     InvoiceController,
     JournalEntryController,
     ReportController,
+    TaxRateController,
     VendorController
 };
 use Illuminate\Support\Facades\Route;
@@ -74,6 +76,7 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         Route::get('reports/ar-aging', [ReportController::class, 'arAging'])->name('reports.ar-aging');
         Route::get('reports/ap-aging', [ReportController::class, 'apAging'])->name('reports.ap-aging');
+        Route::get('reports/sales-tax-liability', [ReportController::class, 'salesTaxLiability'])->name('reports.sales-tax-liability');
 
         // Expenses
         Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
@@ -91,4 +94,20 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::post('budgets/{budget}/approve', [BudgetController::class, 'approve'])->name('budgets.approve');
         Route::get('budgets/{budget}/vs-actual', [BudgetController::class, 'vsActual'])->name('budgets.vs-actual');
         Route::delete('budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+
+        // Tax Rates
+        Route::get('tax-rates', [TaxRateController::class, 'index'])->name('tax-rates.index');
+        Route::post('tax-rates', [TaxRateController::class, 'store'])->name('tax-rates.store');
+        Route::get('tax-rates/{taxRate}', [TaxRateController::class, 'show'])->name('tax-rates.show');
+        Route::put('tax-rates/{taxRate}', [TaxRateController::class, 'update'])->name('tax-rates.update');
+        Route::delete('tax-rates/{taxRate}', [TaxRateController::class, 'destroy'])->name('tax-rates.destroy');
+
+        // Bank Reconciliation
+        Route::get('bank-reconciliations', [BankReconciliationController::class, 'index'])->name('bank-reconciliations.index');
+        Route::post('bank-reconciliations', [BankReconciliationController::class, 'store'])->name('bank-reconciliations.store');
+        Route::get('bank-reconciliations/{bankReconciliation}', [BankReconciliationController::class, 'show'])->name('bank-reconciliations.show');
+        Route::post('bank-reconciliations/{bankReconciliation}/statement-lines', [BankReconciliationController::class, 'importStatementLines'])->name('bank-reconciliations.statement-lines.store');
+        Route::post('bank-reconciliations/{bankReconciliation}/match', [BankReconciliationController::class, 'match'])->name('bank-reconciliations.match');
+        Route::post('bank-reconciliations/{bankReconciliation}/unmatch', [BankReconciliationController::class, 'unmatch'])->name('bank-reconciliations.unmatch');
+        Route::post('bank-reconciliations/{bankReconciliation}/complete', [BankReconciliationController::class, 'complete'])->name('bank-reconciliations.complete');
     });

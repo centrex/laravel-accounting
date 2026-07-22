@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 final class AccountingReportCommand extends Command
 {
     protected $signature = 'accounting:report
-        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|all)}
+        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|sales-tax-liability|all)}
         {--start= : Start date (YYYY-MM-DD) for period reports}
         {--end= : End date (YYYY-MM-DD) for period reports}
         {--date= : Single date (YYYY-MM-DD) for balance-sheet}
@@ -39,7 +39,7 @@ final class AccountingReportCommand extends Command
         $results = [];
 
         // Gather requested reports
-        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow'] : [$type];
+        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow', 'sales-tax-liability'] : [$type];
 
         foreach ($typesToRun as $t) {
             switch ($t) {
@@ -83,6 +83,19 @@ final class AccountingReportCommand extends Command
                     $data = $acct->getCashFlowStatement($start, $end);
                     $results['cash_flow'] = $data;
                     $this->renderCashFlow($data, $format, $outputPath, 'cash_flow');
+
+                    break;
+
+                case 'sales-tax-liability':
+                    if (!$start || !$end) {
+                        $this->warn('Sales Tax Liability Report requires --start and --end; skipping.');
+
+                        break;
+                    }
+                    $this->line("<fg=cyan>--- Sales Tax Liability Report ({$start} → {$end}) ---</>");
+                    $data = $acct->getSalesTaxLiabilityReport($start, $end);
+                    $results['sales_tax_liability'] = $data;
+                    $this->renderSalesTaxLiability($data, $format, $outputPath, 'sales_tax_liability');
 
                     break;
 
@@ -224,6 +237,31 @@ final class AccountingReportCommand extends Command
 
         $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers): void {
             $this->table($headers, array_map('array_values', $rows));
+        });
+    }
+
+    private function renderSalesTaxLiability(array $data, string $format, ?string $outputPath = null, string $suffix = 'sales_tax_liability'): void
+    {
+        $rows = [];
+
+        foreach ($data['rows'] as $r) {
+            $rows[] = [
+                'name'        => $r['name'],
+                'code'        => $r['code'] ?? '',
+                'rate'        => $r['rate'] !== null ? number_format($r['rate'], 2) : '',
+                'collected'   => number_format($r['collected'], 2),
+                'paid'        => number_format($r['paid'], 2),
+                'net_payable' => number_format($r['net_payable'], 2),
+            ];
+        }
+
+        $headers = ['Tax Rate', 'Code', 'Rate', 'Collected', 'Paid', 'Net Payable'];
+
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers, $data): void {
+            $this->table($headers, array_map('array_values', $rows));
+            $this->line('<fg=green>Total Collected  : ' . number_format($data['total_collected'], 2) . '</>');
+            $this->line('<fg=green>Total Paid       : ' . number_format($data['total_paid'], 2) . '</>');
+            $this->line('<fg=yellow>Net Payable      : ' . number_format($data['total_net_payable'], 2) . '</>');
         });
     }
 

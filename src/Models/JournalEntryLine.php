@@ -33,10 +33,12 @@ class JournalEntryLine extends Model implements Auditable
     protected $fillable = [
         'journal_entry_id', 'account_id', 'type',
         'amount', 'description', 'reference',
+        'bank_reconciliation_id', 'reconciled_at',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount'        => 'decimal:2',
+        'reconciled_at' => 'datetime',
     ];
 
     public function journalEntry(): BelongsTo
@@ -47,5 +49,10 @@ class JournalEntryLine extends Model implements Auditable
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function bankReconciliation(): BelongsTo
+    {
+        return $this->belongsTo(BankReconciliation::class);
     }
 }

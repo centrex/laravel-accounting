@@ -57,7 +57,15 @@
                         </div>
                         <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.quantity" placeholder="Qty" class="input input-sm w-20 border-base-300 text-right" />
                         <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.unit_price" placeholder="Price" class="input input-sm w-28 border-base-300 text-right" />
-                        <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.tax_rate" placeholder="Tax%" class="input input-sm w-20 border-base-300 text-right" />
+                        <select wire:model.live="items.{{ $i }}.tax_rate_id" class="select select-sm w-28 border-base-300">
+                            <option value="">Other %</option>
+                            @foreach($this->activeTaxRates as $taxRate)
+                                <option value="{{ $taxRate->id }}">{{ $taxRate->name }} ({{ $taxRate->rate }}%)</option>
+                            @endforeach
+                        </select>
+                        @if(empty($item['tax_rate_id']))
+                            <input type="number" step="0.01" wire:model.lazy="items.{{ $i }}.tax_rate" placeholder="Tax%" class="input input-sm w-20 border-base-300 text-right" />
+                        @endif
                         <x-tallui-button wire:click="removeItem({{ $i }})" icon="o-trash" class="btn-ghost btn-sm text-error" />
                     </div>
                 @endforeach

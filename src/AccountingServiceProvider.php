@@ -187,9 +187,22 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.equity.view',
             'accounting.equity.manage',
 
+            // Fixed assets
+            'accounting.fixed-assets.view',
+            'accounting.fixed-assets.manage',
+
             // Expenses
             'accounting.expense.view',
             'accounting.expense.delete',
+
+            // Tax rates
+            'accounting.tax-rates.view',
+            'accounting.tax-rates.manage',
+
+            // Bank reconciliation
+            'accounting.bank-reconciliation.view',
+            'accounting.bank-reconciliation.create',
+            'accounting.bank-reconciliation.reconcile',
         ];
 
         foreach ($abilities as $ability) {

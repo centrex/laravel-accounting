@@ -39,6 +39,7 @@ class BillItem extends Model implements Auditable
         'unit_price',
         'amount',
         'tax_rate',
+        'tax_rate_id',
         'tax_amount',
         'reference',
     ];
@@ -50,6 +51,11 @@ class BillItem extends Model implements Auditable
         'tax_rate'   => 'decimal:2',
         'tax_amount' => 'decimal:2',
     ];
+
+    public function taxRate(): BelongsTo
+    {
+        return $this->belongsTo(TaxRate::class);
+    }
 
     /**
      * Polymorphic reference (nullable).
