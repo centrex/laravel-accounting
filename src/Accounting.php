@@ -7,6 +7,7 @@ namespace Centrex\Accounting;
 use Carbon\Carbon;
 use Centrex\Accounting\Contracts\InventorySnapshotProvider;
 use Centrex\Accounting\Enums\{BankReconciliationStatus, RequisitionStatus, RequisitionType};
+use Centrex\Accounting\Events\{BillPosted, InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Exceptions\{
     AccountNotFoundException,
     AccountingException,
@@ -374,7 +375,7 @@ class Accounting
             throw InvalidStatusTransitionException::make('Invoice', $invoice->status->value, 'posted');
         }
 
-        return DB::transaction(function () use ($invoice): JournalEntry {
+        $entry = DB::transaction(function () use ($invoice): JournalEntry {
             $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
             $revenueAccount = $this->requireAccount($this->accountCode('sales_revenue'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
@@ -405,6 +406,10 @@ class Accounting
 
             return $entry;
         });
+
+        InvoicePosted::dispatch($invoice->fresh());
+
+        return $entry;
     }
 
     /**
@@ -415,7 +420,7 @@ class Accounting
      */
     public function recordInvoicePayment(Invoice $invoice, array $paymentData): Payment
     {
-        return DB::transaction(function () use ($invoice, $paymentData): Payment {
+        $payment = DB::transaction(function () use ($invoice, $paymentData): Payment {
             // Pessimistic lock — blocks concurrent payments for the same invoice
             $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
 
@@ -513,6 +518,10 @@ class Accounting
 
             return $payment;
         });
+
+        PaymentRecorded::dispatch($payment->fresh());
+
+        return $payment;
     }
 
     // -------------------------------------------------------------------------
@@ -750,7 +759,7 @@ class Accounting
             throw InvalidStatusTransitionException::make('Bill', $bill->status->value, 'posted');
         }
 
-        return DB::transaction(function () use ($bill): JournalEntry {
+        $entry = DB::transaction(function () use ($bill): JournalEntry {
             $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
             $expenseAccount = $this->requireAccount($this->accountCode('inventory'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
@@ -798,12 +807,16 @@ class Accounting
 
             return $entry;
         });
+
+        BillPosted::dispatch($bill->fresh());
+
+        return $entry;
     }
 
     /** Record a bill payment: DR Accounts Payable / CR Cash. */
     public function recordBillPayment(Bill $bill, array $paymentData): Payment
     {
-        return DB::transaction(function () use ($bill, $paymentData): Payment {
+        $payment = DB::transaction(function () use ($bill, $paymentData): Payment {
             $bill = Bill::lockForUpdate()->findOrFail($bill->id);
 
             $amount = (float) $paymentData['amount'];
@@ -860,6 +873,10 @@ class Accounting
 
             return $payment;
         });
+
+        PaymentRecorded::dispatch($payment->fresh());
+
+        return $payment;
     }
 
     // -------------------------------------------------------------------------

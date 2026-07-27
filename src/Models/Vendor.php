@@ -49,11 +49,13 @@ class Vendor extends Model implements Auditable, HasMedia
         'is_active',
         'modelable_type',
         'modelable_id',
+        'outstanding_balance',
     ];
 
     protected $casts = [
-        'payment_terms' => 'integer',
-        'is_active'     => 'boolean',
+        'payment_terms'       => 'integer',
+        'is_active'           => 'boolean',
+        'outstanding_balance' => 'decimal:2',
     ];
 
     protected $appends = [

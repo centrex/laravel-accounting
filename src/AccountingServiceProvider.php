@@ -5,8 +5,8 @@ declare(strict_types = 1);
 namespace Centrex\Accounting;
 
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
-use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
-use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding};
+use Centrex\Accounting\Events\{BillPosted, InvoicePosted, PaymentRecorded};
+use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding, SyncVendorOutstanding};
 use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
 use Centrex\Accounting\Models\{BillItem, ExpenseItem, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, ExpenseItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
@@ -67,6 +67,9 @@ class AccountingServiceProvider extends ServiceProvider
         ExpenseItem::observe(ExpenseItemObserver::class);
         // Register event listeners
         Event::listen(InvoicePosted::class, [SyncCustomerOutstanding::class, 'handle']);
+        Event::listen(BillPosted::class, [SyncVendorOutstanding::class, 'handle']);
+        Event::listen(PaymentRecorded::class, [SyncCustomerOutstanding::class, 'handlePayment']);
+        Event::listen(PaymentRecorded::class, [SyncVendorOutstanding::class, 'handlePayment']);
         Event::listen(PaymentRecorded::class, [NotifyAccountingTeam::class, 'handle']);
 
         // Register authorization gates.

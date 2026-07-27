@@ -51,12 +51,14 @@ class Customer extends Model implements Auditable, HasMedia
         'is_active',
         'modelable_type',
         'modelable_id',
+        'outstanding_balance',
     ];
 
     protected $casts = [
-        'credit_limit'  => 'decimal:2',
-        'payment_terms' => 'integer',
-        'is_active'     => 'boolean',
+        'credit_limit'        => 'decimal:2',
+        'payment_terms'       => 'integer',
+        'is_active'           => 'boolean',
+        'outstanding_balance' => 'decimal:2',
     ];
 
     protected $appends = [
