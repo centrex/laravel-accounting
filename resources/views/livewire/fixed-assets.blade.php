@@ -139,7 +139,7 @@
         </x-tallui-form-group>
 
         <x-tallui-form-group label="Notes" :error="$errors->first('notes')">
-            <x-tallui-form-textarea wire:model="notes" :rows="2" />
+            <x-tallui-textarea wire:model="notes" :rows="2" />
         </x-tallui-form-group>
     </form>
 
