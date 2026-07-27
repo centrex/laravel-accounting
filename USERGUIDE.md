@@ -151,18 +151,47 @@ $loan = Accounting::addLoanFacility(
 $entry = Accounting::drawdownLoan($loan, 10_000_000.00, today(), 'LOAN-001');
 $entry->post();
 // DR Bank 1100 / CR Loan Payable 250x
-
-// Month-end
-Accounting::accrueLoanInterest($loan)?->post();       // DR Interest Expense / CR Accrued Interest
-Accounting::payLoanInterest($loan, 100_000.00, today(), 'LOAN-INT-001')->post();
-Accounting::repayLoan($loan, 500_000.00, today(), 'LOAN-REPAY-001')->post();
 ```
 
-Manage all of this from the UI at `/accounting/loans` — see [README.md § Organizational Loans](README.md#organizational-loans--sbu-wise-tracking).
+**Monthly interest** — accrue, then pay it off (or roll principal down) whenever cash allows:
+
+```php
+// Single facility, month-end accrual
+Accounting::accrueLoanInterest($loan)?->post();
+// DR Interest Expense 6720/6730 / CR Accrued Interest 242x/252x
+// Returns null (nothing posted) once outstanding principal reaches zero
+
+// Or accrue every active facility in one call — handy in a scheduled command
+foreach (Accounting::accrueAllLoanInterest(date: '2026-04-30') as $facilityId => $je) {
+    $je?->post();
+}
+
+Accounting::payLoanInterest($loan, 100_000.00, today(), 'LOAN-INT-001')->post();
+// DR Accrued Interest / CR Bank
+
+Accounting::repayLoan($loan, 500_000.00, today(), 'LOAN-REPAY-001')->post();
+// DR Loan Payable / CR Bank — throws RuntimeException if amount > outstanding principal
+```
+
+Check portfolio status any time:
+
+```php
+$summary = Accounting::getLoanSummary();          // all facilities
+$summary = Accounting::getLoanSummary('NORTH');   // filtered to one SBU
+// per facility: outstanding_principal, accrued_interest, monthly_interest, months_remaining, ...
+```
+
+Manage all of this from the UI at `/accounting/loans` (gated by `accounting.loans.view` / `.manage`) — see [docs/loans.md](docs/loans.md) for the full account-code reference and [README.md § Organizational Loans](README.md#organizational-loans--sbu-wise-tracking).
 
 ### Recording a Capital Contribution or Owner Drawing
 
-There's no dedicated facade method for equity — post directly against the standard accounts seeded by `initializeChartOfAccounts()` (Capital `3000`, Owner Drawings `3200`):
+There's no dedicated facade method for equity — post directly against the standard accounts seeded by `initializeChartOfAccounts()`:
+
+| Code | Name | Normal balance | Purpose |
+| --- | --- | --- | --- |
+| `3000` | Capital | Credit | Owner / shareholder contributions (`config('accounting.accounts.capital')`) |
+| `3100` | Retained Earnings | Credit | Auto-updated by `closeFiscalYear()` — never post to this directly |
+| `3200` | Owner Drawings | Debit (contra-equity) | Owner withdrawals (`config('accounting.accounts.owner_drawings')`) |
 
 ```php
 use Centrex\Accounting\Models\Account;
@@ -180,9 +209,23 @@ $entry = Accounting::createJournalEntry([
     ],
 ]);
 $entry->post();
+
+// Owner drawing — reverse the lines against Owner Drawings (3200) instead of Capital
+$drawings = Account::where('code', config('accounting.accounts.owner_drawings', '3200'))->first();
+
+$entry = Accounting::createJournalEntry([
+    'date'        => today(),
+    'reference'   => 'DRAW-001',
+    'description' => 'Owner withdrawal',
+    'lines' => [
+        ['account_id' => $drawings->id, 'type' => 'debit',  'amount' => 50_000.00],
+        ['account_id' => $bank->id,     'type' => 'credit', 'amount' => 50_000.00],
+    ],
+]);
+$entry->post();
 ```
 
-Manage this from the UI at `/accounting/equity` — see [README.md § Owner's Equity](README.md#owners-equity).
+Manage this from the UI at `/accounting/equity` (gated by `accounting.equity.view` / `.manage`) — see [docs/equity.md](docs/equity.md) for the full reference and [README.md § Owner's Equity](README.md#owners-equity).
 
 ### Generating Reports
 

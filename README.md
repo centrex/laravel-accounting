@@ -1677,6 +1677,8 @@ $checks = Accounting::getPeriodCloseChecks($period);
 
 Covers every loan a company takes from an external lender or an internal entity — term loans, working-capital lines, inter-company advances, director loans, equipment finance, and overdraft facilities. Each loan is a **facility** with its own GL sub-accounts. The `sbu_code` field on the facility tags every journal entry automatically, so SBU-filtered P&L and balance sheets work without any extra steps.
 
+> Full reference (account-code ranges, all facade methods, journal flow table): [docs/loans.md](docs/loans.md).
+
 ### Loan Types
 
 | `loan_type` | Typical use |
@@ -1962,6 +1964,8 @@ Add it to your app's navigation via `Centrex\Accounting\Support\AccountingWorksp
 ## Owner's Equity
 
 There's no dedicated facade method for equity — contributions and drawings are posted as plain journal entries against the standard equity accounts seeded by `initializeChartOfAccounts()`:
+
+> Full reference (account table, retained-earnings rollup, journal flow table): [docs/equity.md](docs/equity.md).
 
 | Code | Name | Normal balance | Purpose |
 | --- | --- | --- | --- |
