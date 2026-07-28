@@ -73,6 +73,7 @@ return [
         'vendors'              => 20,
         'loans'                => 15,
         'equity_entries'       => 15,
+        'owners'               => 20,
         'fixed_assets'         => 15,
         'tax_rates'            => 20,
         'bank_reconciliations' => 15,

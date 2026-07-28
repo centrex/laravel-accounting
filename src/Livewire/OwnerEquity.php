@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\{Account, JournalEntryLine};
+use Centrex\Accounting\Models\{Account, JournalEntryLine, Owner};
 use Livewire\{Component, WithPagination};
 
 class OwnerEquity extends Component
@@ -25,6 +25,9 @@ class OwnerEquity extends Component
 
     public string $contribution_description = '';
 
+    /** Empty string = post to the aggregate 3000 account; otherwise a specific Owner id. */
+    public string $contribution_owner_id = '';
+
     // Owner drawing form
     public bool $showDrawingModal = false;
 
@@ -35,6 +38,9 @@ class OwnerEquity extends Component
     public string $drawing_account_code = '1100';
 
     public string $drawing_description = '';
+
+    /** Empty string = post to the aggregate 3200 account; otherwise a specific Owner id. */
+    public string $drawing_owner_id = '';
 
     public function mount(): void
     {
@@ -67,7 +73,7 @@ class OwnerEquity extends Component
 
     public function openContribution(): void
     {
-        $this->reset(['contribution_amount', 'contribution_description']);
+        $this->reset(['contribution_amount', 'contribution_description', 'contribution_owner_id']);
         $this->contribution_date = now()->format('Y-m-d');
         $this->contribution_account_code = config('accounting.accounts.bank', '1100');
         $this->showContributionModal = true;
@@ -80,6 +86,32 @@ class OwnerEquity extends Component
             'contribution_date'         => 'required|date',
             'contribution_account_code' => 'required|string',
         ]);
+
+        if ($this->contribution_owner_id !== '') {
+            $owner = Owner::find($this->contribution_owner_id);
+
+            if (!$owner) {
+                $this->dispatch('notify', type: 'error', message: 'Selected owner not found.');
+
+                return;
+            }
+
+            try {
+                app(Accounting::class)->recordOwnerContribution($owner, [
+                    'amount'               => (float) $this->contribution_amount,
+                    'date'                 => $this->contribution_date,
+                    'deposit_account_code' => $this->contribution_account_code,
+                    'description'          => $this->contribution_description ?: null,
+                ]);
+
+                $this->dispatch('notify', type: 'success', message: "Capital contribution recorded for {$owner->name}.");
+                $this->showContributionModal = false;
+            } catch (\Throwable $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+            }
+
+            return;
+        }
 
         $capital = $this->capitalAccount();
         $depositAccount = Account::where('code', $this->contribution_account_code)->where('is_active', true)->first();
@@ -119,7 +151,7 @@ class OwnerEquity extends Component
 
     public function openDrawing(): void
     {
-        $this->reset(['drawing_amount', 'drawing_description']);
+        $this->reset(['drawing_amount', 'drawing_description', 'drawing_owner_id']);
         $this->drawing_date = now()->format('Y-m-d');
         $this->drawing_account_code = config('accounting.accounts.bank', '1100');
         $this->showDrawingModal = true;
@@ -132,6 +164,32 @@ class OwnerEquity extends Component
             'drawing_date'         => 'required|date',
             'drawing_account_code' => 'required|string',
         ]);
+
+        if ($this->drawing_owner_id !== '') {
+            $owner = Owner::find($this->drawing_owner_id);
+
+            if (!$owner) {
+                $this->dispatch('notify', type: 'error', message: 'Selected owner not found.');
+
+                return;
+            }
+
+            try {
+                app(Accounting::class)->recordOwnerDrawing($owner, [
+                    'amount'              => (float) $this->drawing_amount,
+                    'date'                => $this->drawing_date,
+                    'source_account_code' => $this->drawing_account_code,
+                    'description'         => $this->drawing_description ?: null,
+                ]);
+
+                $this->dispatch('notify', type: 'success', message: "Owner drawing recorded for {$owner->name}.");
+                $this->showDrawingModal = false;
+            } catch (\Throwable $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+            }
+
+            return;
+        }
 
         $drawings = $this->drawingsAccount();
         $sourceAccount = Account::where('code', $this->drawing_account_code)->where('is_active', true)->first();
@@ -184,11 +242,15 @@ class OwnerEquity extends Component
             ->orderByDesc('id')
             ->paginate(config('accounting.per_page.equity_entries', 15));
 
+        $owners = Owner::where('is_active', true)->orderBy('name')->get();
+
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'
         : 'components.layouts.app';
 
         return view('accounting::livewire.owner-equity', [
+            'owners'                  => $owners,
+            'ownerSummary'            => app(Accounting::class)->getOwnerEquitySummary(),
             'entries'                 => $entries,
             'capitalAccount'          => $this->capitalAccount(),
             'drawingsAccount'         => $this->drawingsAccount(),

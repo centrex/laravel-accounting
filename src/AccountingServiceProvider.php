@@ -189,6 +189,8 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.loans.manage',
             'accounting.equity.view',
             'accounting.equity.manage',
+            'accounting.owners.view',
+            'accounting.owners.manage',
 
             // Fixed assets
             'accounting.fixed-assets.view',

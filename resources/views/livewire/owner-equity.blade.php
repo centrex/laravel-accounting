@@ -3,6 +3,9 @@
 
 <x-tallui-page-header title="Owner's Equity" subtitle="Capital contributions, drawings and retained earnings" icon="o-user-circle">
     <x-slot:actions>
+        @can('accounting.owners.manage')
+            <x-tallui-button :link="route('accounting.owners')" icon="o-user-group" class="btn-ghost btn-sm">Manage Owners</x-tallui-button>
+        @endcan
         @can('accounting.equity.manage')
             <x-tallui-button wire:click="openDrawing" icon="o-arrow-up-tray" class="btn-ghost btn-sm">Record Drawing</x-tallui-button>
             <x-tallui-button wire:click="openContribution" icon="o-plus" class="btn-primary btn-sm">Record Contribution</x-tallui-button>
@@ -23,6 +26,42 @@
         Run <code>Accounting::initializeChartOfAccounts()</code> to seed the standard chart of accounts.
     </x-tallui-alert>
 @endunless
+
+{{-- By Owner --}}
+<x-tallui-card class="mb-4" padding="none">
+    <div class="px-5 pt-4 pb-1">
+        <p class="text-sm font-semibold text-base-content">By Owner</p>
+        <p class="text-xs text-base-content/50">Per-owner Capital/Drawings sub-accounts — rolls up into the aggregate balances above.</p>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+            <thead>
+                <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
+                    <th class="pl-5">Owner</th>
+                    <th class="text-right">Capital</th>
+                    <th class="text-right">Drawings</th>
+                    <th class="text-right pr-5">Net Equity</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-base-200">
+                @forelse($ownerSummary as $row)
+                    <tr class="even:bg-base-200/50 hover:bg-base-200">
+                        <td class="pl-5 text-sm font-medium">{{ $row['owner']->name }} <span class="text-base-content/40 font-mono text-xs">({{ $row['owner']->code }})</span></td>
+                        <td class="text-right text-sm font-mono">{{ number_format($row['capital_balance'], 2) }}</td>
+                        <td class="text-right text-sm font-mono">{{ number_format($row['drawings_balance'], 2) }}</td>
+                        <td class="text-right text-sm font-mono font-semibold pr-5">{{ number_format($row['net_equity'], 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4">
+                            <x-tallui-empty-state title="No owners yet" description="Add owners to track equity per person instead of the aggregate account only" icon="o-user-group" size="sm" />
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</x-tallui-card>
 
 {{-- Activity --}}
 <x-tallui-card padding="none">
@@ -72,8 +111,18 @@
 
     <form wire:submit.prevent="recordContribution" class="space-y-4">
         <p class="text-sm text-base-content/60">
-            Records: DR selected account / CR {{ $capitalAccount?->code }} {{ $capitalAccount?->name }}.
+            Records: DR selected account / CR
+            {{ $contribution_owner_id !== '' ? 'the selected owner\'s Capital sub-account' : ($capitalAccount?->code . ' ' . $capitalAccount?->name) }}.
         </p>
+
+        <x-tallui-form-group label="Owner">
+            <x-tallui-select wire:model="contribution_owner_id">
+                <option value="">Company-wide ({{ $capitalAccount?->code }})</option>
+                @foreach($owners as $owner)
+                    <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->code }})</option>
+                @endforeach
+            </x-tallui-select>
+        </x-tallui-form-group>
 
         <x-tallui-form-group label="Amount *" :error="$errors->first('contribution_amount')">
             <x-tallui-input type="number" step="0.01" wire:model="contribution_amount" class="text-right" />
@@ -114,8 +163,19 @@
 
     <form wire:submit.prevent="recordDrawing" class="space-y-4">
         <p class="text-sm text-base-content/60">
-            Records: DR {{ $drawingsAccount?->code }} {{ $drawingsAccount?->name }} / CR selected account.
+            Records: DR
+            {{ $drawing_owner_id !== '' ? 'the selected owner\'s Drawings sub-account' : ($drawingsAccount?->code . ' ' . $drawingsAccount?->name) }}
+            / CR selected account.
         </p>
+
+        <x-tallui-form-group label="Owner">
+            <x-tallui-select wire:model="drawing_owner_id">
+                <option value="">Company-wide ({{ $drawingsAccount?->code }})</option>
+                @foreach($owners as $owner)
+                    <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->code }})</option>
+                @endforeach
+            </x-tallui-select>
+        </x-tallui-form-group>
 
         <x-tallui-form-group label="Amount *" :error="$errors->first('drawing_amount')">
             <x-tallui-input type="number" step="0.01" wire:model="drawing_amount" class="text-right" />
