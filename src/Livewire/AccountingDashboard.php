@@ -110,27 +110,28 @@ class AccountingDashboard extends Component
         ];
 
         // Invoice stats
+        // outstanding_ar/overdue_total use Invoice::$base_balance (total - paid_amount - AR-reducing
+        // discounts - issued credit memos, converted to base currency) rather than a raw
+        // SUM(total - paid_amount) — the raw sum overstates AR whenever a discount or credit memo has
+        // been recorded against an invoice (see Invoice::getBalanceAttribute()), and mixes currencies
+        // when invoices aren't all in the base currency.
         $invoiceStats = [
-            'draft_count'   => Invoice::where('status', 'draft')->count(),
-            'sent_count'    => Invoice::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count' => Invoice::where('status', 'partially_settled')->count(),
-            'overdue_count' => Invoice::where('status', 'overdue')->count(),
-            'overdue_total' => Invoice::where('status', 'overdue')
-                ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
-            'outstanding_ar' => Invoice::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])
-                ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
+            'draft_count'    => Invoice::where('status', 'draft')->count(),
+            'sent_count'     => Invoice::whereIn('status', ['sent', 'issued'])->count(),
+            'partial_count'  => Invoice::where('status', 'partially_settled')->count(),
+            'overdue_count'  => Invoice::where('status', 'overdue')->count(),
+            'overdue_total'  => Invoice::where('status', 'overdue')->get()->sum('base_balance'),
+            'outstanding_ar' => Invoice::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])->get()->sum('base_balance'),
         ];
 
-        // Bill stats
+        // Bill stats — mirrors the AR fix above via Bill::$base_balance.
         $billStats = [
-            'draft_count'   => Bill::where('status', 'draft')->count(),
-            'sent_count'    => Bill::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count' => Bill::where('status', 'partially_settled')->count(),
-            'overdue_count' => Bill::where('status', 'overdue')->count(),
-            'overdue_total' => Bill::where('status', 'overdue')
-                ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
-            'outstanding_ap' => Bill::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])
-                ->selectRaw('COALESCE(SUM(total - paid_amount), 0) as val')->value('val') ?? 0,
+            'draft_count'    => Bill::where('status', 'draft')->count(),
+            'sent_count'     => Bill::whereIn('status', ['sent', 'issued'])->count(),
+            'partial_count'  => Bill::where('status', 'partially_settled')->count(),
+            'overdue_count'  => Bill::where('status', 'overdue')->count(),
+            'overdue_total'  => Bill::where('status', 'overdue')->get()->sum('base_balance'),
+            'outstanding_ap' => Bill::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])->get()->sum('base_balance'),
         ];
 
         $ledgerStats = [
