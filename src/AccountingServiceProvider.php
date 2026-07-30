@@ -7,7 +7,7 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
 use Centrex\Accounting\Events\{BillPosted, InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding, SyncVendorOutstanding};
-use Centrex\Accounting\Livewire\{AccountingDashboard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Livewire\{AccountingBalanceSnapshotCard, AccountingCurrentAssetsCard, AccountingDashboard, AccountingKpiCard, AccountingPayablesCard, AccountingReceivablesCard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
 use Centrex\Accounting\Models\{BillItem, ExpenseItem, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, ExpenseItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
 use Illuminate\Support\Facades\Blade;
@@ -34,6 +34,11 @@ class AccountingServiceProvider extends ServiceProvider
 
         // Register Livewire Components
         Livewire::component('accounting-dashboard', AccountingDashboard::class);
+        Livewire::component('accounting-kpi-card', AccountingKpiCard::class);
+        Livewire::component('accounting-receivables-card', AccountingReceivablesCard::class);
+        Livewire::component('accounting-payables-card', AccountingPayablesCard::class);
+        Livewire::component('accounting-balance-snapshot-card', AccountingBalanceSnapshotCard::class);
+        Livewire::component('accounting-current-assets-card', AccountingCurrentAssetsCard::class);
         Livewire::component('chart-of-accounts', ChartOfAccounts::class);
         Livewire::component('financial-reports', FinancialReports::class);
         Livewire::component('journal-entries', JournalEntries::class);

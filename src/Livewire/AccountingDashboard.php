@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
-use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
 use Centrex\Accounting\Models\{Account, Bill, Customer, FiscalPeriod, Invoice, JournalEntry, Vendor};
 use Illuminate\Support\Facades\DB;
@@ -94,44 +93,27 @@ class AccountingDashboard extends Component
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        $service = app(Accounting::class);
-
-        // Period P&L + balance sheet
-        $incomeStatement = $service->getIncomeStatement($this->startDate, $this->endDate);
-        $balanceSheet = $service->getBalanceSheet($this->endDate);
-
-        $metrics = [
-            'revenue'           => $incomeStatement['revenue']['total'] ?? 0,
-            'expenses'          => $incomeStatement['expenses']['total'] ?? 0,
-            'net_income'        => $incomeStatement['net_income'] ?? 0,
-            'total_assets'      => $balanceSheet['assets']['total'] ?? 0,
-            'total_liabilities' => $balanceSheet['liabilities']['total'] ?? 0,
-            'total_equity'      => $balanceSheet['equity']['total_with_income'] ?? 0,
+        // Revenue/expenses/net-income/assets/liabilities/equity KPIs, the full AR/AP
+        // outstanding totals, Balance Snapshot, and Current Assets all moved to their own
+        // lazy-loaded Livewire components (AccountingKpiCard, AccountingReceivablesCard,
+        // AccountingPayablesCard, AccountingBalanceSnapshotCard, AccountingCurrentAssetsCard
+        // — see accounting-dashboard.blade.php) since together they ran ~16+ queries,
+        // several scanning the full posted journal-entry history or N+1'ing per open
+        // invoice/bill.
+        //
+        // The overdue-only figures below stay here (not lazy) because the "N invoices
+        // overdue" banner at the top of the page is meant to be visible immediately, not
+        // hidden behind a loading placeholder — and "overdue" is normally a much smaller
+        // subset of invoices/bills than "all outstanding", so the N+1 on base_balance is
+        // bounded.
+        $invoiceOverdue = [
+            'count' => Invoice::where('status', 'overdue')->count(),
+            'total' => Invoice::where('status', 'overdue')->get()->sum('base_balance'),
         ];
 
-        // Invoice stats
-        // outstanding_ar/overdue_total use Invoice::$base_balance (total - paid_amount - AR-reducing
-        // discounts - issued credit memos, converted to base currency) rather than a raw
-        // SUM(total - paid_amount) — the raw sum overstates AR whenever a discount or credit memo has
-        // been recorded against an invoice (see Invoice::getBalanceAttribute()), and mixes currencies
-        // when invoices aren't all in the base currency.
-        $invoiceStats = [
-            'draft_count'    => Invoice::where('status', 'draft')->count(),
-            'sent_count'     => Invoice::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count'  => Invoice::where('status', 'partially_settled')->count(),
-            'overdue_count'  => Invoice::where('status', 'overdue')->count(),
-            'overdue_total'  => Invoice::where('status', 'overdue')->get()->sum('base_balance'),
-            'outstanding_ar' => Invoice::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])->get()->sum('base_balance'),
-        ];
-
-        // Bill stats — mirrors the AR fix above via Bill::$base_balance.
-        $billStats = [
-            'draft_count'    => Bill::where('status', 'draft')->count(),
-            'sent_count'     => Bill::whereIn('status', ['sent', 'issued'])->count(),
-            'partial_count'  => Bill::where('status', 'partially_settled')->count(),
-            'overdue_count'  => Bill::where('status', 'overdue')->count(),
-            'overdue_total'  => Bill::where('status', 'overdue')->get()->sum('base_balance'),
-            'outstanding_ap' => Bill::whereIn('status', ['sent', 'issued', 'partially_settled', 'overdue'])->get()->sum('base_balance'),
+        $billOverdue = [
+            'count' => Bill::where('status', 'overdue')->count(),
+            'total' => Bill::where('status', 'overdue')->get()->sum('base_balance'),
         ];
 
         $ledgerStats = [
@@ -170,31 +152,15 @@ class AccountingDashboard extends Component
         $recentEntries = JournalEntry::with(['lines.account'])
             ->latest('date')->limit(8)->get();
 
-        // Current assets: accounts with codes < 1500 (liquid assets — cash, bank, AR, inventory)
-        $currentAssets = collect($balanceSheet['assets']['accounts'] ?? [])
-            ->filter(fn ($item) => (int) ($item['account']->code ?? 9999) < 1500)
-            ->values();
-
-        $currentAssetTotal = $currentAssets->sum(fn ($item) => (float) ($item['balance'] ?? 0));
-
         $revenueExpensesChart = $this->monthlyRevenueExpenses();
-        $balanceChart = [
-            'series' => [
-                max(0, (float) $metrics['total_assets']),
-                max(0, (float) $metrics['total_liabilities']),
-                max(0, (float) $metrics['total_equity']),
-            ],
-            'categories' => ['Assets', 'Liabilities', 'Equity'],
-        ];
 
         $layout = view()->exists('layouts.app')
             ? 'layouts.app'
             : 'components.layouts.app';
 
         return view('accounting::livewire.accounting-dashboard', compact(
-            'metrics',
-            'invoiceStats',
-            'billStats',
+            'invoiceOverdue',
+            'billOverdue',
             'ledgerStats',
             'customerCount',
             'vendorCount',
@@ -204,9 +170,6 @@ class AccountingDashboard extends Component
             'pendingJournals',
             'openPeriod',
             'revenueExpensesChart',
-            'balanceChart',
-            'currentAssets',
-            'currentAssetTotal',
         ))->layout($layout, ['title' => __('Accounting Dashboard')]);
     }
 }

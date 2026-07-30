@@ -62,19 +62,19 @@
     </x-tallui-alert>
 @endif
 
-@if($invoiceStats['overdue_count'] > 0 || $billStats['overdue_count'] > 0)
+@if($invoiceOverdue['count'] > 0 || $billOverdue['count'] > 0)
     <div class="flex flex-col sm:flex-row gap-3">
-        @if($invoiceStats['overdue_count'] > 0)
-            <x-tallui-alert type="error" title="{{ $invoiceStats['overdue_count'] }} Invoice{{ $invoiceStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
-                {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }} outstanding.
+        @if($invoiceOverdue['count'] > 0)
+            <x-tallui-alert type="error" title="{{ $invoiceOverdue['count'] }} Invoice{{ $invoiceOverdue['count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
+                {{ $currency }} {{ number_format($invoiceOverdue['total'], 2) }} outstanding.
                 @can('accounting.invoice.view')
                 <a href="{{ route('accounting.invoices') }}" wire:navigate class="link link-error font-semibold ml-1">Review →</a>
                 @endcan
             </x-tallui-alert>
         @endif
-        @if($billStats['overdue_count'] > 0)
-            <x-tallui-alert type="warning" title="{{ $billStats['overdue_count'] }} Bill{{ $billStats['overdue_count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
-                {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }} due.
+        @if($billOverdue['count'] > 0)
+            <x-tallui-alert type="warning" title="{{ $billOverdue['count'] }} Bill{{ $billOverdue['count'] > 1 ? 's' : '' }} Overdue" :dismissible="true">
+                {{ $currency }} {{ number_format($billOverdue['total'], 2) }} due.
                 @can('accounting.bill.view')
                 <a href="{{ route('accounting.bills') }}" wire:navigate class="link link-warning font-semibold ml-1">Review →</a>
                 @endcan
@@ -194,125 +194,19 @@
 </div>
 
 {{-- ── Primary KPI Stats ─────────────────────────────────────────────── --}}
-{{-- QuickBooks-style KPI row: separated elevated tiles rather than DaisyUI's joined "stats" bar --}}
-<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            title="Revenue"
-            :value="$currency . ' ' . number_format($metrics['revenue'], 2)"
-            icon="o-arrow-trending-up"
-            icon-color="text-success"
-            :desc="\Carbon\Carbon::parse($startDate)->format('M d') . ' – ' . \Carbon\Carbon::parse($endDate)->format('M d')"
-        />
-    </div>
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            title="Expenses"
-            :value="$currency . ' ' . number_format($metrics['expenses'], 2)"
-            icon="o-arrow-trending-down"
-            icon-color="text-error"
-            desc="Total costs for period"
-        />
-    </div>
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            :title="$metrics['net_income'] >= 0 ? 'Net Profit' : 'Net Loss'"
-            :value="$currency . ' ' . number_format(abs($metrics['net_income']), 2)"
-            :icon="$metrics['net_income'] >= 0 ? 'o-face-smile' : 'o-face-frown'"
-            :icon-color="$metrics['net_income'] >= 0 ? 'text-primary' : 'text-error'"
-            :desc="$metrics['net_income'] >= 0 ? 'Profitable period' : 'Loss period'"
-        />
-    </div>
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            title="Total Assets"
-            :value="$currency . ' ' . number_format($metrics['total_assets'], 2)"
-            icon="o-building-library"
-            icon-color="text-info"
-            desc="Current asset base"
-        />
-    </div>
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            title="Liabilities"
-            :value="$currency . ' ' . number_format($metrics['total_liabilities'], 2)"
-            icon="o-credit-card"
-            icon-color="text-warning"
-            desc="Total obligations"
-        />
-    </div>
-    <div class="rounded-2xl border border-base-300 bg-base-100 shadow-theme-xs">
-        <x-tallui-stat
-            title="Equity"
-            :value="$currency . ' ' . number_format($metrics['total_equity'], 2)"
-            icon="o-scale"
-            icon-color="text-secondary"
-            desc="Owner's equity"
-        />
-    </div>
-</div>
+{{-- Split into its own lazy component — getIncomeStatement()+getBalanceSheet() together run
+     ~16 queries, some scanning the full posted journal-entry history. --}}
+<livewire:accounting-kpi-card :start-date="$startDate" :end-date="$endDate" lazy />
 
 {{-- ── AR / AP / Entity Summary Cards ──────────────────────────────────── --}}
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
 
     @can('accounting.invoice.view')
-    <a href="{{ route('accounting.invoices') }}" wire:navigate class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-success/40 transition-all rounded-2xl h-full">
-            <div class="card-body p-4 gap-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Receivables</span>
-                    <div class="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                        <x-tallui-icon name="o-inbox-arrow-down" class="w-4 h-4 text-success" />
-                    </div>
-                </div>
-                <div class="text-xl font-bold mt-1">{{ $currency }} {{ number_format($invoiceStats['outstanding_ar'], 2) }}</div>
-                <div class="flex items-center gap-1.5 flex-wrap mt-1">
-                    @if($invoiceStats['overdue_count'] > 0)
-                        <x-tallui-badge type="error" size="sm">{{ $invoiceStats['overdue_count'] }} overdue</x-tallui-badge>
-                    @endif
-                    @if($invoiceStats['sent_count'] > 0)
-                        <x-tallui-badge type="info" size="sm">{{ $invoiceStats['sent_count'] }} sent</x-tallui-badge>
-                    @endif
-                    @if($invoiceStats['partial_count'] > 0)
-                        <x-tallui-badge type="warning" size="sm">{{ $invoiceStats['partial_count'] }} partial</x-tallui-badge>
-                    @endif
-                    @if(!$invoiceStats['overdue_count'] && !$invoiceStats['sent_count'] && !$invoiceStats['partial_count'])
-                        <span class="text-xs text-base-content/40">All clear</span>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </a>
+        <livewire:accounting-receivables-card lazy />
     @endcan
 
     @can('accounting.bill.view')
-    <a href="{{ route('accounting.bills') }}" wire:navigate class="group">
-        <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md hover:border-warning/40 transition-all rounded-2xl h-full">
-            <div class="card-body p-4 gap-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-base-content/50 uppercase tracking-wide">Payables</span>
-                    <div class="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                        <x-tallui-icon name="o-archive-box-arrow-down" class="w-4 h-4 text-warning" />
-                    </div>
-                </div>
-                <div class="text-xl font-bold mt-1">{{ $currency }} {{ number_format($billStats['outstanding_ap'], 2) }}</div>
-                <div class="flex items-center gap-1.5 flex-wrap mt-1">
-                    @if($billStats['overdue_count'] > 0)
-                        <x-tallui-badge type="error" size="sm">{{ $billStats['overdue_count'] }} overdue</x-tallui-badge>
-                    @endif
-                    @if($billStats['sent_count'] > 0)
-                        <x-tallui-badge type="info" size="sm">{{ $billStats['sent_count'] }} sent</x-tallui-badge>
-                    @endif
-                    @if($billStats['partial_count'] > 0)
-                        <x-tallui-badge type="warning" size="sm">{{ $billStats['partial_count'] }} partial</x-tallui-badge>
-                    @endif
-                    @if(!$billStats['overdue_count'] && !$billStats['sent_count'] && !$billStats['partial_count'])
-                        <span class="text-xs text-base-content/40">All clear</span>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </a>
+        <livewire:accounting-payables-card lazy />
     @endcan
 
     @can('accounting.customers.view')
@@ -492,60 +386,9 @@
         @endif
     </x-tallui-card>
 
-    <x-tallui-card title="Balance Snapshot" icon="o-chart-pie">
-        <x-slot:actions>
-            @can('accounting.reports.view')
-            <a href="{{ route('accounting.reports') }}" wire:navigate class="btn btn-ghost btn-xs gap-1">
-                Balance Sheet <x-tallui-icon name="o-arrow-top-right-on-square" size="w-3 h-3" />
-            </a>
-            @endcan
-        </x-slot:actions>
-        @if($balanceChart['series'][0] > 0 || $balanceChart['series'][1] > 0 || $balanceChart['series'][2] > 0)
-            <livewire:tallui-pie-chart
-                :series="$balanceChart['series']"
-                :categories="$balanceChart['categories']"
-                :height="200"
-                :donut="true"
-            />
-        @endif
-        <div class="divide-y divide-base-200 mt-2">
-            @foreach([
-                ['label' => 'Assets',      'key' => 'total_assets',      'color' => 'bg-info'],
-                ['label' => 'Liabilities', 'key' => 'total_liabilities', 'color' => 'bg-warning'],
-                ['label' => 'Equity',      'key' => 'total_equity',      'color' => 'bg-secondary'],
-            ] as $row)
-            <div class="flex justify-between items-center py-2 text-sm">
-                <span class="text-base-content/60 flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full {{ $row['color'] }} inline-block"></span>
-                    {{ $row['label'] }}
-                </span>
-                <span class="font-semibold font-mono text-xs">{{ $currency }} {{ number_format($metrics[$row['key']], 2) }}</span>
-            </div>
-            @endforeach
-        </div>
-    </x-tallui-card>
+    <livewire:accounting-balance-snapshot-card :end-date="$endDate" lazy />
 
-    <x-tallui-card title="Current Assets" icon="o-banknotes" subtitle="Liquid assets available" class="xl:col-span-1">
-        @if($currentAssets->isEmpty())
-            <x-tallui-empty-state title="No accounts" icon="o-banknotes" size="sm" />
-        @else
-            <div class="divide-y divide-base-200">
-                @foreach($currentAssets as $item)
-                <div class="flex justify-between items-center py-2 text-sm">
-                    <span class="text-base-content/70 flex items-center gap-1.5">
-                        <span class="font-mono text-primary text-xs">{{ $item['account']->code }}</span>
-                        {{ $item['account']->name }}
-                    </span>
-                    <span class="font-semibold font-mono text-xs">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
-                </div>
-                @endforeach
-                <div class="flex justify-between items-center py-2.5 mt-1 bg-info/10 rounded-lg px-2 font-bold text-sm">
-                    <span>Total</span>
-                    <span class="font-mono">{{ $currency }} {{ number_format($currentAssetTotal, 2) }}</span>
-                </div>
-            </div>
-        @endif
-    </x-tallui-card>
+    <livewire:accounting-current-assets-card :end-date="$endDate" lazy />
 </div>
 
 {{-- ── Recent Invoices & Bills ──────────────────────────────────────────── --}}
@@ -606,10 +449,10 @@
             </div>
         @endif
         <x-slot:footer>
-            @if($invoiceStats['overdue_count'] > 0)
+            @if($invoiceOverdue['count'] > 0)
                 <div class="flex items-center gap-2 text-xs text-error font-medium">
                     <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5 shrink-0" />
-                    {{ $invoiceStats['overdue_count'] }} overdue — {{ $currency }} {{ number_format($invoiceStats['overdue_total'], 2) }}
+                    {{ $invoiceOverdue['count'] }} overdue — {{ $currency }} {{ number_format($invoiceOverdue['total'], 2) }}
                 </div>
             @else
                 <span class="text-xs text-base-content/40">No overdue invoices</span>
@@ -672,10 +515,10 @@
             </div>
         @endif
         <x-slot:footer>
-            @if($billStats['overdue_count'] > 0)
+            @if($billOverdue['count'] > 0)
                 <div class="flex items-center gap-2 text-xs text-error font-medium">
                     <x-tallui-icon name="o-exclamation-triangle" class="w-3.5 h-3.5 shrink-0" />
-                    {{ $billStats['overdue_count'] }} overdue — {{ $currency }} {{ number_format($billStats['overdue_total'], 2) }}
+                    {{ $billOverdue['count'] }} overdue — {{ $currency }} {{ number_format($billOverdue['total'], 2) }}
                 </div>
             @else
                 <span class="text-xs text-base-content/40">No overdue bills</span>

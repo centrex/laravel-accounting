@@ -3857,7 +3857,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'status' given\\.$#"
-			count: 4
+			count: 2
 			path: src/Livewire/AccountingDashboard.php
 
 		-
@@ -3867,7 +3867,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'status' given\\.$#"
-			count: 4
+			count: 2
 			path: src/Livewire/AccountingDashboard.php
 
 		-
@@ -3892,16 +3892,6 @@ parameters:
 
 		-
 			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingDashboard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingDashboard.php
-
-		-
-			message: "#^Unable to resolve the template type TKey in call to function collect$#"
-			count: 1
-			path: src/Livewire/AccountingDashboard.php
-
-		-
-			message: "#^Unable to resolve the template type TValue in call to function collect$#"
 			count: 1
 			path: src/Livewire/AccountingDashboard.php
 
@@ -7719,3 +7709,107 @@ parameters:
 			message: "#^Method Centrex\\\\Accounting\\\\Support\\\\AccountingWorkspace\\:\\:sidebarNavigation\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Support/AccountingWorkspace.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TKey in call to function collect$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TValue in call to function collect$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:billStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'status' given\\.$#"
+			count: 4
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:invoiceStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'status' given\\.$#"
+			count: 4
+			path: src/Livewire/AccountingReceivablesCard.php
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
