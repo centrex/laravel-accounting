@@ -97,6 +97,7 @@
                         <td class="pr-5">
                             @can('accounting.loans.manage')
                                 <div class="flex justify-end flex-wrap gap-1">
+                                    <x-tallui-button wire:click="openEdit({{ $facility->id }})" class="btn-ghost btn-xs">Edit</x-tallui-button>
                                     <x-tallui-button wire:click="openAction({{ $facility->id }}, 'drawdown')" class="btn-ghost btn-xs">Drawdown</x-tallui-button>
                                     <x-tallui-button wire:click="accrueInterest({{ $facility->id }})" wire:confirm="Accrue this month's interest for {{ $facility->lender_name }}?" class="btn-ghost btn-xs">Accrue</x-tallui-button>
                                     <x-tallui-button wire:click="openAction({{ $facility->id }}, 'pay_interest')" class="btn-ghost btn-xs">Pay Interest</x-tallui-button>
@@ -200,6 +201,86 @@
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showCreateModal', false)" class="btn-ghost">Cancel</x-tallui-button>
         <x-tallui-button wire:click="save" spinner="save" class="btn-primary">Save Facility</x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+
+{{-- Edit Facility Modal --}}
+<x-tallui-modal id="loan-facility-edit-modal" title="Edit Loan Facility" icon="o-banknotes" size="lg">
+    <x-slot:trigger>
+        <span
+            x-effect="if ($wire.showEditModal) $dispatch('open-modal', 'loan-facility-edit-modal'); else $dispatch('close-modal', 'loan-facility-edit-modal')"
+            @modal-closed.window="if ($event.detail === 'loan-facility-edit-modal') $wire.showEditModal = false"
+        ></span>
+    </x-slot:trigger>
+
+    <form wire:submit.prevent="submitEdit" class="space-y-4">
+        @if($editFinancialsLocked)
+            <x-tallui-alert type="info">
+                Sanctioned amount, currency, and exchange rate are locked — this facility already has a drawdown, interest accrual, or repayment posted to the GL. Lender name, loan type, rate, and dates can still be revised.
+            </x-tallui-alert>
+        @endif
+
+        <x-tallui-form-group label="Lender Name *" :error="$errors->first('edit_lender_name')">
+            <x-tallui-input wire:model="edit_lender_name" />
+        </x-tallui-form-group>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Loan Type *" :error="$errors->first('edit_loan_type')">
+                <x-tallui-select wire:model="edit_loan_type">
+                    <option value="term_loan">Term Loan</option>
+                    <option value="working_capital">Working Capital</option>
+                    <option value="inter_company">Inter-company</option>
+                    <option value="director">Director</option>
+                    <option value="equipment">Equipment</option>
+                    <option value="overdraft">Overdraft</option>
+                    <option value="bridge">Bridge</option>
+                </x-tallui-select>
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Loan Term" helper="Fixed at creation — determines which GL account range this facility posts to; not editable.">
+                <x-tallui-badge type="{{ $editFacilityTerm === 'long_term' ? 'secondary' : 'neutral' }}" size="sm">
+                    {{ $editFacilityTerm === 'long_term' ? 'Long-term' : 'Short-term' }}
+                </x-tallui-badge>
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Monthly Interest Rate (%) *" :error="$errors->first('edit_monthly_rate_pct')" helper="e.g. 1.5 = 1.5% per month">
+                <x-tallui-input type="number" step="0.01" wire:model="edit_monthly_rate_pct" class="text-right" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="SBU Code" :error="$errors->first('edit_sbu_code')">
+                <x-tallui-input wire:model="edit_sbu_code" placeholder="Optional" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <x-tallui-form-group label="Sanctioned Amount" :error="$errors->first('edit_loan_amount')" :helper="$editFinancialsLocked ? 'Locked' : 'In the currency below'">
+                <x-tallui-input type="number" step="0.01" wire:model="edit_loan_amount" class="text-right" :disabled="$editFinancialsLocked" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Currency" :error="$errors->first('edit_currency')" :helper="$editFinancialsLocked ? 'Locked' : null">
+                <x-tallui-input wire:model="edit_currency" maxlength="3" class="uppercase" :disabled="$editFinancialsLocked" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Exchange Rate" :error="$errors->first('edit_exchange_rate')" :helper="$editFinancialsLocked ? 'Locked' : null">
+                <x-tallui-input type="number" step="0.000001" wire:model="edit_exchange_rate" class="text-right" :disabled="$editFinancialsLocked" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Due Date" :error="$errors->first('edit_due_at')">
+                <x-tallui-input type="date" wire:model="edit_due_at" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Tenure (months)" :error="$errors->first('edit_tenure_months')">
+                <x-tallui-input type="number" wire:model="edit_tenure_months" />
+            </x-tallui-form-group>
+        </div>
+
+        <x-tallui-form-group label="Lender Contact" :error="$errors->first('edit_contact')">
+            <x-tallui-input wire:model="edit_contact" placeholder="Optional" />
+        </x-tallui-form-group>
+    </form>
+
+    <x-slot:footer>
+        <x-tallui-button wire:click="$set('showEditModal', false)" class="btn-ghost">Cancel</x-tallui-button>
+        <x-tallui-button wire:click="submitEdit" spinner="submitEdit" class="btn-primary">Save Changes</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 

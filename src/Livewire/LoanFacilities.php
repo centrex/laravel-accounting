@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\LoanFacility;
+use Centrex\Accounting\Models\{JournalEntryLine, LoanFacility};
 use Livewire\{Component, WithPagination};
 
 class LoanFacilities extends Component
@@ -63,6 +63,35 @@ class LoanFacilities extends Component
     public string $action_reference = '';
 
     public string $action_description = '';
+
+    // Edit form
+    public bool $showEditModal = false;
+
+    public ?int $editFacilityId = null;
+
+    public bool $editFinancialsLocked = false;
+
+    public string $editFacilityTerm = '';
+
+    public string $edit_lender_name = '';
+
+    public string $edit_loan_type = '';
+
+    public string $edit_monthly_rate_pct = '';
+
+    public string $edit_sbu_code = '';
+
+    public string $edit_loan_amount = '';
+
+    public string $edit_currency = '';
+
+    public string $edit_exchange_rate = '';
+
+    public string $edit_due_at = '';
+
+    public string $edit_tenure_months = '';
+
+    public string $edit_contact = '';
 
     protected array $queryString = ['search', 'termFilter', 'typeFilter'];
 
@@ -198,6 +227,92 @@ class LoanFacilities extends Component
         $facility->update(['is_active' => !$facility->is_active]);
 
         $this->dispatch('notify', type: 'success', message: $facility->is_active ? 'Facility reactivated.' : 'Facility marked inactive.');
+    }
+
+    public function openEdit(int $id): void
+    {
+        $this->resetValidation();
+        $facility = LoanFacility::findOrFail($id);
+
+        $this->editFacilityId = $facility->id;
+        $this->editFinancialsLocked = $this->hasPostedActivity($facility);
+        $this->editFacilityTerm = $facility->loan_term;
+        $this->edit_lender_name = $facility->lender_name;
+        $this->edit_loan_type = $facility->loan_type;
+        $this->edit_monthly_rate_pct = (string) round(((float) $facility->monthly_rate) * 100, 4);
+        $this->edit_sbu_code = $facility->sbu_code ?? '';
+        $this->edit_loan_amount = $facility->loan_amount !== null ? (string) $facility->loan_amount : '';
+        $this->edit_currency = $facility->currency;
+        $this->edit_exchange_rate = (string) $facility->exchange_rate;
+        $this->edit_due_at = $facility->due_at?->format('Y-m-d') ?? '';
+        $this->edit_tenure_months = $facility->tenure_months !== null ? (string) $facility->tenure_months : '';
+        $this->edit_contact = $facility->lender_contact ?? '';
+        $this->showEditModal = true;
+    }
+
+    public function submitEdit(): void
+    {
+        $facility = LoanFacility::findOrFail($this->editFacilityId);
+        $locked = $this->hasPostedActivity($facility);
+
+        $rules = [
+            'edit_lender_name'      => 'required|string|max:255',
+            'edit_loan_type'        => 'required|in:term_loan,working_capital,inter_company,director,equipment,overdraft,bridge',
+            'edit_monthly_rate_pct' => 'required|numeric|min:0|max:100',
+            'edit_sbu_code'         => 'nullable|string|max:32',
+            'edit_due_at'           => 'nullable|date',
+            'edit_tenure_months'    => 'nullable|integer|min:1',
+            'edit_contact'          => 'nullable|string|max:255',
+        ];
+
+        if (!$locked) {
+            $rules['edit_loan_amount'] = 'nullable|numeric|min:0';
+            $rules['edit_currency'] = 'required|string|size:3';
+            $rules['edit_exchange_rate'] = 'required|numeric|min:0.000001';
+        }
+
+        $this->validate($rules);
+
+        $data = [
+            'lender_name'    => $this->edit_lender_name,
+            'loan_type'      => $this->edit_loan_type,
+            'monthly_rate'   => ((float) $this->edit_monthly_rate_pct) / 100,
+            'sbu_code'       => $this->edit_sbu_code ? strtoupper(trim($this->edit_sbu_code)) : null,
+            'due_at'         => $this->edit_due_at ?: null,
+            'tenure_months'  => $this->edit_tenure_months !== '' ? (int) $this->edit_tenure_months : null,
+            'lender_contact' => $this->edit_contact ?: null,
+        ];
+
+        // loan_amount/currency/exchange_rate are only safe to edit before any drawdown/interest/
+        // repayment has posted — those entries already convert amounts to base currency using
+        // the exchange_rate in effect at the time, so changing it afterward would desync every
+        // *Local() figure from the GL history it's supposed to describe. loan_term is never
+        // editable at all (not even here) — it picked which GL account range (240x vs 250x) got
+        // provisioned at addLoanFacility() time; relabeling it after the fact wouldn't move the
+        // account, so the record would contradict its own principal_account_id.
+        if (!$locked) {
+            $data['loan_amount'] = $this->edit_loan_amount !== '' ? (float) $this->edit_loan_amount : null;
+            $data['currency'] = strtoupper($this->edit_currency);
+            $data['exchange_rate'] = (float) $this->edit_exchange_rate;
+        }
+
+        $facility->update($data);
+
+        $this->dispatch('notify', type: 'success', message: 'Loan facility updated.');
+        $this->showEditModal = false;
+    }
+
+    /**
+     * True once this facility's dedicated GL accounts (principal/interest) have any posted
+     * activity — at that point loan_amount/currency/exchange_rate are locked to keep the
+     * record consistent with what's already posted.
+     */
+    private function hasPostedActivity(LoanFacility $facility): bool
+    {
+        return JournalEntryLine::query()
+            ->whereIn('account_id', array_filter([$facility->principal_account_id, $facility->interest_account_id]))
+            ->whereHas('journalEntry', fn ($query) => $query->where('status', 'posted'))
+            ->exists();
     }
 
     public function render(): \Illuminate\Contracts\View\View

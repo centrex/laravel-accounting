@@ -62,14 +62,15 @@
                         </td>
                         <td class="pr-5">
                             @can('accounting.fixed-assets.manage')
-                                @if(!$asset->isDisposed())
-                                    <div class="flex justify-end flex-wrap gap-1">
+                                <div class="flex justify-end flex-wrap gap-1">
+                                    <x-tallui-button wire:click="openEdit({{ $asset->id }})" class="btn-ghost btn-xs">Edit</x-tallui-button>
+                                    @if(!$asset->isDisposed())
                                         <x-tallui-button wire:click="openCapitalize({{ $asset->id }})" class="btn-ghost btn-xs">Capitalize</x-tallui-button>
                                         <x-tallui-button wire:click="depreciate({{ $asset->id }})" wire:confirm="Post this month's depreciation for {{ $asset->name }}?" class="btn-ghost btn-xs">Depreciate</x-tallui-button>
                                         <x-tallui-button wire:click="openDispose({{ $asset->id }})" class="btn-ghost btn-xs">Dispose</x-tallui-button>
                                         <x-tallui-button wire:click="toggleActive({{ $asset->id }})" wire:confirm="{{ $asset->is_active ? 'Mark this asset inactive?' : 'Reactivate this asset?' }}" icon="{{ $asset->is_active ? 'o-pause' : 'o-play' }}" class="btn-ghost btn-xs" title="{{ $asset->is_active ? 'Mark Inactive' : 'Reactivate' }}" />
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             @endcan
                         </td>
                     </tr>
@@ -146,6 +147,67 @@
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showCreateModal', false)" class="btn-ghost">Cancel</x-tallui-button>
         <x-tallui-button wire:click="save" spinner="save" class="btn-primary">Save Asset</x-tallui-button>
+    </x-slot:footer>
+</x-tallui-modal>
+
+{{-- Edit Asset Modal --}}
+<x-tallui-modal id="fixed-asset-edit-modal" title="Edit Fixed Asset" icon="o-cube" size="lg">
+    <x-slot:trigger>
+        <span
+            x-effect="if ($wire.showEditModal) $dispatch('open-modal', 'fixed-asset-edit-modal'); else $dispatch('close-modal', 'fixed-asset-edit-modal')"
+            @modal-closed.window="if ($event.detail === 'fixed-asset-edit-modal') $wire.showEditModal = false"
+        ></span>
+    </x-slot:trigger>
+
+    <form wire:submit.prevent="submitEdit" class="space-y-4">
+        @if($editCostLocked)
+            <x-tallui-alert type="info">
+                Acquisition cost is locked — this asset already has capitalization, depreciation, or disposal posted to the GL. Useful life and salvage value can still be revised (applies to future depreciation only).
+            </x-tallui-alert>
+        @endif
+
+        <x-tallui-form-group label="Asset Name *" :error="$errors->first('edit_name')">
+            <x-tallui-input wire:model="edit_name" />
+        </x-tallui-form-group>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Asset Class" :error="$errors->first('edit_asset_class')">
+                <x-tallui-input wire:model="edit_asset_class" placeholder="e.g. computer_equipment" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="SBU Code" :error="$errors->first('edit_sbu_code')">
+                <x-tallui-input wire:model="edit_sbu_code" placeholder="Optional" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <x-tallui-form-group label="Acquisition Cost *" :error="$errors->first('edit_acquisition_cost')" :helper="$editCostLocked ? 'Locked' : null">
+                <x-tallui-input type="number" step="0.01" wire:model="edit_acquisition_cost" class="text-right" :disabled="$editCostLocked" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Salvage Value" :error="$errors->first('edit_salvage_value')">
+                <x-tallui-input type="number" step="0.01" wire:model="edit_salvage_value" class="text-right" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Useful Life (months) *" :error="$errors->first('edit_useful_life_months')">
+                <x-tallui-input type="number" wire:model="edit_useful_life_months" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <x-tallui-form-group label="Location" :error="$errors->first('edit_location')">
+                <x-tallui-input wire:model="edit_location" placeholder="Optional" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Serial Number" :error="$errors->first('edit_serial_number')">
+                <x-tallui-input wire:model="edit_serial_number" placeholder="Optional" />
+            </x-tallui-form-group>
+        </div>
+
+        <x-tallui-form-group label="Notes" :error="$errors->first('edit_notes')">
+            <x-tallui-textarea wire:model="edit_notes" :rows="2" />
+        </x-tallui-form-group>
+    </form>
+
+    <x-slot:footer>
+        <x-tallui-button wire:click="$set('showEditModal', false)" class="btn-ghost">Cancel</x-tallui-button>
+        <x-tallui-button wire:click="submitEdit" spinner="submitEdit" class="btn-primary">Save Changes</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 
