@@ -124,9 +124,17 @@
             </x-tallui-select>
         </x-tallui-form-group>
 
-        <x-tallui-form-group label="Amount *" :error="$errors->first('contribution_amount')">
-            <x-tallui-input type="number" step="0.01" wire:model="contribution_amount" class="text-right" />
-        </x-tallui-form-group>
+        <div class="grid grid-cols-3 gap-4">
+            <x-tallui-form-group label="Amount *" :error="$errors->first('contribution_amount')">
+                <x-tallui-input type="number" step="0.01" wire:model="contribution_amount" class="text-right" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Currency" :error="$errors->first('contribution_currency')">
+                <x-tallui-input wire:model="contribution_currency" maxlength="3" class="uppercase" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Exchange Rate" :error="$errors->first('contribution_exchange_rate')" helper="{{ config('accounting.base_currency', 'BDT') }} per unit">
+                <x-tallui-input type="number" step="0.000001" wire:model="contribution_exchange_rate" class="text-right" />
+            </x-tallui-form-group>
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Date *" :error="$errors->first('contribution_date')">
@@ -177,9 +185,17 @@
             </x-tallui-select>
         </x-tallui-form-group>
 
-        <x-tallui-form-group label="Amount *" :error="$errors->first('drawing_amount')">
-            <x-tallui-input type="number" step="0.01" wire:model="drawing_amount" class="text-right" />
-        </x-tallui-form-group>
+        <div class="grid grid-cols-3 gap-4">
+            <x-tallui-form-group label="Amount *" :error="$errors->first('drawing_amount')">
+                <x-tallui-input type="number" step="0.01" wire:model="drawing_amount" class="text-right" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Currency" :error="$errors->first('drawing_currency')">
+                <x-tallui-input wire:model="drawing_currency" maxlength="3" class="uppercase" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Exchange Rate" :error="$errors->first('drawing_exchange_rate')" helper="{{ config('accounting.base_currency', 'BDT') }} per unit">
+                <x-tallui-input type="number" step="0.000001" wire:model="drawing_exchange_rate" class="text-right" />
+            </x-tallui-form-group>
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Date *" :error="$errors->first('drawing_date')">

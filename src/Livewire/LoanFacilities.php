@@ -35,6 +35,10 @@ class LoanFacilities extends Component
 
     public string $loan_amount = '';
 
+    public string $currency = '';
+
+    public string $exchange_rate = '';
+
     public string $disbursed_at = '';
 
     public string $due_at = '';
@@ -47,6 +51,8 @@ class LoanFacilities extends Component
     public bool $showActionModal = false;
 
     public ?int $actionFacilityId = null;
+
+    public string $actionFacilityCurrency = '';
 
     public string $actionType = '';
 
@@ -64,10 +70,12 @@ class LoanFacilities extends Component
     {
         $this->reset([
             'lender_name', 'loan_type', 'loan_term', 'monthly_rate_pct', 'sbu_code',
-            'loan_amount', 'disbursed_at', 'due_at', 'tenure_months', 'contact',
+            'loan_amount', 'currency', 'exchange_rate', 'disbursed_at', 'due_at', 'tenure_months', 'contact',
         ]);
         $this->loan_type = 'term_loan';
         $this->loan_term = 'short_term';
+        $this->currency = config('accounting.base_currency', 'BDT');
+        $this->exchange_rate = '1';
         $this->disbursed_at = now()->format('Y-m-d');
         $this->showCreateModal = true;
     }
@@ -81,6 +89,8 @@ class LoanFacilities extends Component
             'monthly_rate_pct' => 'required|numeric|min:0|max:100',
             'sbu_code'         => 'nullable|string|max:32',
             'loan_amount'      => 'nullable|numeric|min:0',
+            'currency'         => 'nullable|string|size:3',
+            'exchange_rate'    => 'nullable|numeric|min:0.000001',
             'disbursed_at'     => 'nullable|date',
             'due_at'           => 'nullable|date',
             'tenure_months'    => 'nullable|integer|min:1',
@@ -99,6 +109,8 @@ class LoanFacilities extends Component
                 dueAt: $this->due_at ?: null,
                 tenureMonths: $this->tenure_months !== '' ? (int) $this->tenure_months : null,
                 contact: $this->contact ?: null,
+                currency: $this->currency ?: null,
+                exchangeRate: $this->exchange_rate !== '' ? (float) $this->exchange_rate : null,
             );
 
             $this->dispatch('notify', type: 'success', message: 'Loan facility added.');
@@ -111,6 +123,7 @@ class LoanFacilities extends Component
     public function openAction(int $id, string $type): void
     {
         $this->actionFacilityId = $id;
+        $this->actionFacilityCurrency = LoanFacility::findOrFail($id)->currency;
         $this->actionType = $type;
         $this->action_amount = '';
         $this->action_date = now()->format('Y-m-d');

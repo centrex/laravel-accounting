@@ -2542,10 +2542,13 @@ class Accounting
         ?string $dueAt = null,
         ?int $tenureMonths = null,
         ?string $contact = null,
+        ?string $currency = null,
+        float|int|string|null $exchangeRate = null,
     ): LoanFacility {
         return DB::transaction(function () use (
             $lenderName, $loanType, $loanTerm, $monthlyRate,
             $sbuCode, $loanAmount, $disbursedAt, $dueAt, $tenureMonths, $contact,
+            $currency, $exchangeRate,
         ): LoanFacility {
             $isShort = $loanTerm === 'short_term';
 
@@ -2590,6 +2593,8 @@ class Accounting
                 'interest_account_id'  => $interestAccount->id,
                 'monthly_rate'         => $monthlyRate,
                 'loan_amount'          => $loanAmount,
+                'currency'             => $currency ? strtoupper(trim($currency)) : $this->baseCurrency(),
+                'exchange_rate'        => $this->normalizeExchangeRate($exchangeRate),
                 'disbursed_at'         => $disbursedAt,
                 'due_at'               => $dueAt,
                 'tenure_months'        => $tenureMonths,
@@ -2599,6 +2604,9 @@ class Accounting
 
     /**
      * Record a loan disbursement — funds received into Bank.
+     *
+     * $amount is in the facility's own currency; createJournalEntry() converts it to the
+     * accounting base currency for posting using the facility's exchange_rate.
      *
      * DR Bank (1100) / CR Loan Payable (240x or 250x)
      * Journal entry is tagged with the facility's sbu_code.
@@ -2619,12 +2627,14 @@ class Accounting
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'description' => $description ?? "Loan disbursement — {$facility->lender_name}",
-            'sbu_code'    => $effectiveSbu,
-            'lines'       => [
+            'date'          => $date,
+            'reference'     => $reference,
+            'type'          => 'general',
+            'description'   => $description ?? "Loan disbursement — {$facility->lender_name}",
+            'sbu_code'      => $effectiveSbu,
+            'currency'      => $facility->currency,
+            'exchange_rate' => $facility->exchange_rate,
+            'lines'         => [
                 ['account_id' => $bank->id,                          'type' => 'debit',  'amount' => $amount],
                 ['account_id' => $facility->principal_account_id,    'type' => 'credit', 'amount' => $amount],
             ],
@@ -2634,6 +2644,10 @@ class Accounting
     /**
      * Accrue one month's interest for a single loan facility.
      *
+     * Interest is calculated on the outstanding principal in the facility's own currency
+     * (what the lender actually charges against), then converted to the accounting base
+     * currency for the journal entry via createJournalEntry()'s currency/exchange_rate handling.
+     *
      * DR Interest Expense 6720 (short) or 6730 (long) / CR Accrued Interest (242x or 252x)
      * Returns null when outstanding principal is zero.
      */
@@ -2641,33 +2655,36 @@ class Accounting
         LoanFacility $facility,
         mixed $date = null,
     ): ?JournalEntry {
-        $principal = $facility->outstandingPrincipal();
+        $principalLocal = $facility->outstandingPrincipalLocal();
 
-        if ($principal <= 0) {
+        if ($principalLocal <= 0) {
             return null;
         }
 
-        $interest = round($principal * $facility->monthly_rate, 2);
+        $interestLocal = round($principalLocal * $facility->monthly_rate, 2);
         $date ??= now()->endOfMonth()->toDateString();
         $expenseCode = $facility->isShortTerm() ? '6720' : '6730';
         $expenseAcct = $this->requireAccount($expenseCode);
 
         return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => 'LOAN-INT-' . now()->format('Y-m') . '-' . $facility->id,
-            'type'        => 'general',
-            'sbu_code'    => $facility->sbu_code,
-            'description' => sprintf(
-                'Loan interest accrual — %s (%s) — %s — principal %s × %.2f%%/mo',
+            'date'          => $date,
+            'reference'     => 'LOAN-INT-' . now()->format('Y-m') . '-' . $facility->id,
+            'type'          => 'general',
+            'sbu_code'      => $facility->sbu_code,
+            'currency'      => $facility->currency,
+            'exchange_rate' => $facility->exchange_rate,
+            'description'   => sprintf(
+                'Loan interest accrual — %s (%s) — %s — principal %s %s × %.2f%%/mo',
                 $facility->lender_name,
                 str_replace('_', ' ', $facility->loan_type),
                 now()->format('F Y'),
-                number_format($principal, 2),
+                $facility->currency,
+                number_format($principalLocal, 2),
                 $facility->monthly_rate * 100,
             ),
             'lines' => [
-                ['account_id' => $expenseAcct->id,               'type' => 'debit',  'amount' => $interest],
-                ['account_id' => $facility->interest_account_id, 'type' => 'credit', 'amount' => $interest],
+                ['account_id' => $expenseAcct->id,               'type' => 'debit',  'amount' => $interestLocal],
+                ['account_id' => $facility->interest_account_id, 'type' => 'credit', 'amount' => $interestLocal],
             ],
         ]);
     }
@@ -2690,6 +2707,8 @@ class Accounting
     /**
      * Pay accrued interest to the lender.
      *
+     * $amount is in the facility's own currency, converted to base currency for posting.
+     *
      * DR Accrued Interest (242x or 252x) / CR Bank (1100)
      */
     public function payLoanInterest(
@@ -2701,12 +2720,14 @@ class Accounting
         $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'sbu_code'    => $facility->sbu_code,
-            'description' => "Loan interest payment — {$facility->lender_name}",
-            'lines'       => [
+            'date'          => $date,
+            'reference'     => $reference,
+            'type'          => 'general',
+            'sbu_code'      => $facility->sbu_code,
+            'currency'      => $facility->currency,
+            'exchange_rate' => $facility->exchange_rate,
+            'description'   => "Loan interest payment — {$facility->lender_name}",
+            'lines'         => [
                 ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
                 ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
             ],
@@ -2715,6 +2736,9 @@ class Accounting
 
     /**
      * Repay principal to the lender.
+     *
+     * $amount is in the facility's own currency, checked against the outstanding principal
+     * in that same currency, then converted to base currency for posting.
      *
      * DR Loan Payable (240x or 250x) / CR Bank (1100)
      */
@@ -2726,11 +2750,11 @@ class Accounting
         ?string $description = null,
         ?string $sbuCode = null,
     ): JournalEntry {
-        $outstanding = $facility->outstandingPrincipal();
+        $outstandingLocal = $facility->outstandingPrincipalLocal();
 
-        if ($amount > $outstanding + 0.01) {
+        if ($amount > $outstandingLocal + 0.01) {
             throw new \RuntimeException(
-                "Repayment of {$amount} exceeds outstanding principal of {$outstanding} for '{$facility->lender_name}'.",
+                "Repayment of {$amount} {$facility->currency} exceeds outstanding principal of {$outstandingLocal} {$facility->currency} for '{$facility->lender_name}'.",
             );
         }
 
@@ -2738,12 +2762,14 @@ class Accounting
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'sbu_code'    => $effectiveSbu,
-            'description' => $description ?? "Loan principal repayment — {$facility->lender_name}",
-            'lines'       => [
+            'date'          => $date,
+            'reference'     => $reference,
+            'type'          => 'general',
+            'sbu_code'      => $effectiveSbu,
+            'currency'      => $facility->currency,
+            'exchange_rate' => $facility->exchange_rate,
+            'description'   => $description ?? "Loan principal repayment — {$facility->lender_name}",
+            'lines'         => [
                 ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
                 ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
             ],
@@ -2766,22 +2792,26 @@ class Accounting
 
         return $query->get()
             ->map(fn (LoanFacility $f): array => [
-                'id'                    => $f->id,
-                'lender_name'           => $f->lender_name,
-                'loan_type'             => $f->loan_type,
-                'loan_term'             => $f->loan_term,
-                'sbu_code'              => $f->sbu_code,
-                'is_active'             => $f->is_active,
-                'monthly_rate'          => $f->monthly_rate,
-                'loan_amount'           => $f->loan_amount,
-                'disbursed_at'          => $f->disbursed_at?->toDateString(),
-                'due_at'                => $f->due_at?->toDateString(),
-                'months_remaining'      => $f->monthsRemaining(),
-                'outstanding_principal' => $f->outstandingPrincipal(),
-                'accrued_interest'      => $f->accruedInterest(),
-                'monthly_interest'      => $f->monthlyInterestAmount(),
-                'principal_account'     => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
-                'interest_account'      => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
+                'id'                          => $f->id,
+                'lender_name'                 => $f->lender_name,
+                'loan_type'                   => $f->loan_type,
+                'loan_term'                   => $f->loan_term,
+                'sbu_code'                    => $f->sbu_code,
+                'is_active'                   => $f->is_active,
+                'monthly_rate'                => $f->monthly_rate,
+                'loan_amount'                 => $f->loan_amount,
+                'currency'                    => $f->currency,
+                'exchange_rate'               => $f->exchange_rate,
+                'disbursed_at'                => $f->disbursed_at?->toDateString(),
+                'due_at'                      => $f->due_at?->toDateString(),
+                'months_remaining'            => $f->monthsRemaining(),
+                'outstanding_principal'       => $f->outstandingPrincipal(),
+                'outstanding_principal_local' => $f->outstandingPrincipalLocal(),
+                'accrued_interest'            => $f->accruedInterest(),
+                'accrued_interest_local'      => $f->accruedInterestLocal(),
+                'monthly_interest'            => $f->monthlyInterestAmount(),
+                'principal_account'           => $f->principalAccount?->code . ' ' . $f->principalAccount?->name,
+                'interest_account'            => $f->interestAccount?->code . ' ' . $f->interestAccount?->name,
             ])
             ->all();
     }
@@ -2847,19 +2877,26 @@ class Accounting
      * Record a capital contribution from a specific owner — DR the deposit account / CR that
      * owner's own Capital sub-account (see addOwner()), instead of the aggregate 3000 account.
      *
-     * @param  array{amount: float, date?: string, deposit_account_code?: string, description?: ?string}  $data
+     * A foreign owner may contribute in their own currency: pass `currency`/`exchange_rate`
+     * and `amount` is treated as that currency, converted to the accounting base currency for
+     * the journal entry (same handling as Invoice/Bill/LoanFacility). Unlike a loan, equity has
+     * no running balance to reconcile against, so this is a one-off per-transaction conversion —
+     * there's nothing persisted on Owner itself.
+     *
+     * @param  array{amount: float, date?: string, deposit_account_code?: string, description?: ?string, currency?: ?string, exchange_rate?: float|int|string|null}  $data
      */
     public function recordOwnerContribution(Owner $owner, array $data): JournalEntry
     {
         $depositAccount = $this->requireAccount($data['deposit_account_code'] ?? config('accounting.accounts.bank', '1100'));
 
         $entry = $this->createJournalEntry([
-            'date'        => $data['date'] ?? now()->toDateString(),
-            'reference'   => 'CAP-' . $owner->code . '-' . now()->format('YmdHis'),
-            'type'        => 'general',
-            'description' => $data['description'] ?? "Capital contribution — {$owner->name}",
-            'currency'    => $this->baseCurrency(),
-            'lines'       => [
+            'date'          => $data['date'] ?? now()->toDateString(),
+            'reference'     => 'CAP-' . $owner->code . '-' . now()->format('YmdHis'),
+            'type'          => 'general',
+            'description'   => $data['description'] ?? "Capital contribution — {$owner->name}",
+            'currency'      => $data['currency'] ?? $this->baseCurrency(),
+            'exchange_rate' => $this->normalizeExchangeRate($data['exchange_rate'] ?? 1),
+            'lines'         => [
                 ['account_id' => $depositAccount->id, 'type' => 'debit', 'amount' => (float) $data['amount']],
                 ['account_id' => $owner->capital_account_id, 'type' => 'credit', 'amount' => (float) $data['amount']],
             ],
@@ -2873,19 +2910,24 @@ class Accounting
      * Record a drawing/withdrawal for a specific owner — DR that owner's own Drawings
      * sub-account / CR the source account, instead of the aggregate 3200 account.
      *
-     * @param  array{amount: float, date?: string, source_account_code?: string, description?: ?string}  $data
+     * A foreign owner may draw in their own currency: pass `currency`/`exchange_rate` and
+     * `amount` is treated as that currency, converted to the accounting base currency for the
+     * journal entry (same handling as recordOwnerContribution()).
+     *
+     * @param  array{amount: float, date?: string, source_account_code?: string, description?: ?string, currency?: ?string, exchange_rate?: float|int|string|null}  $data
      */
     public function recordOwnerDrawing(Owner $owner, array $data): JournalEntry
     {
         $sourceAccount = $this->requireAccount($data['source_account_code'] ?? config('accounting.accounts.bank', '1100'));
 
         $entry = $this->createJournalEntry([
-            'date'        => $data['date'] ?? now()->toDateString(),
-            'reference'   => 'DRAW-' . $owner->code . '-' . now()->format('YmdHis'),
-            'type'        => 'general',
-            'description' => $data['description'] ?? "Owner drawing — {$owner->name}",
-            'currency'    => $this->baseCurrency(),
-            'lines'       => [
+            'date'          => $data['date'] ?? now()->toDateString(),
+            'reference'     => 'DRAW-' . $owner->code . '-' . now()->format('YmdHis'),
+            'type'          => 'general',
+            'description'   => $data['description'] ?? "Owner drawing — {$owner->name}",
+            'currency'      => $data['currency'] ?? $this->baseCurrency(),
+            'exchange_rate' => $this->normalizeExchangeRate($data['exchange_rate'] ?? 1),
+            'lines'         => [
                 ['account_id' => $owner->drawings_account_id, 'type' => 'debit', 'amount' => (float) $data['amount']],
                 ['account_id' => $sourceAccount->id, 'type' => 'credit', 'amount' => (float) $data['amount']],
             ],

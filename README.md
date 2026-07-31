@@ -1677,6 +1677,8 @@ $checks = Accounting::getPeriodCloseChecks($period);
 
 Covers every loan a company takes from an external lender or an internal entity — term loans, working-capital lines, inter-company advances, director loans, equipment finance, and overdraft facilities. Each loan is a **facility** with its own GL sub-accounts. The `sbu_code` field on the facility tags every journal entry automatically, so SBU-filtered P&L and balance sheets work without any extra steps.
 
+A facility can be denominated in its own `currency` — a foreign lender's USD line, say — with `exchange_rate` converting every drawdown, interest accrual, payment, and repayment to the accounting base currency for GL posting. Interest is calculated on the outstanding principal in the facility's own currency, since that's what the lender actually charges. Omit `currency`/`exchangeRate` and a facility behaves exactly as before (base currency, 1:1).
+
 > Full reference (account-code ranges, all facade methods, journal flow table): [docs/loans.md](docs/loans.md).
 
 ### Loan Types
@@ -1768,11 +1770,29 @@ $directorLoan = Accounting::addLoanFacility(
     loanAmount:  1_000_000.00,
 );
 // → creates 2403 / 2423 — sbu_code = null, JEs carry no SBU tag
+
+// 5. Foreign-currency term loan — USD facility from an offshore lender
+$offshoreLoan = Accounting::addLoanFacility(
+    lenderName:   'Standard Chartered (Offshore)',
+    loanType:     'term_loan',
+    loanTerm:     'long_term',
+    monthlyRate:  0.01,                 // 1%/month, charged on the USD outstanding principal
+    sbuCode:      'HO',
+    loanAmount:   100_000.00,           // USD 100,000 sanctioned
+    disbursedAt:  '2026-01-01',
+    dueAt:        '2029-01-01',
+    tenureMonths: 36,
+    currency:     'USD',
+    exchangeRate: 110.50,               // 1 USD = 110.50 BDT — converts every posting to base currency
+);
+// → creates 2502 / 2522 — all GL balances in BDT despite the facility being USD-denominated
 ```
 
 ---
 
 ### Drawdown — Receive Loan Proceeds
+
+`amount` is always in the facility's own currency — `drawdownLoan()` converts it to base currency using the facility's `exchange_rate` before posting.
 
 ```php
 // Dutch-Bangla working-capital: ৳30,00,000 received into bank
@@ -1806,11 +1826,18 @@ Accounting::drawdownLoan(
     reference: 'IC-ADV-2026-001',
     sbuCode:  'EAST',   // overrides facility-level 'HO' for this specific entry
 );
+
+// Offshore USD facility — amount is in USD, journal lines post in BDT
+Accounting::drawdownLoan($offshoreLoan, 40_000.00, '2026-01-01', 'SCB-USD-2026-T1');
+// DR Bank 1100  ৳44,20,000  (40,000 × 110.50)   [sbu_code = HO]
+// CR Term Loan Payable 2502  ৳44,20,000
 ```
 
 ---
 
 ### Month-End Interest Accrual
+
+Interest is calculated on the outstanding principal **in the facility's own currency** (`outstandingPrincipalLocal()` × `monthly_rate`), then converted to base currency for the journal entry — so a USD facility's interest is whatever the lender actually charges on the USD balance, not on its fluctuating BDT equivalent.
 
 ```php
 // Accrue all active loan facilities in one call
@@ -1898,21 +1925,28 @@ $north = Accounting::getLoanSummary(sbuCode: 'NORTH');
 
 // Returns per facility:
 // [
-//   'lender_name'           => 'Dutch-Bangla Bank Ltd',
-//   'loan_type'             => 'working_capital',
-//   'loan_term'             => 'short_term',
-//   'sbu_code'              => 'NORTH',
-//   'monthly_rate'          => 0.02,
-//   'loan_amount'           => 3000000.0,
-//   'disbursed_at'          => '2026-04-01',
-//   'due_at'                => '2026-10-01',
-//   'months_remaining'      => 5,
-//   'outstanding_principal' => 2500000.0,   // after one instalment
-//   'accrued_interest'      => 0.0,         // paid
-//   'monthly_interest'      => 50000.0,     // next estimate on reduced balance
-//   'principal_account'     => '2401 Working Capital Payable — Dutch-Bangla Bank Ltd',
-//   'interest_account'      => '2421 Accrued Interest — Dutch-Bangla Bank Ltd',
+//   'lender_name'                 => 'Dutch-Bangla Bank Ltd',
+//   'loan_type'                   => 'working_capital',
+//   'loan_term'                   => 'short_term',
+//   'sbu_code'                    => 'NORTH',
+//   'monthly_rate'                => 0.02,
+//   'loan_amount'                 => 3000000.0,
+//   'currency'                    => 'BDT',
+//   'exchange_rate'               => 1.0,
+//   'disbursed_at'                => '2026-04-01',
+//   'due_at'                      => '2026-10-01',
+//   'months_remaining'            => 5,
+//   'outstanding_principal'       => 2500000.0,   // base currency (GL) — after one instalment
+//   'outstanding_principal_local' => 2500000.0,   // facility's own currency
+//   'accrued_interest'            => 0.0,         // base currency — paid
+//   'accrued_interest_local'      => 0.0,         // facility's own currency
+//   'monthly_interest'            => 50000.0,     // facility's own currency — next estimate on reduced balance
+//   'principal_account'           => '2401 Working Capital Payable — Dutch-Bangla Bank Ltd',
+//   'interest_account'            => '2421 Accrued Interest — Dutch-Bangla Bank Ltd',
 // ]
+
+// For $offshoreLoan (USD), 'outstanding_principal' is the BDT GL balance while
+// 'outstanding_principal_local' is that balance ÷ exchange_rate — the actual USD still owed.
 ```
 
 ---
@@ -1952,8 +1986,8 @@ $tb = Accounting::getTrialBalance('2026-04-01', '2026-04-30');
 
 `/accounting/loans` (route: `accounting.loans`, gated by `accounting.loans.view` / `.manage`) lists every facility with its live outstanding principal and accrued interest, pulled straight from the GL. From there you can:
 
-- **New Loan Facility** — registers a lender via `addLoanFacility()`; the monthly rate field takes a plain percentage (e.g. `1.5`) and is converted to the `0.015` fraction the facade expects.
-- **Drawdown / Pay Interest / Repay** — each opens a small amount + date + reference form that calls the matching facade method (`drawdownLoan()`, `payLoanInterest()`, `repayLoan()`) and posts the resulting entry immediately.
+- **New Loan Facility** — registers a lender via `addLoanFacility()`; the monthly rate field takes a plain percentage (e.g. `1.5`) and is converted to the `0.015` fraction the facade expects. Currency (defaults to the accounting base currency) and Exchange Rate fields set the facility's own currency once, at creation.
+- **Drawdown / Pay Interest / Repay** — each opens a small amount + date + reference form that calls the matching facade method (`drawdownLoan()`, `payLoanInterest()`, `repayLoan()`) and posts the resulting entry immediately. The amount field is labelled with the facility's currency (e.g. "Amount * (USD)") — it's always in that currency, converted to base currency automatically. The facility list shows outstanding principal / accrued interest in the facility's currency, with the base-currency equivalent underneath when it differs.
 - **Accrue Interest** — one click, calls `accrueLoanInterest()` for that facility only and posts it; shows an info toast instead of erroring when there's no outstanding principal to accrue.
 - **Mark Inactive / Reactivate** — toggles `is_active`; `drawdownLoan()` refuses further draws against an inactive facility.
 
@@ -1963,22 +1997,56 @@ Add it to your app's navigation via `Centrex\Accounting\Support\AccountingWorksp
 
 ## Owner's Equity
 
-There's no dedicated facade method for equity — contributions and drawings are posted as plain journal entries against the standard equity accounts seeded by `initializeChartOfAccounts()`:
+Contributions and drawings can be tracked at two levels: **company-wide**, posted straight to the fixed `3000`/`3200` aggregate accounts, or **per-owner**, via `addOwner()` + `recordOwnerContribution()`/`recordOwnerDrawing()`, which auto-provisions a dedicated Capital and Drawings sub-account per owner (rolling up into the same aggregate balances on the Balance Sheet). Both levels support multi-currency contributions/drawings — a foreign owner can contribute in their own currency, converted to the accounting base currency for posting, the same mechanism as `Invoice`/`Bill`/`LoanFacility`.
 
-> Full reference (account table, retained-earnings rollup, journal flow table): [docs/equity.md](docs/equity.md).
+> Full reference (account table, per-owner facade methods, currency handling, journal flow table): [docs/equity.md](docs/equity.md).
 
 | Code | Name | Normal balance | Purpose |
 | --- | --- | --- | --- |
-| `3000` | Capital | Credit | Owner / shareholder contributions |
+| `3000` | Capital (parent) | Credit | Owner / shareholder contributions — aggregate |
+| `3001–3099` | Per-owner Capital sub-account | Credit | Auto-created by `addOwner()` |
 | `3100` | Retained Earnings | Credit | Auto-updated by `closeFiscalYear()` |
-| `3200` | Owner Drawings | Debit (contra-equity) | Owner withdrawals |
+| `3200` | Owner Drawings (parent) | Debit (contra-equity) | Owner withdrawals — aggregate |
+| `3201–3299` | Per-owner Drawings sub-account | Debit (contra-equity) | Auto-created by `addOwner()` |
 
-Both account codes are configurable — `ACCOUNTING_ACCOUNT_CAPITAL` (default `3000`) and `ACCOUNTING_ACCOUNT_OWNER_DRAWINGS` (default `3200`) — and resolved via `config('accounting.accounts.capital')` / `config('accounting.accounts.owner_drawings')`.
+Both parent account codes are configurable — `ACCOUNTING_ACCOUNT_CAPITAL` (default `3000`) and `ACCOUNTING_ACCOUNT_OWNER_DRAWINGS` (default `3200`) — and resolved via `config('accounting.accounts.capital')` / `config('accounting.accounts.owner_drawings')`.
+
+### Register an Owner
+
+```php
+use Centrex\Accounting\Facades\Accounting;
+
+$owner = Accounting::addOwner([
+    'code'                 => 'OWN-001',
+    'name'                 => 'Jane Rahman',
+    'ownership_percentage' => 60.0,
+]);
+// → creates 3001 "Capital — Jane Rahman" and 3201 "Drawings — Jane Rahman"
+```
 
 ### Record a Capital Contribution
 
 ```php
-use Centrex\Accounting\Facades\Accounting;
+// Per owner — DR deposit account / CR that owner's own Capital sub-account
+Accounting::recordOwnerContribution($owner, [
+    'amount'               => 500_000.00,
+    'date'                 => today(),
+    'deposit_account_code' => '1100',
+    'description'          => 'Capital injection — Q1 2026',
+]);
+// DR Bank 1100                  ৳5,00,000
+// CR Capital — Jane Rahman 3001  ৳5,00,000
+
+// A foreign owner contributing in their own currency — converted to base currency for posting
+Accounting::recordOwnerContribution($owner, [
+    'amount'        => 10_000.00,   // USD 10,000
+    'currency'      => 'USD',
+    'exchange_rate' => 110.50,      // 1 USD = 110.50 BDT
+]);
+// DR Bank 1100                  ৳11,05,000  (10,000 × 110.50)
+// CR Capital — Jane Rahman 3001  ৳11,05,000
+
+// Company-wide (no specific owner) — post directly to the aggregate account
 use Centrex\Accounting\Models\Account;
 
 $bank    = Account::where('code', '1100')->first();
@@ -2000,6 +2068,16 @@ $entry->post();
 ### Record an Owner Drawing
 
 ```php
+// Per owner — DR that owner's own Drawings sub-account / CR source account
+Accounting::recordOwnerDrawing($owner, [
+    'amount'              => 50_000.00,
+    'date'                => today(),
+    'source_account_code' => '1100',
+]);
+// DR Drawings — Jane Rahman 3201  ৳50,000
+// CR Bank 1100                    ৳50,000
+
+// Company-wide (no specific owner)
 $drawings = Account::where('code', config('accounting.accounts.owner_drawings', '3200'))->first();
 $bank     = Account::where('code', '1100')->first();
 
@@ -2016,11 +2094,19 @@ $entry = Accounting::createJournalEntry([
 $entry->post();
 ```
 
+### Per-Owner Equity Summary
+
+```php
+$summary = Accounting::getOwnerEquitySummary();
+// Collection, per active owner: ['owner' => Owner, 'capital_balance', 'drawings_balance', 'net_equity']
+```
+
 Retained Earnings rolls up automatically — `Accounting::closeFiscalYear($fiscalYear)` transfers net income into `3100` via a closing journal entry; it is never posted to directly.
 
 ### Web UI
 
-`/accounting/equity` (route: `accounting.equity`, gated by `accounting.equity.view` / `.manage`) shows live Capital / Owner Drawings / Retained Earnings balances as stat cards, plus a feed of posted equity journal lines. **Record Contribution** and **Record Drawing** open a modal (amount, date, a cash/bank account picker restricted to active `10xx`/`11xx` accounts) and post the entry in one step — same pattern as the invoice/bill payment modals.
+- **`/accounting/owners`** (route `accounting.owners`, gated by `accounting.owners.view` / `.manage`) — register and manage owners; creating one calls `addOwner()` and provisions its sub-accounts.
+- **`/accounting/equity`** (route `accounting.equity`, gated by `accounting.equity.view` / `.manage`) shows live Capital / Owner Drawings / Retained Earnings balances as stat cards, a **By Owner** table, and a feed of posted equity journal lines. **Record Contribution** and **Record Drawing** open a modal with an Owner picker ("Company-wide" or a specific owner), Amount, Currency, Exchange Rate, date, and a cash/bank account picker restricted to active `10xx`/`11xx` accounts — same pattern as the invoice/bill payment modals.
 
 ---
 

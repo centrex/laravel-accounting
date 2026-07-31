@@ -53,6 +53,7 @@
                     <th>Type</th>
                     <th>Term</th>
                     <th class="text-right">Rate / mo</th>
+                    <th>Currency</th>
                     <th class="text-right">Outstanding Principal</th>
                     <th class="text-right">Accrued Interest</th>
                     <th>Status</th>
@@ -75,8 +76,19 @@
                             </x-tallui-badge>
                         </td>
                         <td class="text-right text-sm font-mono">{{ number_format($facility->monthly_rate * 100, 2) }}%</td>
-                        <td class="text-right text-sm font-mono font-medium">{{ number_format($facility->outstandingPrincipal(), 2) }}</td>
-                        <td class="text-right text-sm font-mono text-base-content/70">{{ number_format($facility->accruedInterest(), 2) }}</td>
+                        <td class="text-sm font-mono">{{ $facility->currency }}</td>
+                        <td class="text-right text-sm font-mono font-medium">
+                            {{ $facility->currency }} {{ number_format($facility->outstandingPrincipalLocal(), 2) }}
+                            @if($facility->currency !== config('accounting.base_currency', 'BDT'))
+                                <div class="text-xs text-base-content/50 font-normal">≈ {{ config('accounting.base_currency', 'BDT') }} {{ number_format($facility->outstandingPrincipal(), 2) }}</div>
+                            @endif
+                        </td>
+                        <td class="text-right text-sm font-mono text-base-content/70">
+                            {{ $facility->currency }} {{ number_format($facility->accruedInterestLocal(), 2) }}
+                            @if($facility->currency !== config('accounting.base_currency', 'BDT'))
+                                <div class="text-xs text-base-content/50 font-normal">≈ {{ config('accounting.base_currency', 'BDT') }} {{ number_format($facility->accruedInterest(), 2) }}</div>
+                            @endif
+                        </td>
                         <td>
                             <x-tallui-badge type="{{ $facility->is_active ? 'success' : 'ghost' }}" size="sm">
                                 {{ $facility->is_active ? 'Active' : 'Inactive' }}
@@ -96,7 +108,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <x-tallui-empty-state title="No loan facilities yet" description="Register a lender to start tracking drawdowns, interest and repayments" icon="o-banknotes">
                                 @can('accounting.loans.manage')
                                     <x-tallui-button wire:click="openCreate" icon="o-plus" class="btn-primary">New Loan Facility</x-tallui-button>
@@ -155,9 +167,18 @@
         </div>
 
         <div class="grid grid-cols-3 gap-4">
-            <x-tallui-form-group label="Sanctioned Amount" :error="$errors->first('loan_amount')">
+            <x-tallui-form-group label="Sanctioned Amount" :error="$errors->first('loan_amount')" helper="In the currency below">
                 <x-tallui-input type="number" step="0.01" wire:model="loan_amount" class="text-right" />
             </x-tallui-form-group>
+            <x-tallui-form-group label="Currency" :error="$errors->first('currency')" helper="Loan is drawn down &amp; interest accrues in this currency">
+                <x-tallui-input wire:model="currency" maxlength="3" class="uppercase" />
+            </x-tallui-form-group>
+            <x-tallui-form-group label="Exchange Rate" :error="$errors->first('exchange_rate')" helper="{{ 'Units of ' . config('accounting.base_currency', 'BDT') . ' per 1 unit of currency' }}">
+                <x-tallui-input type="number" step="0.000001" wire:model="exchange_rate" class="text-right" />
+            </x-tallui-form-group>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Disbursed On" :error="$errors->first('disbursed_at')">
                 <x-tallui-input type="date" wire:model="disbursed_at" />
             </x-tallui-form-group>
@@ -202,7 +223,7 @@
     <form wire:submit.prevent="submitAction" class="space-y-4">
         <p class="text-sm text-base-content/60">{{ $actionMeta['help'] }}</p>
 
-        <x-tallui-form-group label="Amount *" :error="$errors->first('action_amount')">
+        <x-tallui-form-group label="Amount * ({{ $actionFacilityCurrency }})" :error="$errors->first('action_amount')" helper="In the facility's own currency ({{ $actionFacilityCurrency }})">
             <x-tallui-input type="number" step="0.01" wire:model="action_amount" class="text-right" />
         </x-tallui-form-group>
 

@@ -25,6 +25,10 @@ class OwnerEquity extends Component
 
     public string $contribution_description = '';
 
+    public string $contribution_currency = '';
+
+    public string $contribution_exchange_rate = '';
+
     /** Empty string = post to the aggregate 3000 account; otherwise a specific Owner id. */
     public string $contribution_owner_id = '';
 
@@ -39,6 +43,10 @@ class OwnerEquity extends Component
 
     public string $drawing_description = '';
 
+    public string $drawing_currency = '';
+
+    public string $drawing_exchange_rate = '';
+
     /** Empty string = post to the aggregate 3200 account; otherwise a specific Owner id. */
     public string $drawing_owner_id = '';
 
@@ -46,6 +54,10 @@ class OwnerEquity extends Component
     {
         $this->contribution_account_code = config('accounting.accounts.bank', '1100');
         $this->drawing_account_code = config('accounting.accounts.bank', '1100');
+        $this->contribution_currency = config('accounting.base_currency', 'BDT');
+        $this->drawing_currency = config('accounting.base_currency', 'BDT');
+        $this->contribution_exchange_rate = '1';
+        $this->drawing_exchange_rate = '1';
     }
 
     public function cashBankAccounts(): \Illuminate\Database\Eloquent\Collection
@@ -76,15 +88,19 @@ class OwnerEquity extends Component
         $this->reset(['contribution_amount', 'contribution_description', 'contribution_owner_id']);
         $this->contribution_date = now()->format('Y-m-d');
         $this->contribution_account_code = config('accounting.accounts.bank', '1100');
+        $this->contribution_currency = config('accounting.base_currency', 'BDT');
+        $this->contribution_exchange_rate = '1';
         $this->showContributionModal = true;
     }
 
     public function recordContribution(): void
     {
         $this->validate([
-            'contribution_amount'       => 'required|numeric|min:0.01',
-            'contribution_date'         => 'required|date',
-            'contribution_account_code' => 'required|string',
+            'contribution_amount'        => 'required|numeric|min:0.01',
+            'contribution_date'          => 'required|date',
+            'contribution_account_code'  => 'required|string',
+            'contribution_currency'      => 'nullable|string|size:3',
+            'contribution_exchange_rate' => 'nullable|numeric|min:0.000001',
         ]);
 
         if ($this->contribution_owner_id !== '') {
@@ -102,6 +118,8 @@ class OwnerEquity extends Component
                     'date'                 => $this->contribution_date,
                     'deposit_account_code' => $this->contribution_account_code,
                     'description'          => $this->contribution_description ?: null,
+                    'currency'             => $this->contribution_currency ?: null,
+                    'exchange_rate'        => $this->contribution_exchange_rate !== '' ? (float) $this->contribution_exchange_rate : null,
                 ]);
 
                 $this->dispatch('notify', type: 'success', message: "Capital contribution recorded for {$owner->name}.");
@@ -130,12 +148,13 @@ class OwnerEquity extends Component
 
         try {
             $entry = app(Accounting::class)->createJournalEntry([
-                'date'        => $this->contribution_date,
-                'reference'   => 'CAP-' . now()->format('YmdHis'),
-                'type'        => 'general',
-                'description' => $this->contribution_description ?: 'Owner capital contribution',
-                'currency'    => self::getCurrency(),
-                'lines'       => [
+                'date'          => $this->contribution_date,
+                'reference'     => 'CAP-' . now()->format('YmdHis'),
+                'type'          => 'general',
+                'description'   => $this->contribution_description ?: 'Owner capital contribution',
+                'currency'      => $this->contribution_currency ?: self::getCurrency(),
+                'exchange_rate' => $this->contribution_exchange_rate !== '' ? (float) $this->contribution_exchange_rate : 1.0,
+                'lines'         => [
                     ['account_id' => $depositAccount->id, 'type' => 'debit',  'amount' => (float) $this->contribution_amount],
                     ['account_id' => $capital->id,         'type' => 'credit', 'amount' => (float) $this->contribution_amount],
                 ],
@@ -154,15 +173,19 @@ class OwnerEquity extends Component
         $this->reset(['drawing_amount', 'drawing_description', 'drawing_owner_id']);
         $this->drawing_date = now()->format('Y-m-d');
         $this->drawing_account_code = config('accounting.accounts.bank', '1100');
+        $this->drawing_currency = config('accounting.base_currency', 'BDT');
+        $this->drawing_exchange_rate = '1';
         $this->showDrawingModal = true;
     }
 
     public function recordDrawing(): void
     {
         $this->validate([
-            'drawing_amount'       => 'required|numeric|min:0.01',
-            'drawing_date'         => 'required|date',
-            'drawing_account_code' => 'required|string',
+            'drawing_amount'        => 'required|numeric|min:0.01',
+            'drawing_date'          => 'required|date',
+            'drawing_account_code'  => 'required|string',
+            'drawing_currency'      => 'nullable|string|size:3',
+            'drawing_exchange_rate' => 'nullable|numeric|min:0.000001',
         ]);
 
         if ($this->drawing_owner_id !== '') {
@@ -180,6 +203,8 @@ class OwnerEquity extends Component
                     'date'                => $this->drawing_date,
                     'source_account_code' => $this->drawing_account_code,
                     'description'         => $this->drawing_description ?: null,
+                    'currency'            => $this->drawing_currency ?: null,
+                    'exchange_rate'       => $this->drawing_exchange_rate !== '' ? (float) $this->drawing_exchange_rate : null,
                 ]);
 
                 $this->dispatch('notify', type: 'success', message: "Owner drawing recorded for {$owner->name}.");
@@ -208,12 +233,13 @@ class OwnerEquity extends Component
 
         try {
             $entry = app(Accounting::class)->createJournalEntry([
-                'date'        => $this->drawing_date,
-                'reference'   => 'DRAW-' . now()->format('YmdHis'),
-                'type'        => 'general',
-                'description' => $this->drawing_description ?: 'Owner drawing',
-                'currency'    => self::getCurrency(),
-                'lines'       => [
+                'date'          => $this->drawing_date,
+                'reference'     => 'DRAW-' . now()->format('YmdHis'),
+                'type'          => 'general',
+                'description'   => $this->drawing_description ?: 'Owner drawing',
+                'currency'      => $this->drawing_currency ?: self::getCurrency(),
+                'exchange_rate' => $this->drawing_exchange_rate !== '' ? (float) $this->drawing_exchange_rate : 1.0,
+                'lines'         => [
                     ['account_id' => $drawings->id,      'type' => 'debit',  'amount' => (float) $this->drawing_amount],
                     ['account_id' => $sourceAccount->id, 'type' => 'credit', 'amount' => (float) $this->drawing_amount],
                 ],
