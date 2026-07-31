@@ -150,3 +150,59 @@ it('AccountingBalanceSnapshotCard and AccountingCurrentAssetsCard share one cach
 
     expect($queryCount)->toBe(0);
 });
+
+it('never puts an Account model into the cached balance sheet — only plain arrays cross the cache boundary', function (): void {
+    // The 'array' cache store (used in tests) keeps values in-process without ever
+    // calling serialize()/unserialize(), so it can't catch this: in production
+    // (file/redis/database stores), an Account model surviving into the cached value
+    // comes back as __PHP_Incomplete_Class on the next request if the Account class
+    // isn't autoloaded yet, and ->code throws. Assert the invariant directly instead.
+    $cash = Account::where('code', '1000')->first();
+    $revenue = Account::where('code', '4000')->first();
+
+    app(Accounting::class)->createJournalEntry([
+        'date'        => today(),
+        'reference'   => 'REF-SERIALIZE',
+        'type'        => 'general',
+        'description' => 'Sale',
+        'currency'    => 'BDT',
+        'lines'       => [
+            ['account_id' => $cash->id, 'type' => 'debit', 'amount' => 300],
+            ['account_id' => $revenue->id, 'type' => 'credit', 'amount' => 300],
+        ],
+    ])->post();
+
+    $component = new AccountingCurrentAssetsCard();
+    $component->endDate = today()->endOfMonth();
+    $component->mount();
+
+    $balanceSheet = $component->balanceSheet();
+
+    foreach (['assets', 'liabilities', 'equity'] as $section) {
+        foreach ($balanceSheet[$section]['accounts'] ?? [] as $row) {
+            expect($row['account'])->toBeArray()
+                ->and($row['account'])->not->toBeInstanceOf(Account::class);
+        }
+    }
+});
+
+it('AccountingCurrentAssetsCard renders account code/name from the sanitized array shape', function (): void {
+    $cash = Account::where('code', '1000')->first();
+    $revenue = Account::where('code', '4000')->first();
+
+    app(Accounting::class)->createJournalEntry([
+        'date'        => today(),
+        'reference'   => 'REF-RENDER',
+        'type'        => 'general',
+        'description' => 'Sale',
+        'currency'    => 'BDT',
+        'lines'       => [
+            ['account_id' => $cash->id, 'type' => 'debit', 'amount' => 300],
+            ['account_id' => $revenue->id, 'type' => 'credit', 'amount' => 300],
+        ],
+    ])->post();
+
+    Livewire::test(AccountingCurrentAssetsCard::class, ['endDate' => today()->endOfMonth()])
+        ->assertSee($cash->code)
+        ->assertSee($cash->name);
+});

@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Concerns\{SerializesBalanceSheetAccounts, WithCurrency};
 use Centrex\TallUi\Concerns\CachesData;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Blade;
@@ -18,10 +18,16 @@ use Livewire\Component;
  * than coupling the two into one component (Livewire requires a single root element, which
  * would fight the dashboard's CSS grid layout), they share the exact same cache key so
  * whichever mounts first pays the query cost and the other reads it straight from cache.
+ *
+ * Applies SerializesBalanceSheetAccounts even though this card never reads the embedded
+ * account rows itself — see that trait's docblock. Whichever of these two cards' lazy
+ * request lands first is the one that actually populates the shared cache entry, so both
+ * must sanitize identically or the entry's shape depends on a race.
  */
 class AccountingBalanceSnapshotCard extends Component
 {
     use CachesData;
+    use SerializesBalanceSheetAccounts;
     use WithCurrency;
 
     #[Reactive]
@@ -43,7 +49,7 @@ class AccountingBalanceSnapshotCard extends Component
     {
         return $this->rememberCache(
             $this->cacheKey('accounting', 'balance-sheet', (string) $this->endDate),
-            fn (): array => app(Accounting::class)->getBalanceSheet($this->endDate),
+            fn (): array => $this->serializeBalanceSheetAccounts(app(Accounting::class)->getBalanceSheet($this->endDate)),
         );
     }
 

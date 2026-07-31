@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Concerns\{SerializesBalanceSheetAccounts, WithCurrency};
 use Centrex\TallUi\Concerns\CachesData;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Blade;
@@ -20,6 +20,7 @@ use Livewire\Component;
 class AccountingCurrentAssetsCard extends Component
 {
     use CachesData;
+    use SerializesBalanceSheetAccounts;
     use WithCurrency;
 
     #[Reactive]
@@ -37,7 +38,7 @@ class AccountingCurrentAssetsCard extends Component
     {
         return $this->rememberCache(
             $this->cacheKey('accounting', 'balance-sheet', (string) $this->endDate),
-            fn (): array => app(Accounting::class)->getBalanceSheet($this->endDate),
+            fn (): array => $this->serializeBalanceSheetAccounts(app(Accounting::class)->getBalanceSheet($this->endDate)),
         );
     }
 
@@ -62,7 +63,7 @@ class AccountingCurrentAssetsCard extends Component
         $balanceSheet = $this->balanceSheet();
 
         $currentAssets = collect($balanceSheet['assets']['accounts'] ?? [])
-            ->filter(fn (array $item) => (int) ($item['account']->code ?? 9999) < 1500)
+            ->filter(fn (array $item) => (int) ($item['account']['code'] ?? 9999) < 1500)
             ->values();
 
         return view('accounting::livewire.accounting-current-assets-card', [

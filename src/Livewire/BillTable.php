@@ -30,6 +30,8 @@ class BillTable extends DataTable
         return [
             Column::make('Bill #', 'bill_number')->searchable()->sortable(),
             Column::make('Vendor', 'vendor.name')->relation('vendor')->searchable(),
+            Column::make('Purchase Order', 'source_reference')->searchable()->sortable()
+                ->view('accounting::livewire.partials.bill-table.order'),
             Column::make('Bill Date', 'bill_date')->sortable()->format('date'),
             Column::make('Due Date', 'due_date')->sortable()->format('date')->hideOnMobile()
                 ->view('accounting::livewire.partials.bill-table.due-date'),

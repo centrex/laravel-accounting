@@ -6,8 +6,8 @@
             @foreach($currentAssets as $item)
             <div class="flex justify-between items-center py-2 text-sm">
                 <span class="text-base-content/70 flex items-center gap-1.5">
-                    <span class="font-mono text-primary text-xs">{{ $item['account']->code }}</span>
-                    {{ $item['account']->name }}
+                    <span class="font-mono text-primary text-xs">{{ $item['account']['code'] }}</span>
+                    {{ $item['account']['name'] }}
                 </span>
                 <span class="font-semibold font-mono text-xs">{{ $currency }} {{ number_format($item['balance'], 2) }}</span>
             </div>

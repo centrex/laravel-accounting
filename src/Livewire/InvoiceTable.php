@@ -32,6 +32,8 @@ class InvoiceTable extends DataTable
                 ->view('accounting::livewire.partials.invoice-table.number'),
             Column::make('Customer', 'customer.name')->relation('customer')->searchable()
                 ->view('accounting::livewire.partials.invoice-table.customer'),
+            Column::make('Sale Order', 'source_reference')->searchable()->sortable()
+                ->view('accounting::livewire.partials.invoice-table.order'),
             Column::make('Date', 'invoice_date')->sortable()->format('date'),
             Column::make('Due Date', 'due_date')->sortable()->format('date')->hideOnMobile(),
             Column::make('Total', 'base_total')->currency($currency),
