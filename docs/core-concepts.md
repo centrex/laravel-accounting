@@ -64,6 +64,9 @@ Every `JournalEntry` has an optional `sbu_code` field. All report methods accept
 
 Used when `laravel-accounting` is integrated with `laravel-inventory`. WAC is calculated per product per warehouse and feeds into COGS journal entries. See the [inventory documentation](../../laravel-inventory/docs/core-concepts.md) for the WAC formula.
 
+Seeing COGS higher than revenue, an inflated margin, or a correction command that skipped a
+line? See [cogs-scenarios.md](cogs-scenarios.md) for a symptom-driven troubleshooting guide.
+
 ---
 
 ## Account subtypes
