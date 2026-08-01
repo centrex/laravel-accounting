@@ -18,6 +18,7 @@
             <option value="today">Today</option>
             <option value="this_week">This Week</option>
             <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
             <option value="this_quarter">This Quarter</option>
             <option value="this_year">This Year</option>
         </select>

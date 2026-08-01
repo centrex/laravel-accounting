@@ -100,7 +100,17 @@
                     <div class="text-sm text-base-content/60">{{ $invoice->customer->phone }}</div>
                 @endif
             </div>
-            <x-tallui-badge :type="$badgeType">{{ str($status)->replace('_', ' ')->title() }}</x-tallui-badge>
+            <div class="text-right">
+                <x-tallui-badge :type="$badgeType">{{ str($status)->replace('_', ' ')->title() }}</x-tallui-badge>
+                @if($invoice->inventory_sale_order_id && Route::has('inventory.sale-orders.show'))
+                    <div class="mt-2">
+                        <a href="{{ route('inventory.sale-orders.show', ['recordId' => $invoice->inventory_sale_order_id]) }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                            <x-tallui-icon name="o-shopping-cart" class="h-3.5 w-3.5" />
+                            {{ $invoice->source_reference ?: 'View Sale Order' }}
+                        </a>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

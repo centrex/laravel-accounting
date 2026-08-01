@@ -94,6 +94,42 @@ class Expenses extends Component
         $this->showModal = true;
     }
 
+    /** Only draft, unposted expenses can be edited — same rule delete() enforces. */
+    #[On('expense-table:edit')]
+    public function openEdit(int $id): void
+    {
+        $expense = Expense::with('items')->findOrFail($id);
+
+        if ($expense->status !== 'draft' || $expense->journal_entry_id !== null) {
+            $this->dispatch('notify', type: 'error', message: 'Only draft expenses can be edited.');
+
+            return;
+        }
+
+        $this->expenseId = $expense->id;
+        $this->account_id = $expense->account_id;
+        $this->expense_date = $expense->expense_date?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $this->due_date = $expense->due_date?->format('Y-m-d') ?? '';
+        $this->notes = (string) $expense->notes;
+        $this->payment_method = $expense->payment_method ?: 'cash';
+        $this->payment_account_code = $expense->payment_account_code ?: '1100';
+        $this->reference = (string) $expense->reference;
+        $this->vendor_name = (string) $expense->vendor_name;
+
+        $this->items = $expense->items->map(fn (ExpenseItem $item): array => [
+            'description' => $item->description,
+            'quantity'    => (float) $item->quantity,
+            'unit_price'  => (float) $item->unit_price,
+            'tax_rate'    => (float) $item->tax_rate,
+        ])->all();
+
+        if ($this->items === []) {
+            $this->addItem();
+        }
+
+        $this->showModal = true;
+    }
+
     public function save(): void
     {
         $this->validate([
@@ -109,6 +145,16 @@ class Expenses extends Component
             'items.*.tax_rate'     => 'nullable|numeric|min:0|max:100',
         ]);
 
+        if ($this->expenseId) {
+            $existing = Expense::findOrFail($this->expenseId);
+
+            if ($existing->status !== 'draft' || $existing->journal_entry_id !== null) {
+                $this->dispatch('notify', type: 'error', message: 'Only draft expenses can be edited.');
+
+                return;
+            }
+        }
+
         DB::transaction(function (): void {
             $subtotal = 0;
             $taxAmount = 0;
@@ -120,7 +166,7 @@ class Expenses extends Component
                 $taxAmount += $itemTax;
             }
 
-            $expense = Expense::create([
+            $attributes = [
                 'account_id'           => $this->account_id,
                 'expense_date'         => $this->expense_date,
                 'due_date'             => $this->due_date ?: null,
@@ -128,13 +174,20 @@ class Expenses extends Component
                 'tax_amount'           => $taxAmount,
                 'total'                => $subtotal + $taxAmount,
                 'currency'             => config('accounting.base_currency', 'BDT'),
-                'status'               => 'draft',
                 'payment_method'       => $this->payment_method,
                 'payment_account_code' => $this->payment_method !== 'credit' ? $this->payment_account_code : null,
                 'reference'            => $this->reference ?: null,
                 'vendor_name'          => $this->vendor_name ?: null,
                 'notes'                => $this->notes ?: null,
-            ]);
+            ];
+
+            if ($this->expenseId) {
+                $expense = Expense::findOrFail($this->expenseId);
+                $expense->update($attributes);
+                $expense->items()->delete();
+            } else {
+                $expense = Expense::create($attributes + ['status' => 'draft']);
+            }
 
             foreach ($this->items as $item) {
                 $amount = $item['quantity'] * $item['unit_price'];
@@ -152,7 +205,7 @@ class Expenses extends Component
             }
         });
 
-        $this->dispatch('notify', type: 'success', message: 'Expense recorded successfully!');
+        $this->dispatch('notify', type: 'success', message: $this->expenseId ? 'Expense updated successfully!' : 'Expense recorded successfully!');
         $this->showModal = false;
         $this->reset(['expenseId', 'account_id', 'items', 'notes', 'reference', 'vendor_name']);
         $this->payment_method = 'cash';

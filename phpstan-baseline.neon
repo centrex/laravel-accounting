@@ -151,6 +151,11 @@ parameters:
 			path: database/migrations/2026_07_28_000001_create_acct_owners_table.php
 
 		-
+			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Support\\\\Facades\\\\Schema\\:\\:connection\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 2
+			path: database/migrations/2026_07_31_000001_add_currency_to_loan_facilities_table.php
+
+		-
 			message: "#^Cannot call method copy\\(\\) on Carbon\\\\Carbon\\|null\\.$#"
 			count: 1
 			path: database/seeders/AccountingSeeder.php
@@ -726,6 +731,11 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$currency\\.$#"
+			count: 8
+			path: src/Accounting.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$disbursed_at\\.$#"
 			count: 1
 			path: src/Accounting.php
@@ -733,6 +743,11 @@ parameters:
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$due_at\\.$#"
 			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$exchange_rate\\.$#"
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1581,7 +1596,7 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: non\\-falsy\\-string, type\\: 'general', sbu_code\\: mixed, description\\: non\\-falsy\\-string, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: float\\}, array\\{account_id\\: mixed, type\\: 'credit', amount\\: float\\}\\}\\} given\\.$#"
+			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: non\\-falsy\\-string, type\\: 'general', sbu_code\\: mixed, currency\\: mixed, exchange_rate\\: mixed, description\\: non\\-falsy\\-string, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: float\\}, array\\{account_id\\: mixed, type\\: 'credit', amount\\: float\\}\\}\\} given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -3821,6 +3836,146 @@ parameters:
 			path: src/Listeners/SyncVendorOutstanding.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$subtype\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Cannot access offset 'accounts' on mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:map\\(\\) expects callable\\(mixed, int\\|string\\)\\: non\\-empty\\-array, Closure\\(array\\)\\: non\\-empty\\-array given\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$items of static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\) expects Illuminate\\\\Contracts\\\\Support\\\\Arrayable\\<\\(int\\|string\\), mixed\\>\\|iterable\\<\\(int\\|string\\), mixed\\>\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Unable to resolve the template type TMakeKey in call to method static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\)$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Unable to resolve the template type TMakeValue in call to method static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\)$#"
+			count: 1
+			path: src/Livewire/AccountingBalanceSnapshotCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$subtype\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Cannot access offset 'accounts' on mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:map\\(\\) expects callable\\(mixed, int\\|string\\)\\: non\\-empty\\-array, Closure\\(array\\)\\: non\\-empty\\-array given\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$items of static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\) expects Illuminate\\\\Contracts\\\\Support\\\\Arrayable\\<\\(int\\|string\\), mixed\\>\\|iterable\\<\\(int\\|string\\), mixed\\>\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TKey in call to function collect$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TMakeKey in call to method static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\)$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TMakeValue in call to method static method Illuminate\\\\Support\\\\Collection\\<\\(int\\|string\\),mixed\\>\\:\\:make\\(\\)$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
+			message: "#^Unable to resolve the template type TValue in call to function collect$#"
+			count: 1
+			path: src/Livewire/AccountingCurrentAssetsCard.php
+
+		-
 			message: "#^Call to method Illuminate\\\\Contracts\\\\View\\\\Factory\\:\\:exists\\(\\) with 'layouts\\.app' will always evaluate to false\\.$#"
 			count: 1
 			path: src/Livewire/AccountingDashboard.php
@@ -3894,6 +4049,61 @@ parameters:
 			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingDashboard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Livewire/AccountingDashboard.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingKpiCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:billStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'status' given\\.$#"
+			count: 4
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingPayablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:invoiceStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'status' given\\.$#"
+			count: 4
+			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/AccountingReceivablesCard.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$account_id\\.$#"
@@ -4991,17 +5201,77 @@ parameters:
 			path: src/Livewire/Expenses.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$account_id\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$due_date\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$expense_date\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$expense_number\\.$#"
 			count: 1
 			path: src/Livewire/Expenses.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$reference\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$journal_entry_id\\.$#"
+			count: 2
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$notes\\.$#"
 			count: 1
 			path: src/Livewire/Expenses.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$payment_account_code\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$payment_method\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$reference\\.$#"
+			count: 2
+			path: src/Livewire/Expenses.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$status\\.$#"
+			count: 3
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$vendor_name\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:\\$description\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:\\$quantity\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:\\$tax_rate\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:\\$unit_price\\.$#"
 			count: 1
 			path: src/Livewire/Expenses.php
 
@@ -5037,6 +5307,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\Expenses\\:\\:getTaxTotalProperty\\(\\) should return float but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>, array\\<string, mixed\\> given\\.$#"
 			count: 1
 			path: src/Livewire/Expenses.php
 
@@ -5096,6 +5371,16 @@ parameters:
 			path: src/Livewire/Expenses.php
 
 		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:all\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Livewire/Expenses.php
+
+		-
 			message: "#^Call to method Illuminate\\\\Contracts\\\\View\\\\Factory\\:\\:exists\\(\\) with 'layouts\\.app' will always evaluate to false\\.$#"
 			count: 1
 			path: src/Livewire/FinancialReports.php
@@ -5126,12 +5411,37 @@ parameters:
 			path: src/Livewire/FinancialReports.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$accumulated_depreciation_account_id\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$acquisition_cost\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_account_id\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$is_active\\.$#"
 			count: 2
 			path: src/Livewire/FixedAssets.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$name\\.$#"
+			count: 2
+			path: src/Livewire/FixedAssets.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$salvage_value\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$useful_life_months\\.$#"
 			count: 1
 			path: src/Livewire/FixedAssets.php
 
@@ -5151,12 +5461,22 @@ parameters:
 			path: src/Livewire/FixedAssets.php
 
 		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'asset_class' given\\.$#"
 			count: 1
 			path: src/Livewire/FixedAssets.php
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'name' given\\.$#"
+			count: 1
+			path: src/Livewire/FixedAssets.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'status' given\\.$#"
 			count: 1
 			path: src/Livewire/FixedAssets.php
 
@@ -5751,12 +6071,62 @@ parameters:
 			path: src/Livewire/JournalEntries.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$currency\\.$#"
+			count: 2
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$due_at\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$exchange_rate\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$interest_account_id\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$is_active\\.$#"
 			count: 2
 			path: src/Livewire/LoanFacilities.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$lender_name\\.$#"
+			count: 2
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$loan_amount\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$loan_term\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$loan_type\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$monthly_rate\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$principal_account_id\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$tenure_months\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
 
@@ -5776,6 +6146,11 @@ parameters:
 			path: src/Livewire/LoanFacilities.php
 
 		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, 'lender_name' given\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
@@ -5791,7 +6166,17 @@ parameters:
 			path: src/Livewire/LoanFacilities.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'status' given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
 			message: "#^Parameter \\#1 \\$perPage of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:paginate\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\LoanFacilities\\:\\:\\$currency \\(string\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
 
@@ -5871,7 +6256,17 @@ parameters:
 			path: src/Livewire/OwnerEquity.php
 
 		-
+			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\OwnerEquity\\:\\:\\$contribution_currency \\(string\\) does not accept mixed\\.$#"
+			count: 2
+			path: src/Livewire/OwnerEquity.php
+
+		-
 			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\OwnerEquity\\:\\:\\$drawing_account_code \\(string\\) does not accept mixed\\.$#"
+			count: 2
+			path: src/Livewire/OwnerEquity.php
+
+		-
+			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\OwnerEquity\\:\\:\\$drawing_currency \\(string\\) does not accept mixed\\.$#"
 			count: 2
 			path: src/Livewire/OwnerEquity.php
 
@@ -7396,6 +7791,11 @@ parameters:
 			path: src/Models/LoanFacility.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$exchange_rate\\.$#"
+			count: 1
+			path: src/Models/LoanFacility.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$loan_term\\.$#"
 			count: 1
 			path: src/Models/LoanFacility.php
@@ -7709,107 +8109,3 @@ parameters:
 			message: "#^Method Centrex\\\\Accounting\\\\Support\\\\AccountingWorkspace\\:\\:sidebarNavigation\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Support/AccountingWorkspace.php
-
-		-
-			message: "#^Cannot cast mixed to string\\.$#"
-			count: 1
-			path: src/Livewire/AccountingBalanceSnapshotCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Livewire/AccountingBalanceSnapshotCard.php
-
-		-
-			message: "#^Cannot cast mixed to string\\.$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php
-
-		-
-			message: "#^Unable to resolve the template type TKey in call to function collect$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php
-
-		-
-			message: "#^Unable to resolve the template type TValue in call to function collect$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php
-
-		-
-			message: "#^Cannot cast mixed to string\\.$#"
-			count: 2
-			path: src/Livewire/AccountingKpiCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:billStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
-			count: 1
-			path: src/Livewire/AccountingPayablesCard.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'status' given\\.$#"
-			count: 4
-			path: src/Livewire/AccountingPayablesCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:invoiceStats\\(\\) should return array\\<string, float\\|int\\> but returns array\\<string, mixed\\>\\.$#"
-			count: 1
-			path: src/Livewire/AccountingReceivablesCard.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'status' given\\.$#"
-			count: 4
-			path: src/Livewire/AccountingReceivablesCard.php
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingKpiCard.php
-
-		-
-			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingKpiCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingKpiCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingReceivablesCard.php
-
-		-
-			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingReceivablesCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingPayablesCard.php
-
-		-
-			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingPayablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingPayablesCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingBalanceSnapshotCard.php
-
-		-
-			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingBalanceSnapshotCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingBalanceSnapshotCard.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php
-
-		-
-			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingCurrentAssetsCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
-			count: 1
-			path: src/Livewire/AccountingCurrentAssetsCard.php

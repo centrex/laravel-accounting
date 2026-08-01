@@ -3,6 +3,10 @@
     <x-tallui-button wire:click="$dispatch('expense-table:audit', { id: {{ $row->getKey() }} })" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
     @if($row->status === 'draft')
         <x-tallui-button
+            wire:click="$dispatch('expense-table:edit', { id: {{ $row->getKey() }} })"
+            class="btn-ghost btn-xs"
+        >Edit</x-tallui-button>
+        <x-tallui-button
             wire:click="$dispatch('expense-table:post', { id: {{ $row->getKey() }} })"
             wire:confirm="Post expense {{ $row->expense_number }}?"
             class="btn-info btn-xs"

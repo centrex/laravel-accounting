@@ -38,6 +38,7 @@ class AccountingDashboard extends Component
             'today'        => [$this->startDate = now()->startOfDay(),     $this->endDate = now()->endOfDay()],
             'this_week'    => [$this->startDate = now()->startOfWeek(),    $this->endDate = now()->endOfWeek()],
             'this_month'   => [$this->startDate = now()->startOfMonth(),   $this->endDate = now()->endOfMonth()],
+            'last_month'   => [$this->startDate = now()->subMonthNoOverflow()->startOfMonth(), $this->endDate = now()->subMonthNoOverflow()->endOfMonth()],
             'this_quarter' => [$this->startDate = now()->startOfQuarter(), $this->endDate = now()->endOfQuarter()],
             'this_year'    => [$this->startDate = now()->startOfYear(),    $this->endDate = now()->endOfYear()],
             default        => null,

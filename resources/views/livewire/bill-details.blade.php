@@ -90,7 +90,17 @@
                     <div class="text-sm text-base-content/60">{{ $bill->vendor->phone }}</div>
                 @endif
             </div>
-            <x-tallui-badge :type="$badgeType">{{ str($status)->replace('_', ' ')->title() }}</x-tallui-badge>
+            <div class="text-right">
+                <x-tallui-badge :type="$badgeType">{{ str($status)->replace('_', ' ')->title() }}</x-tallui-badge>
+                @if($bill->inventory_purchase_order_id && Route::has('inventory.purchase-orders.show'))
+                    <div class="mt-2">
+                        <a href="{{ route('inventory.purchase-orders.show', ['recordId' => $bill->inventory_purchase_order_id]) }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                            <x-tallui-icon name="o-arrow-down-tray" class="h-3.5 w-3.5" />
+                            {{ $bill->source_reference ?: 'View Purchase Order' }}
+                        </a>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

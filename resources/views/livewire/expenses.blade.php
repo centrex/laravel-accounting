@@ -11,7 +11,7 @@
 <livewire:accounting-expense-table />
 
 {{-- Create Expense Modal --}}
-<x-tallui-modal id="expense-modal" title="New Expense" icon="o-credit-card" size="xl">
+<x-tallui-modal id="expense-modal" :title="$expenseId ? 'Edit Expense' : 'New Expense'" icon="o-credit-card" size="xl">
     <x-slot:trigger>
         <span
             x-effect="if ($wire.showModal) $dispatch('open-modal', 'expense-modal'); else $dispatch('close-modal', 'expense-modal')"
@@ -116,7 +116,7 @@
 
     <x-slot:footer>
         <x-tallui-button wire:click="$set('showModal', false)" class="btn-ghost">Cancel</x-tallui-button>
-        <x-tallui-button wire:click="save" spinner="save" class="btn-primary">Record Expense</x-tallui-button>
+        <x-tallui-button wire:click="save" spinner="save" class="btn-primary">{{ $expenseId ? 'Update Expense' : 'Record Expense' }}</x-tallui-button>
     </x-slot:footer>
 </x-tallui-modal>
 
