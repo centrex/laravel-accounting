@@ -151,6 +151,45 @@ it('AccountingBalanceSnapshotCard and AccountingCurrentAssetsCard share one cach
     expect($queryCount)->toBe(0);
 });
 
+it('AccountingCurrentAssetsCard::refresh() clears the shared balance sheet cache entry', function (): void {
+    $cash = Account::where('code', '1000')->first();
+    $revenue = Account::where('code', '4000')->first();
+
+    app(Accounting::class)->createJournalEntry([
+        'date'        => today(),
+        'reference'   => 'REF-3',
+        'type'        => 'general',
+        'description' => 'Sale',
+        'currency'    => 'BDT',
+        'lines'       => [
+            ['account_id' => $cash->id, 'type' => 'debit', 'amount' => 100],
+            ['account_id' => $revenue->id, 'type' => 'credit', 'amount' => 100],
+        ],
+    ])->post();
+
+    $currentAssets = new AccountingCurrentAssetsCard();
+    $currentAssets->endDate = today()->endOfMonth();
+    $currentAssets->mount();
+    $currentAssets->balanceSheet();
+
+    $currentAssets->refresh();
+
+    // refresh() forgets the same key AccountingBalanceSnapshotCard shares — its next
+    // balanceSheet() call must recompute (a fresh query), not read the now-cleared cache.
+    $snapshot = new AccountingBalanceSnapshotCard();
+    $snapshot->endDate = today()->endOfMonth();
+    $snapshot->mount();
+
+    $queryCount = 0;
+    DB::listen(function () use (&$queryCount): void {
+        $queryCount++;
+    });
+
+    $snapshot->balanceSheet();
+
+    expect($queryCount)->toBeGreaterThan(0);
+});
+
 it('never puts an Account model into the cached balance sheet — only plain arrays cross the cache boundary', function (): void {
     // The 'array' cache store (used in tests) keeps values in-process without ever
     // calling serialize()/unserialize(), so it can't catch this: in production

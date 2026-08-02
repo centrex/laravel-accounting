@@ -3927,7 +3927,7 @@ parameters:
 
 		-
 			message: "#^Cannot cast mixed to string\\.$#"
-			count: 1
+			count: 2
 			path: src/Livewire/AccountingCurrentAssetsCard.php
 
 		-
@@ -8109,3 +8109,98 @@ parameters:
 			message: "#^Method Centrex\\\\Accounting\\\\Support\\\\AccountingWorkspace\\:\\:sidebarNavigation\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Support/AccountingWorkspace.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 6
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'account' on mixed\\.$#"
+			count: 10
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'accounts' on mixed\\.$#"
+			count: 6
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'balance' on mixed\\.$#"
+			count: 4
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'code' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'collected' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'credit' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'debit' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'name' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'net_income' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'net_payable' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'paid' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'rate' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'total' on mixed\\.$#"
+			count: 7
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'total'\\|'total_with_income' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'total_with_income' on mixed\\.$#"
+			count: 2
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access property \\$code on mixed\\.$#"
+			count: 5
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access property \\$name on mixed\\.$#"
+			count: 5
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 43
+			path: src/Support/FinancialReportsExporter.php

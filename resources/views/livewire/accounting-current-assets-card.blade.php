@@ -1,4 +1,14 @@
 <x-tallui-card title="Current Assets" icon="o-banknotes" subtitle="Liquid assets available">
+    <x-slot:actions>
+        <x-tallui-button
+            wire:click="refresh"
+            spinner="refresh"
+            icon="o-arrow-path"
+            class="btn-ghost btn-xs"
+            :tooltip="'Refresh'"
+        />
+    </x-slot:actions>
+
     @if($currentAssets->isEmpty())
         <x-tallui-empty-state title="No accounts" icon="o-banknotes" size="sm" />
     @else

@@ -6,7 +6,9 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Support\FinancialReportsExporter;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinancialReports extends Component
 {
@@ -47,7 +49,7 @@ class FinancialReports extends Component
 
     public function exportPdf()
     {
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             session()->flash('error', 'PDF export is not available in this environment.');
 
             return null;
@@ -70,19 +72,50 @@ class FinancialReports extends Component
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.financial-report', [
-            'reportType' => $this->reportType,
+            'reportType'  => $this->reportType,
             'reportTitle' => $this->reportTitle(),
-            'reportData' => $this->reportData,
-            'startDate' => $this->startDate,
-            'endDate' => $this->endDate,
-            'sbuCode' => $this->normalizedSbuCode(),
-            'currency' => $this->currency,
+            'reportData'  => $this->reportData,
+            'startDate'   => $this->startDate,
+            'endDate'     => $this->endDate,
+            'sbuCode'     => $this->normalizedSbuCode(),
+            'currency'    => $this->currency,
             'generatedAt' => now(),
         ]);
 
         return response()->streamDownload(
-            static fn () => print($pdf->output()),
+            static fn () => print ($pdf->output()),
             $this->pdfFilename(),
+        );
+    }
+
+    public function exportExcel(): ?StreamedResponse
+    {
+        try {
+            $reportData = $this->resolveReportData();
+
+            if ($reportData === null) {
+                session()->flash('error', 'Generate a report before exporting it.');
+
+                return null;
+            }
+
+            $this->reportData = $reportData;
+        } catch (\Throwable $e) {
+            session()->flash('error', $e->getMessage());
+
+            return null;
+        }
+
+        return FinancialReportsExporter::downloadReport($this->reportType, $this->reportData, $this->excelFilename());
+    }
+
+    public function exportAllExcel(): StreamedResponse
+    {
+        return FinancialReportsExporter::downloadAll(
+            $this->startDate,
+            $this->endDate,
+            $this->normalizedSbuCode(),
+            'financial-reports-' . now()->format('Ymd_His') . '.xlsx',
         );
     }
 
@@ -100,12 +133,12 @@ class FinancialReports extends Component
         $service = app(Accounting::class);
 
         return match ($this->reportType) {
-            'trial_balance'    => $service->getTrialBalance($this->startDate, $this->endDate, $this->normalizedSbuCode()),
-            'balance_sheet'    => $service->getBalanceSheet($this->endDate, $this->normalizedSbuCode()),
-            'income_statement' => $service->getIncomeStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
-            'cash_flow'        => $service->getCashFlowStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'trial_balance'       => $service->getTrialBalance($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'balance_sheet'       => $service->getBalanceSheet($this->endDate, $this->normalizedSbuCode()),
+            'income_statement'    => $service->getIncomeStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
+            'cash_flow'           => $service->getCashFlowStatement($this->startDate, $this->endDate, $this->normalizedSbuCode()),
             'sales_tax_liability' => $service->getSalesTaxLiabilityReport($this->startDate, $this->endDate, $this->normalizedSbuCode()),
-            default            => null,
+            default               => null,
         };
     }
 
@@ -119,12 +152,12 @@ class FinancialReports extends Component
     private function reportTitle(): string
     {
         return match ($this->reportType) {
-            'trial_balance'    => 'Trial Balance',
-            'balance_sheet'    => 'Balance Sheet',
-            'income_statement' => 'Income Statement',
-            'cash_flow'        => 'Cash Flow Statement',
+            'trial_balance'       => 'Trial Balance',
+            'balance_sheet'       => 'Balance Sheet',
+            'income_statement'    => 'Income Statement',
+            'cash_flow'           => 'Cash Flow Statement',
             'sales_tax_liability' => 'Sales Tax Liability Report',
-            default            => 'Financial Report',
+            default               => 'Financial Report',
         };
     }
 
@@ -133,6 +166,14 @@ class FinancialReports extends Component
         return str($this->reportType)
             ->replace('_', '-')
             ->append('-' . now()->format('Ymd_His') . '.pdf')
+            ->toString();
+    }
+
+    private function excelFilename(): string
+    {
+        return str($this->reportType)
+            ->replace('_', '-')
+            ->append('-' . now()->format('Ymd_His') . '.xlsx')
             ->toString();
     }
 }

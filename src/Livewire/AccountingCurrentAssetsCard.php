@@ -42,6 +42,16 @@ class AccountingCurrentAssetsCard extends Component
         );
     }
 
+    /**
+     * Clears the cached balance sheet so the next render recomputes it — forgets the same
+     * key AccountingBalanceSnapshotCard shares, so that card picks up fresh data too on its
+     * next render rather than continuing to serve the now-stale cached entry.
+     */
+    public function refresh(): void
+    {
+        $this->forgetCache($this->cacheKey('accounting', 'balance-sheet', (string) $this->endDate));
+    }
+
     public function placeholder(): string
     {
         return Blade::render(<<<'BLADE'

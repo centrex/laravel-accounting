@@ -5,7 +5,17 @@
     title="Financial Reports"
     subtitle="Generate trial balance, balance sheet, P&L and cash flow statements"
     icon="o-chart-bar-square"
-/>
+>
+    <x-slot:actions>
+        <x-tallui-button
+            wire:click="exportAllExcel"
+            spinner="exportAllExcel"
+            label="Export All (Excel)"
+            icon="o-arrow-down-tray"
+            class="btn-ghost btn-sm"
+        />
+    </x-slot:actions>
+</x-tallui-page-header>
 
 {{-- ── Report Configuration ─────────────────────────────────────────────── --}}
 <x-tallui-card padding="compact">
@@ -52,6 +62,13 @@
 @if($reportData)
     <x-tallui-card>
         <x-slot:actions>
+            <x-tallui-button
+                wire:click="exportExcel"
+                spinner="exportExcel"
+                label="Export Excel"
+                icon="o-arrow-down-tray"
+                class="btn-ghost btn-sm"
+            />
             <x-tallui-button
                 wire:click="exportPdf"
                 spinner="exportPdf"
