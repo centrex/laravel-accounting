@@ -5,7 +5,7 @@
 <div class="print:hidden">
 <x-tallui-page-header
     title="Customer Ledger"
-    :subtitle="$customer->name . ' · ' . $customer->code"
+    :subtitle="($customer->organization_name ? $customer->organization_name . ' · ' : '') . $customer->name . ' · ' . $customer->code"
     icon="o-book-open"
 >
     <x-slot:actions>
@@ -36,6 +36,9 @@
 {{-- Print-only header --}}
 <div class="hidden print:block mb-6 border-b pb-4">
     <h1 class="text-xl font-bold">Customer Ledger — Statement of Account</h1>
+    @if($customer->organization_name)
+        <p class="text-base font-semibold mt-1">{{ $customer->organization_name }}</p>
+    @endif
     <p class="text-base font-medium mt-1">{{ $customer->name }} ({{ $customer->code }})</p>
     <p class="text-sm text-gray-500 mt-1">Period: {{ $startDate }} to {{ $endDate }}</p>
     <p class="text-sm text-gray-500">Generated: {{ now()->format('d M Y, h:i A') }}</p>
@@ -44,6 +47,12 @@
 {{-- Customer info summary --}}
 <x-tallui-card class="mb-4">
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        @if($customer->organization_name)
+        <div>
+            <div class="text-xs uppercase text-base-content/50">Organization</div>
+            <div class="text-sm font-medium">{{ $customer->organization_name }}</div>
+        </div>
+        @endif
         <div>
             <div class="text-xs uppercase text-base-content/50">Email</div>
             <div class="text-sm font-medium">{{ $customer->email ?? '—' }}</div>

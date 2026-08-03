@@ -52,6 +52,9 @@
                         <td class="pl-5 font-mono text-xs text-base-content/60">{{ $customer->code }}</td>
                         <td>
                             <div class="font-medium text-sm">{{ $customer->name }}</div>
+                            @if($customer->organization_name)
+                                <div class="text-xs text-base-content/50">{{ $customer->organization_name }}</div>
+                            @endif
                             @if($customer->city)
                                 <div class="text-xs text-base-content/50">
                                     {{ $customer->city }}{{ $customer->country ? ', ' . $customer->country : '' }}

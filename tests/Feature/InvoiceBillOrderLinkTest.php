@@ -97,4 +97,72 @@ class InvoiceBillOrderLinkTest extends TestCase
         Livewire::test(BillDetails::class, ['bill' => $bill])
             ->assertDontSee('View Purchase Order');
     }
+
+    /**
+     * The bill-table "order" column partial (partials/bill-table/order.blade.php) is exercised
+     * directly here rather than through Livewire::test(BillTable::class) — this package's own
+     * isolated test env pins a published centrex/tallui release that predates
+     * Column::currency() (used elsewhere in BillTable::columns()), so a full component render
+     * fails on that unrelated, pre-existing version mismatch. The host app (laravel-erp)
+     * path-repos centrex/tallui to the current sibling package, where BillTable renders fine —
+     * only this package's standalone test workbench is affected.
+     */
+    public function test_bill_table_order_column_links_a_freight_bill_to_its_shipment(): void
+    {
+        Route::get('/fake-inventory/shipments/{recordId}', fn () => 'ok')->name('inventory.shipments.show');
+        // Route::has() reads a name→route lookup table that's snapshotted when a route is
+        // add()ed to the collection — before ->name() is chained onto it — so a route registered
+        // this way needs an explicit refresh before Route::has() (called from inside the blade
+        // partial under test) will see it. Livewire::test() triggers this refresh as a side
+        // effect of its own dispatch, which is why the other tests in this file don't need it.
+        Route::getRoutes()->refreshNameLookups();
+
+        $bill = Bill::factory()->create([
+            'vendor_id'        => Vendor::factory()->create()->id,
+            'source_type'      => 'Centrex\\Inventory\\Models\\Shipment',
+            'source_id'        => 9,
+            'source_reference' => 'SHP-0009',
+            'status'           => 'draft',
+        ]);
+
+        $html = view('accounting::livewire.partials.bill-table.order', ['row' => $bill, 'value' => $bill->source_reference])->render();
+
+        $this->assertStringContainsString(route('inventory.shipments.show', ['recordId' => 9]), $html);
+        $this->assertStringContainsString('SHP-0009', $html);
+    }
+
+    public function test_bill_table_order_column_links_a_freight_bill_to_its_transfer(): void
+    {
+        Route::get('/fake-inventory/transfers/{recordId}', fn () => 'ok')->name('inventory.transfers.show');
+        Route::getRoutes()->refreshNameLookups();
+
+        $bill = Bill::factory()->create([
+            'vendor_id'        => Vendor::factory()->create()->id,
+            'source_type'      => 'Centrex\\Inventory\\Models\\Transfer',
+            'source_id'        => 4,
+            'source_reference' => 'TRF-0004',
+            'status'           => 'draft',
+        ]);
+
+        $html = view('accounting::livewire.partials.bill-table.order', ['row' => $bill, 'value' => $bill->source_reference])->render();
+
+        $this->assertStringContainsString(route('inventory.transfers.show', ['recordId' => 4]), $html);
+        $this->assertStringContainsString('TRF-0004', $html);
+    }
+
+    public function test_bill_table_order_column_shows_plain_reference_when_the_inventory_route_is_not_registered(): void
+    {
+        $bill = Bill::factory()->create([
+            'vendor_id'        => Vendor::factory()->create()->id,
+            'source_type'      => 'Centrex\\Inventory\\Models\\Shipment',
+            'source_id'        => 11,
+            'source_reference' => 'SHP-0011',
+            'status'           => 'draft',
+        ]);
+
+        $html = view('accounting::livewire.partials.bill-table.order', ['row' => $bill, 'value' => $bill->source_reference])->render();
+
+        $this->assertStringContainsString('SHP-0011', $html);
+        $this->assertStringNotContainsString('<a ', $html);
+    }
 }
