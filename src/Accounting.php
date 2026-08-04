@@ -1227,7 +1227,7 @@ class Accounting
             'equity'      => array_merge($equity, [
                 'net_income'        => $netIncome,
                 'retained_earnings' => $retainedEarnings,
-                'total_with_income' => ($liabilities['total'] ?? 0) + $retainedEarnings,
+                'total_with_income' => $retainedEarnings,
             ]),
             'sbu_code'    => $this->normalizeSbuCode($sbuCode),
             'is_balanced' => abs(
