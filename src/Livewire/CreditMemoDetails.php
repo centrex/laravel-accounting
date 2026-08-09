@@ -16,8 +16,6 @@ class CreditMemoDetails extends Component
     public CreditMemo $creditMemo;
 
     // Refund modal (DR AR / CR Cash or Bank — pays the credit back out in cash)
-    public bool $showRefundModal = false;
-
     public string $refund_amount = '';
 
     public string $refund_date = '';
@@ -74,7 +72,7 @@ class CreditMemoDetails extends Component
         $this->refund_date = now()->format('Y-m-d');
         $this->refund_method = 'cash';
         $this->refund_account_code = config('accounting.accounts.cash', '1000');
-        $this->showRefundModal = true;
+        $this->dispatch('open-modal', 'refund-modal');
     }
 
     public function recordRefund(): void
@@ -101,7 +99,7 @@ class CreditMemoDetails extends Component
             ]);
 
             $this->dispatch('notify', type: 'success', message: "Refund {$payment->payment_number} recorded.");
-            $this->showRefundModal = false;
+            $this->dispatch('close-modal', 'refund-modal');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }

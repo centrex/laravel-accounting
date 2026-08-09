@@ -24,8 +24,6 @@ class CreditMemos extends Component
     public string $dateTo = '';
 
     // Create modal
-    public bool $showModal = false;
-
     public ?int $invoice_id = null;
 
     public string $memo_date = '';
@@ -52,7 +50,7 @@ class CreditMemos extends Component
                 $this->invoice_id = $invoiceId;
             }
 
-            $this->showModal = true;
+            $this->dispatch('open-modal', 'credit-memo-create-modal');
         }
     }
 
@@ -60,7 +58,7 @@ class CreditMemos extends Component
     {
         $this->reset(['invoice_id', 'reason', 'subtotal', 'tax_amount', 'notes']);
         $this->memo_date = now()->format('Y-m-d');
-        $this->showModal = true;
+        $this->dispatch('open-modal', 'credit-memo-create-modal');
     }
 
     public function save(): void
@@ -85,7 +83,7 @@ class CreditMemos extends Component
             ]);
 
             $this->dispatch('notify', type: 'success', message: "{$memo->credit_memo_number} created as draft.");
-            $this->showModal = false;
+            $this->dispatch('close-modal', 'credit-memo-create-modal');
         } catch (\Throwable $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }

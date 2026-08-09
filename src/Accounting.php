@@ -2440,6 +2440,14 @@ class Accounting
         string $date,
         string $reference,
     ): JournalEntry {
+        $accrued = $facility->accruedInterest();
+
+        if ($amount > $accrued + 0.01) {
+            throw new \RuntimeException(
+                "Payment of {$amount} exceeds accrued interest of {$accrued} for '{$facility->lender_name}'.",
+            );
+        }
+
         $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([
@@ -2719,6 +2727,14 @@ class Accounting
         string $date,
         string $reference,
     ): JournalEntry {
+        $accruedLocal = $facility->accruedInterestLocal();
+
+        if ($amount > $accruedLocal + 0.01) {
+            throw new \RuntimeException(
+                "Payment of {$amount} {$facility->currency} exceeds accrued interest of {$accruedLocal} {$facility->currency} for '{$facility->lender_name}'.",
+            );
+        }
+
         $bank = $this->requireAccount($this->accountCode('bank'));
 
         return $this->createJournalEntry([

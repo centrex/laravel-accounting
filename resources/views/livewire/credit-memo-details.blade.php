@@ -177,7 +177,7 @@
 </x-tallui-card>
 
 {{-- Refund Modal --}}
-<x-tallui-modal wire:model="showRefundModal" title="Record Refund — {{ $creditMemo->credit_memo_number }}" size="md">
+<x-tallui-modal id="refund-modal" title="Record Refund — {{ $creditMemo->credit_memo_number }}" size="md">
     <form wire:submit="recordRefund" class="space-y-4">
 
         <div class="grid grid-cols-2 gap-4">
@@ -226,7 +226,7 @@
         </x-tallui-alert>
 
         <div class="flex justify-end gap-2 pt-2">
-            <x-tallui-button type="button" wire:click="$set('showRefundModal', false)" class="btn-ghost btn-sm">Cancel</x-tallui-button>
+            <x-tallui-button type="button" @click="$dispatch('close-modal', 'refund-modal')" class="btn-ghost btn-sm">Cancel</x-tallui-button>
             <x-tallui-button type="submit" class="btn-success btn-sm" :spinner="'recordRefund'">Record Refund</x-tallui-button>
         </div>
     </form>

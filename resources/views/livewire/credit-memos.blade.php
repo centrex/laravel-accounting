@@ -116,7 +116,7 @@
 </x-tallui-card>
 
 {{-- Create Modal --}}
-<x-tallui-modal wire:model="showModal" title="New Credit Memo" size="lg">
+<x-tallui-modal id="credit-memo-create-modal" title="New Credit Memo" size="lg">
     <form wire:submit="save" class="space-y-4">
 
         <x-tallui-form-group label="Invoice" :required="true">
@@ -163,7 +163,7 @@
         </x-tallui-alert>
 
         <div class="flex justify-end gap-2 pt-2">
-            <x-tallui-button type="button" wire:click="$set('showModal', false)" class="btn-ghost btn-sm">Cancel</x-tallui-button>
+            <x-tallui-button type="button" @click="$dispatch('close-modal', 'credit-memo-create-modal')" class="btn-ghost btn-sm">Cancel</x-tallui-button>
             <x-tallui-button type="submit" class="btn-primary btn-sm" :spinner="'save'">Create Draft</x-tallui-button>
         </div>
     </form>

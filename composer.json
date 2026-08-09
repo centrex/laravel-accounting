@@ -88,6 +88,15 @@
             "phpstan/extension-installer": true
         }
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../tallui",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "extra": {
         "laravel": {
             "providers": [
