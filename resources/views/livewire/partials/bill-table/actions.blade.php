@@ -6,6 +6,7 @@
         <x-tallui-button
             wire:click="$dispatch('bill-table:post', { id: {{ $row->getKey() }} })"
             wire:confirm="Approve bill {{ $row->bill_number }}?"
+            wire:loading.attr="disabled"
             class="btn-info btn-xs"
         >Approve</x-tallui-button>
     @endif

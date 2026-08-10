@@ -44,6 +44,7 @@
                 <button
                     type="button"
                     wire:click="$dispatch('invoice-table:post', { id: {{ $row->id }} })"
+                    wire:loading.attr="disabled"
                     @click="open = false"
                     class="btn btn-info flex-1"
                 >Post Invoice</button>
