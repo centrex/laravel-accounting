@@ -102,6 +102,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Segregation of Duties
+    |--------------------------------------------------------------------------
+    | When true, the user who submitted a journal entry for approval cannot
+    | also be the one who posts it — JournalEntry::post() throws instead.
+    | Only applies once an entry has actually been submitted; entries posted
+    | directly from draft (admin bypass of the submit step) are unaffected.
+    */
+    'enforce_sod' => env('ACCOUNTING_ENFORCE_SOD', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Optional Integrations
     |--------------------------------------------------------------------------
     | Accounting stays independent by resolving optional package integrations

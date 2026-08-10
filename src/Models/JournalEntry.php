@@ -138,6 +138,12 @@ class JournalEntry extends Model implements Auditable
             }
         }
 
+        if (config('accounting.enforce_sod', true) && $this->submitted_by !== null && $this->submitted_by === auth()->id()) {
+            throw new AccountingException(
+                'Segregation of duties: the user who submitted this entry for approval cannot also post it.'
+            );
+        }
+
         $this->update([
             'status'      => 'posted',
             'approved_by' => auth()->id(),
