@@ -1416,7 +1416,7 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>, array\\<string, float\\|int\\|string\\|true\\|null\\> given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -6136,6 +6136,11 @@ parameters:
 			path: src/Livewire/LoanFacilities.php
 
 		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\LoanFacilities\\:\\:fundAccounts\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\LoanFacilities\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
@@ -6147,6 +6152,26 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:orWhere\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'code' given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'code' given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'type' given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
 
@@ -6171,7 +6196,17 @@ parameters:
 			path: src/Livewire/LoanFacilities.php
 
 		-
+			message: "#^Parameter \\#1 \\$columns of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:get\\(\\) expects array\\<int, model property of Centrex\\\\Accounting\\\\Models\\\\Account\\>\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, array\\<int, string\\> given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
 			message: "#^Parameter \\#1 \\$perPage of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:paginate\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\LoanFacilities\\:\\:\\$action_account_code \\(string\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
 

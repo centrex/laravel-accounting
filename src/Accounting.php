@@ -2608,6 +2608,12 @@ class Accounting
                 'disbursed_at'         => $disbursedAt,
                 'due_at'               => $dueAt,
                 'tenure_months'        => $tenureMonths,
+                // Explicit rather than relying on the DB column default — Eloquent doesn't
+                // refetch after insert, so an omitted key here leaves the returned model's
+                // is_active null (falsy) until something calls ->fresh(), which trips
+                // drawdownLoan()'s/repayLoan()'s "is inactive" guard on the very facility that
+                // was just created.
+                'is_active' => true,
             ]);
         });
     }
@@ -2618,8 +2624,8 @@ class Accounting
      * $amount is in the facility's own currency; createJournalEntry() converts it to the
      * accounting base currency for posting using the facility's exchange_rate.
      *
-     * DR Bank (1100) / CR Loan Payable (240x or 250x)
-     * Journal entry is tagged with the facility's sbu_code.
+     * DR fund account (any active asset account 10xx/11xx; defaults to Bank 1100) / CR Loan
+     * Payable (240x or 250x). Journal entry is tagged with the facility's sbu_code.
      */
     public function drawdownLoan(
         LoanFacility $facility,
@@ -2628,12 +2634,13 @@ class Accounting
         string $reference,
         ?string $description = null,
         ?string $sbuCode = null,
+        ?string $accountCode = null,
     ): JournalEntry {
         if (!$facility->is_active) {
             throw new \RuntimeException("Loan facility '{$facility->lender_name}' is inactive.");
         }
 
-        $bank = $this->requireAccount($this->accountCode('bank'));
+        $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([
@@ -2719,13 +2726,15 @@ class Accounting
      *
      * $amount is in the facility's own currency, converted to base currency for posting.
      *
-     * DR Accrued Interest (242x or 252x) / CR Bank (1100)
+     * DR Accrued Interest (242x or 252x) / CR fund account (any active asset account 10xx/11xx;
+     * defaults to Bank 1100)
      */
     public function payLoanInterest(
         LoanFacility $facility,
         float $amount,
         string $date,
         string $reference,
+        ?string $accountCode = null,
     ): JournalEntry {
         $accruedLocal = $facility->accruedInterestLocal();
 
@@ -2735,7 +2744,7 @@ class Accounting
             );
         }
 
-        $bank = $this->requireAccount($this->accountCode('bank'));
+        $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
 
         return $this->createJournalEntry([
             'date'          => $date,
@@ -2758,7 +2767,8 @@ class Accounting
      * $amount is in the facility's own currency, checked against the outstanding principal
      * in that same currency, then converted to base currency for posting.
      *
-     * DR Loan Payable (240x or 250x) / CR Bank (1100)
+     * DR Loan Payable (240x or 250x) / CR fund account (any active asset account 10xx/11xx;
+     * defaults to Bank 1100)
      */
     public function repayLoan(
         LoanFacility $facility,
@@ -2767,6 +2777,7 @@ class Accounting
         string $reference,
         ?string $description = null,
         ?string $sbuCode = null,
+        ?string $accountCode = null,
     ): JournalEntry {
         $outstandingLocal = $facility->outstandingPrincipalLocal();
 
@@ -2776,7 +2787,7 @@ class Accounting
             );
         }
 
-        $bank = $this->requireAccount($this->accountCode('bank'));
+        $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
         $effectiveSbu = $sbuCode ?? $facility->sbu_code;
 
         return $this->createJournalEntry([

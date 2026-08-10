@@ -287,9 +287,9 @@
 {{-- Drawdown / Pay Interest / Repay Modal --}}
 @php
     $actionLabels = [
-        'drawdown'     => ['title' => 'Record Drawdown', 'cta' => 'Record Drawdown', 'help' => 'Funds received into Bank against this facility.'],
-        'pay_interest' => ['title' => 'Pay Interest', 'cta' => 'Record Payment', 'help' => 'Pay accrued interest to the lender from Bank.'],
-        'repay'        => ['title' => 'Repay Principal', 'cta' => 'Record Repayment', 'help' => 'Repay outstanding principal to the lender from Bank.'],
+        'drawdown'     => ['title' => 'Record Drawdown', 'cta' => 'Record Drawdown', 'help' => 'Funds received against this facility into the fund account selected below.'],
+        'pay_interest' => ['title' => 'Pay Interest', 'cta' => 'Record Payment', 'help' => 'Pay accrued interest to the lender from the fund account selected below.'],
+        'repay'        => ['title' => 'Repay Principal', 'cta' => 'Record Repayment', 'help' => 'Repay outstanding principal to the lender from the fund account selected below.'],
     ];
     $actionMeta = $actionLabels[$actionType] ?? ['title' => 'Record Transaction', 'cta' => 'Save', 'help' => ''];
 @endphp
@@ -316,6 +316,14 @@
                 <x-tallui-input wire:model="action_reference" />
             </x-tallui-form-group>
         </div>
+
+        <x-tallui-form-group label="Fund Source * ({{ $actionType === 'drawdown' ? 'Deposit To' : 'Pay From' }})" :error="$errors->first('action_account_code')">
+            <x-tallui-select wire:model="action_account_code">
+                @foreach($this->fundAccounts as $acct)
+                    <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                @endforeach
+            </x-tallui-select>
+        </x-tallui-form-group>
 
         @if($actionType !== 'pay_interest')
             <x-tallui-form-group label="Description">

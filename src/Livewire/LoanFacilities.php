@@ -6,7 +6,8 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
-use Centrex\Accounting\Models\{JournalEntryLine, LoanFacility};
+use Centrex\Accounting\Models\{Account, JournalEntryLine, LoanFacility};
+use Livewire\Attributes\Computed;
 use Livewire\{Component, WithPagination};
 
 class LoanFacilities extends Component
@@ -63,6 +64,8 @@ class LoanFacilities extends Component
     public string $action_reference = '';
 
     public string $action_description = '';
+
+    public string $action_account_code = '';
 
     // Edit form
     public bool $showEditModal = false;
@@ -149,6 +152,16 @@ class LoanFacilities extends Component
         }
     }
 
+    #[Computed]
+    public function fundAccounts(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Account::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(fn ($q) => $q->where('code', 'like', '10%')->orWhere('code', 'like', '11%'))
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
+    }
+
     public function openAction(int $id, string $type): void
     {
         $this->actionFacilityId = $id;
@@ -158,15 +171,17 @@ class LoanFacilities extends Component
         $this->action_date = now()->format('Y-m-d');
         $this->action_reference = strtoupper($type) . '-' . now()->format('YmdHis');
         $this->action_description = '';
+        $this->action_account_code = config('accounting.accounts.bank', '1100');
         $this->showActionModal = true;
     }
 
     public function submitAction(): void
     {
         $this->validate([
-            'action_amount'    => 'required|numeric|min:0.01',
-            'action_date'      => 'required|date',
-            'action_reference' => 'required|string|max:255',
+            'action_amount'       => 'required|numeric|min:0.01',
+            'action_date'         => 'required|date',
+            'action_reference'    => 'required|string|max:255',
+            'action_account_code' => 'required|string',
         ]);
 
         $facility = LoanFacility::findOrFail($this->actionFacilityId);
@@ -180,12 +195,14 @@ class LoanFacilities extends Component
                     $this->action_date,
                     $this->action_reference,
                     $this->action_description ?: null,
+                    accountCode: $this->action_account_code,
                 ),
                 'pay_interest' => $accounting->payLoanInterest(
                     $facility,
                     (float) $this->action_amount,
                     $this->action_date,
                     $this->action_reference,
+                    accountCode: $this->action_account_code,
                 ),
                 'repay' => $accounting->repayLoan(
                     $facility,
@@ -193,6 +210,7 @@ class LoanFacilities extends Component
                     $this->action_date,
                     $this->action_reference,
                     $this->action_description ?: null,
+                    accountCode: $this->action_account_code,
                 ),
                 default => throw new \RuntimeException('Unknown action.'),
             };
