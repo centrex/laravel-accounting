@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 final class AccountingReportCommand extends Command
 {
     protected $signature = 'accounting:report
-        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|sales-tax-liability|all)}
+        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|cash-book|sales-tax-liability|all)}
         {--start= : Start date (YYYY-MM-DD) for period reports}
         {--end= : End date (YYYY-MM-DD) for period reports}
         {--date= : Single date (YYYY-MM-DD) for balance-sheet}
@@ -39,7 +39,7 @@ final class AccountingReportCommand extends Command
         $results = [];
 
         // Gather requested reports
-        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow', 'sales-tax-liability'] : [$type];
+        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow', 'cash-book', 'sales-tax-liability'] : [$type];
 
         foreach ($typesToRun as $t) {
             switch ($t) {
@@ -83,6 +83,14 @@ final class AccountingReportCommand extends Command
                     $data = $acct->getCashFlowStatement($start, $end);
                     $results['cash_flow'] = $data;
                     $this->renderCashFlow($data, $format, $outputPath, 'cash_flow');
+
+                    break;
+
+                case 'cash-book':
+                    $this->line('<fg=cyan>--- Cash Book ---</>');
+                    $data = $acct->getCashBook(null, $start, $end);
+                    $results['cash_book'] = $data;
+                    $this->renderCashBook($data, $format, $outputPath, 'cash_book');
 
                     break;
 
@@ -237,6 +245,47 @@ final class AccountingReportCommand extends Command
 
         $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers): void {
             $this->table($headers, array_map('array_values', $rows));
+        });
+    }
+
+    private function renderCashBook(array $data, string $format, ?string $outputPath = null, string $suffix = 'cash_book'): void
+    {
+        $multiAccount = count($data['accounts']) > 1;
+
+        $rows = [];
+
+        foreach ($data['entries'] as $entry) {
+            $row = [
+                'date'        => $entry['date'],
+                'reference'   => $entry['entry_number'] ?? $entry['reference'],
+                'description' => $entry['description'],
+            ];
+
+            if ($multiAccount) {
+                $row['account'] = $entry['account_label'];
+            }
+
+            $row['receipt'] = number_format($entry['receipt'], 2);
+            $row['payment'] = number_format($entry['payment'], 2);
+            $row['balance'] = number_format($entry['running_balance'], 2);
+
+            $rows[] = $row;
+        }
+
+        $headers = ['Date', 'Reference', 'Description'];
+
+        if ($multiAccount) {
+            $headers[] = 'Account';
+        }
+
+        $headers = [...$headers, 'Receipt', 'Payment', 'Balance'];
+
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers, $data): void {
+            $this->table($headers, array_map('array_values', $rows));
+            $this->line('<fg=green>Opening Balance: ' . number_format($data['opening_balance'], 2) . '</>');
+            $this->line('<fg=green>Total Receipts : ' . number_format($data['total_receipts'], 2) . '</>');
+            $this->line('<fg=green>Total Payments : ' . number_format($data['total_payments'], 2) . '</>');
+            $this->line('<fg=yellow>Closing Balance: ' . number_format($data['closing_balance'], 2) . '</>');
         });
     }
 

@@ -74,6 +74,7 @@ Route::middleware(config('accounting.api_middleware', ['api', 'auth:sanctum']))
         Route::get('reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
         Route::get('reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+        Route::get('reports/cash-book', [ReportController::class, 'cashBook'])->name('reports.cash-book');
         Route::get('reports/ar-aging', [ReportController::class, 'arAging'])->name('reports.ar-aging');
         Route::get('reports/ap-aging', [ReportController::class, 'apAging'])->name('reports.ap-aging');
         Route::get('reports/sales-tax-liability', [ReportController::class, 'salesTaxLiability'])->name('reports.sales-tax-liability');

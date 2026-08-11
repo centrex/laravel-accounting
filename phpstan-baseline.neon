@@ -242,12 +242,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
-			count: 8
+			count: 10
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
-			count: 7
+			count: 9
 			path: src/Accounting.php
 
 		-
@@ -627,7 +627,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\InventoryFinancingFacility\\:\\:\\$lender_name\\.$#"
-			count: 8
+			count: 9
 			path: src/Accounting.php
 
 		-
@@ -732,7 +732,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$currency\\.$#"
-			count: 8
+			count: 10
 			path: src/Accounting.php
 
 		-
@@ -762,7 +762,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\:\\:\\$lender_name\\.$#"
-			count: 7
+			count: 8
 			path: src/Accounting.php
 
 		-
@@ -971,8 +971,13 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Cannot call method first\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
 			message: "#^Cannot call method get\\(\\) on mixed\\.$#"
-			count: 3
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1107,6 +1112,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:getBudgetVsActual\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:getCashBook\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1452,7 +1462,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
-			count: 5
+			count: 6
 			path: src/Accounting.php
 
 		-
@@ -1672,7 +1682,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 6
+			count: 9
 			path: src/Accounting.php
 
 		-
@@ -1682,7 +1692,12 @@ parameters:
 
 		-
 			message: "#^Part \\$prefix \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
-			count: 13
+			count: 17
+			path: src/Accounting.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -1702,7 +1717,7 @@ parameters:
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:all\\(\\) contains unresolvable type\\.$#"
-			count: 3
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1822,6 +1837,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Commands\\\\AccountingReportCommand\\:\\:renderBalanceSheet\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Commands/AccountingReportCommand.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Commands\\\\AccountingReportCommand\\:\\:renderCashBook\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Commands/AccountingReportCommand.php
 
@@ -4256,11 +4276,6 @@ parameters:
 			path: src/Livewire/BillDetails.php
 
 		-
-			message: "#^Call to an undefined method Centrex\\\\TallUi\\\\DataTable\\\\Column\\:\\:currency\\(\\)\\.$#"
-			count: 2
-			path: src/Livewire/BillTable.php
-
-		-
 			message: "#^Cannot cast mixed to string\\.$#"
 			count: 1
 			path: src/Livewire/BillTable.php
@@ -5171,11 +5186,6 @@ parameters:
 			path: src/Livewire/ExpenseDetails.php
 
 		-
-			message: "#^Call to an undefined method Centrex\\\\TallUi\\\\DataTable\\\\Column\\:\\:currency\\(\\)\\.$#"
-			count: 2
-			path: src/Livewire/ExpenseTable.php
-
-		-
 			message: "#^Cannot cast mixed to string\\.$#"
 			count: 1
 			path: src/Livewire/ExpenseTable.php
@@ -5609,11 +5619,6 @@ parameters:
 			message: "#^Property Centrex\\\\Accounting\\\\Livewire\\\\InvoiceDetails\\:\\:\\$charge_account_code \\(string\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Livewire/InvoiceDetails.php
-
-		-
-			message: "#^Call to an undefined method Centrex\\\\TallUi\\\\DataTable\\\\Column\\:\\:currency\\(\\)\\.$#"
-			count: 2
-			path: src/Livewire/InvoiceTable.php
 
 		-
 			message: "#^Cannot cast mixed to string\\.$#"
@@ -6171,11 +6176,6 @@ parameters:
 			path: src/Livewire/LoanFacilities.php
 
 		-
-			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
-			count: 1
-			path: src/Livewire/LoanFacilities.php
-
-		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\LoanFacility, 'lender_name' given\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
@@ -6192,6 +6192,11 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'status' given\\.$#"
+			count: 1
+			path: src/Livewire/LoanFacilities.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
 			count: 1
 			path: src/Livewire/LoanFacilities.php
 
@@ -7721,6 +7726,11 @@ parameters:
 			path: src/Models/JournalEntry.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$submitted_by\\.$#"
+			count: 1
+			path: src/Models/JournalEntry.php
+
+		-
 			message: "#^Cannot cast mixed to float\\.$#"
 			count: 3
 			path: src/Models/JournalEntry.php
@@ -8147,12 +8157,17 @@ parameters:
 
 		-
 			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
-			count: 6
+			count: 7
 			path: src/Support/FinancialReportsExporter.php
 
 		-
 			message: "#^Cannot access offset 'account' on mixed\\.$#"
 			count: 10
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'account_label' on mixed\\.$#"
+			count: 1
 			path: src/Support/FinancialReportsExporter.php
 
 		-
@@ -8181,7 +8196,22 @@ parameters:
 			path: src/Support/FinancialReportsExporter.php
 
 		-
+			message: "#^Cannot access offset 'date' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
 			message: "#^Cannot access offset 'debit' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'description' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'entry_number' on mixed\\.$#"
 			count: 1
 			path: src/Support/FinancialReportsExporter.php
 
@@ -8206,7 +8236,27 @@ parameters:
 			path: src/Support/FinancialReportsExporter.php
 
 		-
+			message: "#^Cannot access offset 'payment' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
 			message: "#^Cannot access offset 'rate' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'receipt' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'reference' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'running_balance' on mixed\\.$#"
 			count: 1
 			path: src/Support/FinancialReportsExporter.php
 
@@ -8237,5 +8287,10 @@ parameters:
 
 		-
 			message: "#^Cannot cast mixed to float\\.$#"
-			count: 43
+			count: 54
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
+			count: 1
 			path: src/Support/FinancialReportsExporter.php

@@ -26,6 +26,7 @@
                 <option value="balance_sheet">Balance Sheet</option>
                 <option value="income_statement">Income Statement (P&L)</option>
                 <option value="cash_flow">Cash Flow Statement</option>
+                <option value="cash_book">Cash Book</option>
                 <option value="sales_tax_liability">Sales Tax Liability</option>
             </x-tallui-select>
         </x-tallui-form-group>
@@ -85,6 +86,7 @@
                 @elseif($reportType === 'balance_sheet')    Balance Sheet
                 @elseif($reportType === 'income_statement') Income Statement
                 @elseif($reportType === 'cash_flow')        Cash Flow Statement
+                @elseif($reportType === 'cash_book')        Cash Book
                 @elseif($reportType === 'sales_tax_liability') Sales Tax Liability Report
                 @endif
             </h3>
@@ -365,6 +367,76 @@
                             {{ $net >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($net), 2) }}
                         </span>
                     </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ── Cash Book ──────────────────────────────────────────────────── --}}
+        @if($reportType === 'cash_book' && isset($reportData['entries']))
+            <div class="space-y-4">
+                <div class="stats shadow w-full stats-vertical sm:stats-horizontal">
+                    <x-tallui-stat title="Opening Balance" value="{{ $currency }} {{ number_format($reportData['opening_balance'], 2) }}" icon="o-banknotes" />
+                    <x-tallui-stat title="Total Receipts" value="{{ $currency }} {{ number_format($reportData['total_receipts'], 2) }}" icon="o-arrow-down-circle" icon-color="text-success" />
+                    <x-tallui-stat title="Total Payments" value="{{ $currency }} {{ number_format($reportData['total_payments'], 2) }}" icon="o-arrow-up-circle" icon-color="text-error" />
+                    <x-tallui-stat title="Closing Balance" value="{{ $currency }} {{ number_format($reportData['closing_balance'], 2) }}" icon="o-scale" />
+                </div>
+
+                @if(count($reportData['accounts']) > 1)
+                    <p class="text-xs text-base-content/50">
+                        Combined across:
+                        {{ collect($reportData['accounts'])->map(fn ($a) => $a['name'] . ' (' . $a['code'] . ')')->implode(', ') }}
+                    </p>
+                @endif
+
+                <div class="overflow-x-auto">
+                    <table class="table table-sm w-full">
+                        <thead>
+                            <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
+                                <th class="py-3">Date</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                @if(count($reportData['accounts']) > 1)
+                                    <th>Account</th>
+                                @endif
+                                <th class="text-right">Receipt</th>
+                                <th class="text-right">Payment</th>
+                                <th class="text-right">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-base-200">
+                            @forelse($reportData['entries'] as $entry)
+                                <tr class="even:bg-base-200/50 hover:bg-base-200">
+                                    <td class="text-sm whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($entry['date'])->format('M j, Y') }}</td>
+                                    <td class="text-sm font-mono text-primary">{{ $entry['entry_number'] ?? $entry['reference'] }}</td>
+                                    <td class="text-sm">{{ $entry['description'] }}</td>
+                                    @if(count($reportData['accounts']) > 1)
+                                        <td class="text-sm text-base-content/60">{{ $entry['account_label'] }}</td>
+                                    @endif
+                                    <td class="text-right text-sm font-mono">
+                                        @if($entry['receipt'] > 0)
+                                            <span class="text-success">{{ $currency }} {{ number_format($entry['receipt'], 2) }}</span>
+                                        @else
+                                            <span class="text-base-content/30">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right text-sm font-mono">
+                                        @if($entry['payment'] > 0)
+                                            <span class="text-error">{{ $currency }} {{ number_format($entry['payment'], 2) }}</span>
+                                        @else
+                                            <span class="text-base-content/30">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right text-sm font-mono font-semibold">{{ $currency }} {{ number_format($entry['running_balance'], 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ count($reportData['accounts']) > 1 ? 7 : 6 }}" class="py-8 text-center text-sm text-base-content/40">
+                                        No cash/bank transactions in this period.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         @endif

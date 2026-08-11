@@ -79,7 +79,7 @@ it('exports every report type as one combined multi-sheet .xlsx workbook', funct
     $spreadsheet = loadFinancialReportSpreadsheet($response);
 
     expect($spreadsheet->getSheetNames())->toBe([
-        'Summary', 'Trial Balance', 'Balance Sheet', 'Income Statement', 'Cash Flow', 'Sales Tax Liability',
+        'Summary', 'Trial Balance', 'Balance Sheet', 'Income Statement', 'Cash Flow', 'Cash Book', 'Sales Tax Liability',
     ]);
 
     $summary = $spreadsheet->getSheetByName('Summary');

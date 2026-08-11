@@ -41,6 +41,7 @@ final class FinancialReportsExporter
             'balance_sheet'       => $service->getBalanceSheet($endDate, $sbuCode),
             'income_statement'    => $service->getIncomeStatement($startDate, $endDate, $sbuCode),
             'cash_flow'           => $service->getCashFlowStatement($startDate, $endDate, $sbuCode),
+            'cash_book'           => $service->getCashBook(null, $startDate, $endDate, $sbuCode),
             'sales_tax_liability' => $service->getSalesTaxLiabilityReport($startDate, $endDate, $sbuCode),
         ];
 
@@ -83,6 +84,7 @@ final class FinancialReportsExporter
         $balanceSheet = $reports['balance_sheet'];
         $incomeStatement = $reports['income_statement'];
         $cashFlow = $reports['cash_flow'];
+        $cashBook = $reports['cash_book'];
         $salesTax = $reports['sales_tax_liability'];
 
         $rows = [
@@ -103,6 +105,10 @@ final class FinancialReportsExporter
             ['Cash Flow', 'Investing Activities', round((float) ($cashFlow['investing_activities'] ?? 0), 2)],
             ['Cash Flow', 'Financing Activities', round((float) ($cashFlow['financing_activities'] ?? 0), 2)],
             ['Cash Flow', 'Net Change', round((float) ($cashFlow['net_change'] ?? 0), 2)],
+            ['Cash Book', 'Opening Balance', round((float) $cashBook['opening_balance'], 2)],
+            ['Cash Book', 'Total Receipts', round((float) $cashBook['total_receipts'], 2)],
+            ['Cash Book', 'Total Payments', round((float) $cashBook['total_payments'], 2)],
+            ['Cash Book', 'Closing Balance', round((float) $cashBook['closing_balance'], 2)],
             ['Sales Tax Liability', 'Total Collected', round((float) $salesTax['total_collected'], 2)],
             ['Sales Tax Liability', 'Total Paid', round((float) $salesTax['total_paid'], 2)],
             ['Sales Tax Liability', 'Net Payable', round((float) $salesTax['total_net_payable'], 2)],
@@ -121,6 +127,7 @@ final class FinancialReportsExporter
             'balance_sheet'       => self::writeBalanceSheetSheet($spreadsheet, $index, $reportData),
             'income_statement'    => self::writeIncomeStatementSheet($spreadsheet, $index, $reportData),
             'cash_flow'           => self::writeCashFlowSheet($spreadsheet, $index, $reportData),
+            'cash_book'           => self::writeCashBookSheet($spreadsheet, $index, $reportData),
             'sales_tax_liability' => self::writeSalesTaxLiabilitySheet($spreadsheet, $index, $reportData),
             default               => self::writeSheet($spreadsheet, $index, 'Report', ['No data'], []),
         };
@@ -221,6 +228,61 @@ final class FinancialReportsExporter
         ];
 
         self::writeSheet($spreadsheet, $index, 'Cash Flow', ['Section', 'Amount'], $rows);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function writeCashBookSheet(Spreadsheet $spreadsheet, int $index, array $data): void
+    {
+        $multiAccount = count($data['accounts']) > 1;
+        $labelCols = $multiAccount ? 4 : 3; // Date, Reference, Description, [Account]
+        $rows = [];
+
+        foreach ($data['entries'] as $entry) {
+            $row = [
+                $entry['date'],
+                $entry['entry_number'] ?? $entry['reference'],
+                $entry['description'],
+            ];
+
+            if ($multiAccount) {
+                $row[] = $entry['account_label'];
+            }
+
+            $row[] = round((float) $entry['receipt'], 2);
+            $row[] = round((float) $entry['payment'], 2);
+            $row[] = round((float) $entry['running_balance'], 2);
+
+            $rows[] = $row;
+        }
+
+        // Summary row: $label in the description/account column, one value each
+        // in the receipt/payment/balance columns (blank when not applicable).
+        $summaryRow = function (string $label, ?float $receipt, ?float $payment, ?float $balance) use ($labelCols): array {
+            return [
+                ...array_fill(0, $labelCols - 1, ''),
+                $label,
+                $receipt !== null ? round($receipt, 2) : '',
+                $payment !== null ? round($payment, 2) : '',
+                $balance !== null ? round($balance, 2) : '',
+            ];
+        };
+
+        $rows[] = array_fill(0, $labelCols + 3, '');
+        $rows[] = $summaryRow('Opening Balance', null, null, (float) $data['opening_balance']);
+        $rows[] = $summaryRow('Total Receipts / Payments', (float) $data['total_receipts'], (float) $data['total_payments'], null);
+        $rows[] = $summaryRow('Closing Balance', null, null, (float) $data['closing_balance']);
+
+        $headers = ['Date', 'Reference', 'Description'];
+
+        if ($multiAccount) {
+            $headers[] = 'Account';
+        }
+
+        $headers = [...$headers, 'Receipt', 'Payment', 'Balance'];
+
+        self::writeSheet($spreadsheet, $index, 'Cash Book', $headers, $rows);
     }
 
     /**

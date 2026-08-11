@@ -1525,6 +1525,139 @@ class Accounting
     }
 
     /**
+     * Cash Book: a single chronological receipts/payments ledger across every
+     * cash/bank account (codes 1000–1199, the same range treated as "cash" by
+     * getCashFlowStatement()) — or one specific account when $accountId is given.
+     * Unlike getGeneralLedger() (which returns one ledger per account), entries
+     * from every resolved account are merged into one running balance, matching
+     * the traditional single/double-column cash book format.
+     */
+    public function getCashBook(?int $accountId = null, mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
+    {
+        $accounts = Account::query()
+            ->where('is_active', true)
+            ->when(
+                $accountId !== null,
+                fn ($q) => $q->whereKey($accountId),
+                fn ($q) => $q->whereBetween('code', ['1000', '1199']),
+            )
+            ->orderBy('code')
+            ->get();
+
+        $sbuCode = $this->normalizeSbuCode($sbuCode);
+
+        if ($accounts->isEmpty()) {
+            return [
+                'period'          => ['start' => $startDate, 'end' => $endDate],
+                'accounts'        => [],
+                'opening_balance' => 0.0,
+                'closing_balance' => 0.0,
+                'total_receipts'  => 0.0,
+                'total_payments'  => 0.0,
+                'entries'         => [],
+                'sbu_code'        => $sbuCode,
+            ];
+        }
+
+        $prefix = config('accounting.table_prefix', 'acct_');
+        $accountIds = $accounts->pluck('id')->all();
+
+        $openingBalance = 0.0;
+
+        if ($startDate !== null) {
+            $openingQuery = DB::table("{$prefix}journal_entry_lines as l")
+                ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+                ->where('je.status', 'posted')
+                ->whereIn('l.account_id', $accountIds)
+                ->whereDate('je.date', '<', $startDate)
+                ->selectRaw(
+                    "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
+                    SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
+                );
+
+            $openingRow = $this->applySbuFilter($openingQuery, $sbuCode)->first();
+            // Cash/bank accounts are always debit-normal (asset) — no isDebitAccount() branch needed.
+            $openingBalance = (float) ($openingRow?->total_debit ?? 0) - (float) ($openingRow?->total_credit ?? 0);
+        }
+
+        $lineQuery = DB::table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereIn('l.account_id', $accountIds)
+            ->when($startDate !== null, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
+            ->when($endDate !== null, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->orderBy('je.date')
+            ->orderBy('je.id')
+            ->orderBy('l.id')
+            ->select([
+                'l.id as line_id',
+                'l.account_id',
+                'l.type',
+                'l.amount',
+                'l.description as line_description',
+                'l.reference as line_reference',
+                'je.id as journal_entry_id',
+                'je.entry_number',
+                'je.date',
+                'je.reference as journal_reference',
+                'je.description as journal_description',
+                'je.type as journal_type',
+                'je.sbu_code',
+            ]);
+
+        $lines = $this->applySbuFilter($lineQuery, $sbuCode)->get();
+
+        $accountLabels = $accounts->keyBy('id')->map(
+            fn (Account $a): string => $a->name . ' (' . $a->code . ')',
+        );
+
+        $runningBalance = $openingBalance;
+        $totalReceipts = 0.0;
+        $totalPayments = 0.0;
+        $entries = [];
+
+        foreach ($lines as $row) {
+            $debit = $row->type === 'debit' ? (float) $row->amount : 0.0;
+            $credit = $row->type === 'credit' ? (float) $row->amount : 0.0;
+
+            $totalReceipts += $debit;
+            $totalPayments += $credit;
+            $runningBalance += $debit - $credit;
+
+            $entries[] = [
+                'line_id'          => (int) $row->line_id,
+                'journal_entry_id' => (int) $row->journal_entry_id,
+                'entry_number'     => $row->entry_number,
+                'date'             => $row->date,
+                'account_id'       => (int) $row->account_id,
+                'account_label'    => $accountLabels->get($row->account_id),
+                'reference'        => $row->line_reference ?: $row->journal_reference,
+                'journal_type'     => $row->journal_type,
+                'description'      => $row->line_description ?: $row->journal_description,
+                'sbu_code'         => $row->sbu_code,
+                'receipt'          => $debit,
+                'payment'          => $credit,
+                'running_balance'  => $runningBalance,
+            ];
+        }
+
+        return [
+            'period'   => ['start' => $startDate, 'end' => $endDate],
+            'accounts' => $accounts->map(fn (Account $a): array => [
+                'id'   => $a->id,
+                'code' => $a->code,
+                'name' => $a->name,
+            ])->all(),
+            'opening_balance' => round($openingBalance, 2),
+            'closing_balance' => round($runningBalance, 2),
+            'total_receipts'  => round($totalReceipts, 2),
+            'total_payments'  => round($totalPayments, 2),
+            'entries'         => $entries,
+            'sbu_code'        => $sbuCode,
+        ];
+    }
+
+    /**
      * Sales tax liability report: output tax collected (invoices) vs input tax paid
      * (bills) over a period, grouped by TaxRate. Lines with no linked TaxRate (the
      * free-typed fallback) are grouped into an "Unassigned / Ad-hoc" bucket.

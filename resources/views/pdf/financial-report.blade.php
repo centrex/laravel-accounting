@@ -254,6 +254,49 @@
         </table>
     @endif
 
+    @if($reportType === 'cash_book' && isset($reportData['entries']))
+        <div class="filters">
+            <span><strong>Opening Balance:</strong> {{ $currency }} {{ number_format($reportData['opening_balance'], 2) }}</span>
+            <span><strong>Total Receipts:</strong> {{ $currency }} {{ number_format($reportData['total_receipts'], 2) }}</span>
+            <span><strong>Total Payments:</strong> {{ $currency }} {{ number_format($reportData['total_payments'], 2) }}</span>
+            <span><strong>Closing Balance:</strong> {{ $currency }} {{ number_format($reportData['closing_balance'], 2) }}</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Date</th>
+                    <th style="width: 14%;">Reference</th>
+                    <th>Description</th>
+                    @if(count($reportData['accounts']) > 1)
+                        <th style="width: 16%;">Account</th>
+                    @endif
+                    <th style="width: 13%;" class="text-right">Receipt</th>
+                    <th style="width: 13%;" class="text-right">Payment</th>
+                    <th style="width: 14%;" class="text-right">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($reportData['entries'] as $entry)
+                    <tr>
+                        <td>{{ \Carbon\Carbon::parse($entry['date'])->format('M j, Y') }}</td>
+                        <td class="mono">{{ $entry['entry_number'] ?? $entry['reference'] }}</td>
+                        <td>{{ $entry['description'] }}</td>
+                        @if(count($reportData['accounts']) > 1)
+                            <td>{{ $entry['account_label'] }}</td>
+                        @endif
+                        <td class="text-right mono">{{ $entry['receipt'] > 0 ? number_format($entry['receipt'], 2) : '—' }}</td>
+                        <td class="text-right mono">{{ $entry['payment'] > 0 ? number_format($entry['payment'], 2) : '—' }}</td>
+                        <td class="text-right mono">{{ number_format($entry['running_balance'], 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="{{ count($reportData['accounts']) > 1 ? 7 : 6 }}" class="empty">No cash/bank transactions in this period.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    @endif
+
     @if($reportType === 'sales_tax_liability' && isset($reportData['rows']))
         <table>
             <thead>
