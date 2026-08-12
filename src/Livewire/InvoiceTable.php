@@ -28,8 +28,8 @@ class InvoiceTable extends DataTable
         $currency = (string) config('accounting.base_currency', 'BDT');
 
         return [
-            Column::make('Invoice #', 'invoice_number')->searchable()->sortable()
-                ->view('accounting::livewire.partials.invoice-table.number'),
+            // Column::make('Invoice #', 'invoice_number')->searchable()->sortable()
+            //     ->view('accounting::livewire.partials.invoice-table.number'),
             Column::make('Customer', 'customer.name')->relation('customer')->searchable()
                 ->view('accounting::livewire.partials.invoice-table.customer'),
             Column::make('Sale Order', 'source_reference')->searchable()->sortable()
