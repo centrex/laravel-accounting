@@ -87,6 +87,9 @@
     <div class="filters">
         @if($reportType === 'balance_sheet')
             <span><strong>Date:</strong> {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</span>
+        @elseif($reportType === 'cash_flow_forecast')
+            <span><strong>As of:</strong> {{ \Carbon\Carbon::parse($reportData['as_of'])->format('F d, Y') }}</span>
+            <span><strong>Horizon:</strong> {{ $reportData['forecast_weeks'] }} weeks</span>
         @else
             <span><strong>Start:</strong> {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }}</span>
             <span><strong>End:</strong> {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</span>
@@ -232,25 +235,78 @@
                 </tr>
             </thead>
             <tbody>
+                <tr class="totals">
+                    <td>Opening Cash Balance</td>
+                    <td class="text-right mono">{{ number_format($reportData['opening_cash_balance'] ?? 0, 2) }}</td>
+                </tr>
                 <tr>
                     <td>Operating Activities</td>
                     <td class="text-right mono">{{ number_format($reportData['operating_activities'] ?? 0, 2) }}</td>
                 </tr>
+                @if(($reportData['operating_breakdown']['net_income'] ?? null) !== null)
+                    <tr><td style="padding-left: 20px;">Net Income</td><td class="text-right mono">{{ number_format($reportData['operating_breakdown']['net_income'], 2) }}</td></tr>
+                @endif
+                @foreach($reportData['operating_breakdown']['changes_in_working_capital'] ?? [] as $item)
+                    <tr><td style="padding-left: 20px;">{{ $item['name'] }} ({{ $item['code'] }})</td><td class="text-right mono">{{ number_format($item['amount'], 2) }}</td></tr>
+                @endforeach
                 <tr>
                     <td>Investing Activities</td>
                     <td class="text-right mono">{{ number_format($reportData['investing_activities'] ?? 0, 2) }}</td>
                 </tr>
+                @foreach($reportData['investing_breakdown'] ?? [] as $item)
+                    <tr><td style="padding-left: 20px;">{{ $item['name'] }} ({{ $item['code'] }})</td><td class="text-right mono">{{ number_format($item['amount'], 2) }}</td></tr>
+                @endforeach
                 <tr>
                     <td>Financing Activities</td>
                     <td class="text-right mono">{{ number_format($reportData['financing_activities'] ?? 0, 2) }}</td>
                 </tr>
+                @foreach($reportData['financing_breakdown'] ?? [] as $item)
+                    <tr><td style="padding-left: 20px;">{{ $item['name'] }} ({{ $item['code'] }})</td><td class="text-right mono">{{ number_format($item['amount'], 2) }}</td></tr>
+                @endforeach
             </tbody>
             <tfoot>
                 <tr class="totals">
                     <td>Net Change in Cash</td>
                     <td class="text-right mono">{{ number_format($reportData['net_change'] ?? 0, 2) }}</td>
                 </tr>
+                <tr class="totals">
+                    <td>Closing Cash Balance</td>
+                    <td class="text-right mono">{{ number_format($reportData['closing_cash_balance'] ?? 0, 2) }}</td>
+                </tr>
             </tfoot>
+        </table>
+    @endif
+
+    @if($reportType === 'cash_flow_forecast' && isset($reportData['buckets']))
+        <div class="filters">
+            <span><strong>Starting Cash:</strong> {{ $currency }} {{ number_format($reportData['starting_cash_balance'], 2) }}</span>
+            <span><strong>Ending Projected ({{ $reportData['forecast_weeks'] }}w):</strong> {{ $currency }} {{ number_format($reportData['ending_projected_balance'], 2) }}</span>
+            <span><strong>Overdue AR / AP / Expenses:</strong> {{ $currency }} {{ number_format($reportData['overdue']['ar'], 2) }} / {{ number_format($reportData['overdue']['ap'], 2) }} / {{ number_format($reportData['overdue']['expenses'], 2) }}</span>
+        </div>
+        <p style="color:#6b7280; font-size:10px;">{{ $reportData['run_rate']['basis'] }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Week</th>
+                    <th class="text-right">Inflows</th>
+                    <th class="text-right">Outflows</th>
+                    <th class="text-right">Other (Run-Rate)</th>
+                    <th class="text-right">Net</th>
+                    <th class="text-right">Projected Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($reportData['buckets'] as $bucket)
+                    <tr>
+                        <td>{{ $bucket['label'] }}</td>
+                        <td class="text-right mono">{{ number_format($bucket['expected_inflows'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($bucket['expected_outflows'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($bucket['baseline_other'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($bucket['net'], 2) }}</td>
+                        <td class="text-right mono">{{ number_format($bucket['projected_balance'], 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
         </table>
     @endif
 

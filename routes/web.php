@@ -2,7 +2,8 @@
 
 declare(strict_types = 1);
 
-use Centrex\Accounting\Livewire\{AccountingDashboard, BankReconciliationDetails, BankReconciliations, BillDetails, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, FixedAssets, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, LoanFacilities, OwnerEquity, Owners, PeriodClose, Requisitions, TaxRates, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Http\Controllers\Api\QuickBooksController;
+use Centrex\Accounting\Livewire\{AccountingDashboard, ApAgingReport, ArAgingReport, BankReconciliationDetails, BankReconciliations, BillDetails, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, Expenses, FinancialReports, FixedAssets, GeneralLedger, InvoiceDetails, Invoices, JournalEntries, LoanFacilities, OwnerEquity, Owners, PeriodClose, Requisitions, TaxRates, VendorLedger, VendorLedgerIndex, Vendors};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
@@ -16,6 +17,8 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/ledger/customers', CustomerLedgerIndex::class)->name('ledger.customers');
         Route::get('/ledger/vendors', VendorLedgerIndex::class)->name('ledger.vendors');
         Route::get('/reports', FinancialReports::class)->name('reports');
+        Route::get('/reports/ar-aging', ArAgingReport::class)->name('reports.ar-aging');
+        Route::get('/reports/ap-aging', ApAgingReport::class)->name('reports.ap-aging');
         Route::get('/invoices', Invoices::class)->name('invoices');
         Route::get('/invoices/{invoice}', InvoiceDetails::class)->name('invoices.show');
         Route::get('/credit-memos', CreditMemos::class)->name('credit-memos');
@@ -38,4 +41,8 @@ Route::middleware(config('accounting.web_middleware', ['web', 'auth']))
         Route::get('/tax-rates', TaxRates::class)->name('tax-rates');
         Route::get('/bank-reconciliations', BankReconciliations::class)->name('bank-reconciliations');
         Route::get('/bank-reconciliations/{bankReconciliation}', BankReconciliationDetails::class)->name('bank-reconciliations.show');
+
+        // QuickBooks Online OAuth2 flow
+        Route::get('/qbo/connect', [QuickBooksController::class, 'connect'])->name('qbo.connect');
+        Route::get('/qbo/callback', [QuickBooksController::class, 'callback'])->name('qbo.callback');
     });

@@ -41,6 +41,7 @@ final class FinancialReportsExporter
             'balance_sheet'       => $service->getBalanceSheet($endDate, $sbuCode),
             'income_statement'    => $service->getIncomeStatement($startDate, $endDate, $sbuCode),
             'cash_flow'           => $service->getCashFlowStatement($startDate, $endDate, $sbuCode),
+            'cash_flow_forecast'  => $service->getCashFlowForecast($endDate, sbuCode: $sbuCode),
             'cash_book'           => $service->getCashBook(null, $startDate, $endDate, $sbuCode),
             'sales_tax_liability' => $service->getSalesTaxLiabilityReport($startDate, $endDate, $sbuCode),
         ];
@@ -84,6 +85,7 @@ final class FinancialReportsExporter
         $balanceSheet = $reports['balance_sheet'];
         $incomeStatement = $reports['income_statement'];
         $cashFlow = $reports['cash_flow'];
+        $cashFlowForecast = $reports['cash_flow_forecast'];
         $cashBook = $reports['cash_book'];
         $salesTax = $reports['sales_tax_liability'];
 
@@ -105,6 +107,13 @@ final class FinancialReportsExporter
             ['Cash Flow', 'Investing Activities', round((float) ($cashFlow['investing_activities'] ?? 0), 2)],
             ['Cash Flow', 'Financing Activities', round((float) ($cashFlow['financing_activities'] ?? 0), 2)],
             ['Cash Flow', 'Net Change', round((float) ($cashFlow['net_change'] ?? 0), 2)],
+            ['Cash Flow', 'Opening Cash Balance', round((float) ($cashFlow['opening_cash_balance'] ?? 0), 2)],
+            ['Cash Flow', 'Closing Cash Balance', round((float) ($cashFlow['closing_cash_balance'] ?? 0), 2)],
+            ['Cash Flow Forecast', 'Starting Cash Balance', round((float) $cashFlowForecast['starting_cash_balance'], 2)],
+            ['Cash Flow Forecast', 'Ending Projected Balance', round((float) $cashFlowForecast['ending_projected_balance'], 2)],
+            ['Cash Flow Forecast', 'Overdue Receivables', round((float) $cashFlowForecast['overdue']['ar'], 2)],
+            ['Cash Flow Forecast', 'Overdue Payables (Bills)', round((float) $cashFlowForecast['overdue']['ap'], 2)],
+            ['Cash Flow Forecast', 'Overdue Payables (Credit Expenses)', round((float) $cashFlowForecast['overdue']['expenses'], 2)],
             ['Cash Book', 'Opening Balance', round((float) $cashBook['opening_balance'], 2)],
             ['Cash Book', 'Total Receipts', round((float) $cashBook['total_receipts'], 2)],
             ['Cash Book', 'Total Payments', round((float) $cashBook['total_payments'], 2)],
@@ -127,6 +136,7 @@ final class FinancialReportsExporter
             'balance_sheet'       => self::writeBalanceSheetSheet($spreadsheet, $index, $reportData),
             'income_statement'    => self::writeIncomeStatementSheet($spreadsheet, $index, $reportData),
             'cash_flow'           => self::writeCashFlowSheet($spreadsheet, $index, $reportData),
+            'cash_flow_forecast'  => self::writeCashFlowForecastSheet($spreadsheet, $index, $reportData),
             'cash_book'           => self::writeCashBookSheet($spreadsheet, $index, $reportData),
             'sales_tax_liability' => self::writeSalesTaxLiabilitySheet($spreadsheet, $index, $reportData),
             default               => self::writeSheet($spreadsheet, $index, 'Report', ['No data'], []),
@@ -221,13 +231,71 @@ final class FinancialReportsExporter
     private static function writeCashFlowSheet(Spreadsheet $spreadsheet, int $index, array $data): void
     {
         $rows = [
+            ['Opening Cash Balance', round((float) ($data['opening_cash_balance'] ?? 0), 2)],
+            ['', ''],
             ['Operating Activities', round((float) ($data['operating_activities'] ?? 0), 2)],
-            ['Investing Activities', round((float) ($data['investing_activities'] ?? 0), 2)],
-            ['Financing Activities', round((float) ($data['financing_activities'] ?? 0), 2)],
-            ['Net Change in Cash', round((float) ($data['net_change'] ?? 0), 2)],
         ];
 
+        if (($data['operating_breakdown']['net_income'] ?? null) !== null) {
+            $rows[] = ['  Net Income', round((float) $data['operating_breakdown']['net_income'], 2)];
+        }
+
+        foreach ($data['operating_breakdown']['changes_in_working_capital'] ?? [] as $item) {
+            $rows[] = ["  {$item['name']} ({$item['code']})", round((float) $item['amount'], 2)];
+        }
+
+        $rows[] = ['Investing Activities', round((float) ($data['investing_activities'] ?? 0), 2)];
+
+        foreach ($data['investing_breakdown'] ?? [] as $item) {
+            $rows[] = ["  {$item['name']} ({$item['code']})", round((float) $item['amount'], 2)];
+        }
+
+        $rows[] = ['Financing Activities', round((float) ($data['financing_activities'] ?? 0), 2)];
+
+        foreach ($data['financing_breakdown'] ?? [] as $item) {
+            $rows[] = ["  {$item['name']} ({$item['code']})", round((float) $item['amount'], 2)];
+        }
+
+        $rows[] = ['', ''];
+        $rows[] = ['Net Change in Cash', round((float) ($data['net_change'] ?? 0), 2)];
+        $rows[] = ['Closing Cash Balance', round((float) ($data['closing_cash_balance'] ?? 0), 2)];
+
         self::writeSheet($spreadsheet, $index, 'Cash Flow', ['Section', 'Amount'], $rows);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function writeCashFlowForecastSheet(Spreadsheet $spreadsheet, int $index, array $data): void
+    {
+        $rows = [];
+
+        foreach ($data['buckets'] as $bucket) {
+            $rows[] = [
+                $bucket['label'],
+                round((float) $bucket['expected_inflows'], 2),
+                round((float) $bucket['expected_outflows'], 2),
+                round((float) $bucket['baseline_other'], 2),
+                round((float) $bucket['net'], 2),
+                round((float) $bucket['projected_balance'], 2),
+            ];
+        }
+
+        $rows[] = ['', '', '', '', '', ''];
+        $rows[] = ['Starting Cash Balance', '', '', '', '', round((float) $data['starting_cash_balance'], 2)];
+        $rows[] = ['Overdue Receivables (AR)', round((float) $data['overdue']['ar'], 2), '', '', '', ''];
+        $rows[] = ['Overdue Payables (AP)', '', round((float) $data['overdue']['ap'], 2), '', '', ''];
+        $rows[] = ['Overdue Credit Expenses', '', round((float) $data['overdue']['expenses'], 2), '', '', ''];
+        $rows[] = ['Beyond Horizon — AR / AP', round((float) $data['beyond_horizon']['ar'], 2), round((float) $data['beyond_horizon']['ap'], 2), '', '', ''];
+        $rows[] = ['Ending Projected Balance', '', '', '', '', round((float) $data['ending_projected_balance'], 2)];
+
+        self::writeSheet(
+            $spreadsheet,
+            $index,
+            'Cash Flow Forecast',
+            ['Week', 'Expected Inflows', 'Expected Outflows', 'Other (Run-Rate)', 'Net', 'Projected Balance'],
+            $rows,
+        );
     }
 
     /**

@@ -43,15 +43,53 @@ class CashFlowStatementTest extends TestCase
         $this->assertSame(0.0, $statement['investing_activities']);
         $this->assertSame(0.0, $statement['financing_activities']);
         $this->assertSame(0.0, $statement['net_change']);
+        $this->assertSame(0.0, $statement['opening_cash_balance']);
+        $this->assertSame(0.0, $statement['closing_cash_balance']);
+    }
+
+    public function test_cash_flow_statement_reports_opening_and_closing_cash_balance(): void
+    {
+        // Balance carried in from before the period
+        $priorEntry = $this->accounting->createJournalEntry([
+            'date'        => '2024-12-20',
+            'reference'   => 'CF-000',
+            'description' => 'Prior period cash sale',
+            'lines'       => [
+                ['account_id' => $this->cash->id,    'type' => 'debit',  'amount' => 300],
+                ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 300],
+            ],
+        ]);
+        $priorEntry->post();
+
+        $inPeriodEntry = $this->accounting->createJournalEntry([
+            'date'        => '2025-01-15',
+            'reference'   => 'CF-001',
+            'description' => 'Direct cash sale',
+            'lines'       => [
+                ['account_id' => $this->cash->id,    'type' => 'debit',  'amount' => 125],
+                ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 125],
+            ],
+        ]);
+        $inPeriodEntry->post();
+
+        $statement = $this->accounting->getCashFlowStatement('2025-01-01', '2025-01-31');
+
+        $this->assertSame(300.0, $statement['opening_cash_balance']);
+        $this->assertSame(425.0, $statement['closing_cash_balance']);
+        $this->assertSame(125.0, $statement['net_change']);
+        $this->assertSame(
+            round($statement['closing_cash_balance'] - $statement['opening_cash_balance'], 2),
+            $statement['net_change'],
+        );
     }
 
     public function test_cash_flow_statement_classifies_revenue_counterpart_as_operating_cash_flow(): void
     {
         $entry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-15',
-            'reference' => 'CF-001',
+            'date'        => '2025-01-15',
+            'reference'   => 'CF-001',
             'description' => 'Direct cash sale',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->cash->id,    'type' => 'debit',  'amount' => 125],
                 ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 125],
             ],
@@ -81,10 +119,10 @@ class CashFlowStatementTest extends TestCase
     {
         // Post invoice
         $invoiceEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-05',
-            'reference' => 'INV-001',
+            'date'        => '2025-01-05',
+            'reference'   => 'INV-001',
             'description' => 'Invoice',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->ar->id,      'type' => 'debit',  'amount' => 1000],
                 ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 1000],
             ],
@@ -93,10 +131,10 @@ class CashFlowStatementTest extends TestCase
 
         // Receive payment
         $paymentEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-20',
-            'reference' => 'PMT-001',
+            'date'        => '2025-01-20',
+            'reference'   => 'PMT-001',
             'description' => 'Payment received',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->cash->id, 'type' => 'debit',  'amount' => 1000],
                 ['account_id' => $this->ar->id,   'type' => 'credit', 'amount' => 1000],
             ],
@@ -125,10 +163,10 @@ class CashFlowStatementTest extends TestCase
     public function test_invoice_posted_but_unpaid_shows_zero_operating_cash_flow(): void
     {
         $invoiceEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-05',
-            'reference' => 'INV-002',
+            'date'        => '2025-01-05',
+            'reference'   => 'INV-002',
             'description' => 'Invoice (unpaid)',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->ar->id,      'type' => 'debit',  'amount' => 1000],
                 ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 1000],
             ],
@@ -164,10 +202,10 @@ class CashFlowStatementTest extends TestCase
     {
         // Simulate prior-period invoice (Jan)
         $invoiceEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-05',
-            'reference' => 'INV-003',
+            'date'        => '2025-01-05',
+            'reference'   => 'INV-003',
             'description' => 'Prior period invoice',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->ar->id,      'type' => 'debit',  'amount' => 1000],
                 ['account_id' => $this->revenue->id, 'type' => 'credit', 'amount' => 1000],
             ],
@@ -176,10 +214,10 @@ class CashFlowStatementTest extends TestCase
 
         // Payment in Feb (period B)
         $paymentEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-02-10',
-            'reference' => 'PMT-003',
+            'date'        => '2025-02-10',
+            'reference'   => 'PMT-003',
             'description' => 'Payment for Jan invoice',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->cash->id, 'type' => 'debit',  'amount' => 1000],
                 ['account_id' => $this->ar->id,   'type' => 'credit', 'amount' => 1000],
             ],
@@ -215,10 +253,10 @@ class CashFlowStatementTest extends TestCase
     {
         // Post invoice with tax
         $invoiceEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-05',
-            'reference' => 'INV-004',
+            'date'        => '2025-01-05',
+            'reference'   => 'INV-004',
             'description' => 'Invoice with tax',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->ar->id,         'type' => 'debit',  'amount' => 1150],
                 ['account_id' => $this->revenue->id,    'type' => 'credit', 'amount' => 1000],
                 ['account_id' => $this->taxPayable->id, 'type' => 'credit', 'amount' => 150],
@@ -228,10 +266,10 @@ class CashFlowStatementTest extends TestCase
 
         // Receive full payment (including tax collected)
         $paymentEntry = $this->accounting->createJournalEntry([
-            'date' => '2025-01-20',
-            'reference' => 'PMT-004',
+            'date'        => '2025-01-20',
+            'reference'   => 'PMT-004',
             'description' => 'Full payment',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $this->cash->id, 'type' => 'debit',  'amount' => 1150],
                 ['account_id' => $this->ar->id,   'type' => 'credit', 'amount' => 1150],
             ],

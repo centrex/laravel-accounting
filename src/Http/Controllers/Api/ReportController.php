@@ -6,6 +6,7 @@ namespace Centrex\Accounting\Http\Controllers\Api;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Models\Account;
+use Centrex\Accounting\QuickBooks\QuickBooksReportFormatter;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 
@@ -104,6 +105,29 @@ class ReportController extends Controller
             $data = $this->accounting->getCashFlowStatement(
                 $request->start_date,
                 $request->end_date ?? now()->toDateString(),
+                $request->string('sbu_code')->toString() ?: null,
+            );
+
+            return response()->json(['data' => $data]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function cashFlowForecast(Request $request): JsonResponse
+    {
+        $request->validate([
+            'as_of_date'     => ['nullable', 'date'],
+            'forecast_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
+            'lookback_days'  => ['nullable', 'integer', 'min:1', 'max:365'],
+            'sbu_code'       => ['nullable', 'string', 'max:50'],
+        ]);
+
+        try {
+            $data = $this->accounting->getCashFlowForecast(
+                $request->as_of_date,
+                (int) ($request->integer('forecast_weeks') ?: 12),
+                (int) ($request->integer('lookback_days') ?: 90),
                 $request->string('sbu_code')->toString() ?: null,
             );
 
@@ -250,16 +274,10 @@ class ReportController extends Controller
         }
     }
 
-    /** Delegate QBO formatting to the pro package's formatter when installed. */
+    /** Reformat a report array into QuickBooks Online's structure/terminology. */
     private function applyQboFormat(string $method, array $data): array
     {
-        $formatterClass = 'Centrex\\AccountingPro\\QuickBooks\\QuickBooksReportFormatter';
-
-        if (!class_exists($formatterClass)) {
-            return $data;
-        }
-
-        return app($formatterClass)->{$method}($data);
+        return app(QuickBooksReportFormatter::class)->{$method}($data);
     }
 
     /** Serialize account groups (replacing model objects with plain arrays) */

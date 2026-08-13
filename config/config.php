@@ -162,6 +162,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | QuickBooks Online Integration
+    |--------------------------------------------------------------------------
+    | Credentials from your Intuit Developer app (developer.intuit.com).
+    | environment: 'sandbox' (testing) or 'production'
+    | default_realm_id: your QBO company ID (shown in the QBO URL after /c/)
+    | webhook_verifier_token: from your app's Webhooks settings in Intuit Dev Portal
+    */
+    'quickbooks' => [
+        'client_id'              => env('QBO_CLIENT_ID', ''),
+        'client_secret'          => env('QBO_CLIENT_SECRET', ''),
+        'redirect_uri'           => env('QBO_REDIRECT_URI', ''),
+        'environment'            => env('QBO_ENVIRONMENT', 'sandbox'),   // sandbox | production
+        'default_realm_id'       => env('QBO_REALM_ID', ''),
+        'webhook_verifier_token' => env('QBO_WEBHOOK_VERIFIER_TOKEN', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Account Code Mappings
     |--------------------------------------------------------------------------
     | Override any of these to match your chart of accounts. These codes are

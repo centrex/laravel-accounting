@@ -156,6 +156,11 @@ parameters:
 			path: database/migrations/2026_07_31_000001_add_currency_to_loan_facilities_table.php
 
 		-
+			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Support\\\\Facades\\\\Schema\\:\\:connection\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 2
+			path: database/migrations/2026_08_13_000001_create_acct_quickbooks_tokens_table.php
+
+		-
 			message: "#^Cannot call method copy\\(\\) on Carbon\\\\Carbon\\|null\\.$#"
 			count: 1
 			path: database/seeders/AccountingSeeder.php
@@ -327,12 +332,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$bill_date\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$bill_number\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -452,7 +457,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$name\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -462,12 +467,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$expense_date\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$expense_number\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -507,7 +512,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$vendor_name\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -657,12 +662,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_date\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
-			count: 5
+			count: 6
 			path: src/Accounting.php
 
 		-
@@ -892,7 +897,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$name\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -972,7 +977,7 @@ parameters:
 
 		-
 			message: "#^Cannot call method first\\(\\) on mixed\\.$#"
-			count: 1
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -1117,6 +1122,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:getCashBook\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:getCashFlowForecast\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1462,7 +1472,22 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
-			count: 6
+			count: 8
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'sbu_code' given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'payment_method' given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'status' given\\.$#"
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -1472,6 +1497,11 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'due_date' given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'sbu_code' given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1506,8 +1536,18 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_type' given\\.$#"
+			count: 2
+			path: src/Accounting.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payment_method' given\\.$#"
 			count: 4
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'sbu_code' given\\.$#"
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -1637,7 +1677,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$time of static method Carbon\\\\Carbon\\:\\:parse\\(\\) expects Carbon\\\\Month\\|Carbon\\\\WeekDay\\|DateTimeInterface\\|float\\|int\\|string\\|null, mixed given\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1692,11 +1732,21 @@ parameters:
 
 		-
 			message: "#^Part \\$prefix \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
-			count: 17
+			count: 21
 			path: src/Accounting.php
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1711,18 +1761,28 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\LoanFacility\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:all\\(\\) contains unresolvable type\\.$#"
-			count: 4
+			count: 7
 			path: src/Accounting.php
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:values\\(\\) contains unresolvable type\\.$#"
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -1746,8 +1806,33 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Cannot access offset 'client_id' on mixed\\.$#"
+			count: 1
+			path: src/AccountingServiceProvider.php
+
+		-
+			message: "#^Cannot access offset 'client_secret' on mixed\\.$#"
+			count: 1
+			path: src/AccountingServiceProvider.php
+
+		-
+			message: "#^Cannot access offset 'environment' on mixed\\.$#"
+			count: 1
+			path: src/AccountingServiceProvider.php
+
+		-
+			message: "#^Cannot access offset 'redirect_uri' on mixed\\.$#"
+			count: 1
+			path: src/AccountingServiceProvider.php
+
+		-
 			message: "#^Cannot call method hasRole\\(\\) on class\\-string\\|object\\.$#"
 			count: 1
+			path: src/AccountingServiceProvider.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 3
 			path: src/AccountingServiceProvider.php
 
 		-
@@ -1851,6 +1936,11 @@ parameters:
 			path: src/Commands/AccountingReportCommand.php
 
 		-
+			message: "#^Method Centrex\\\\Accounting\\\\Commands\\\\AccountingReportCommand\\:\\:renderCashFlowForecast\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Commands/AccountingReportCommand.php
+
+		-
 			message: "#^Method Centrex\\\\Accounting\\\\Commands\\\\AccountingReportCommand\\:\\:renderIncomeStatement\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Commands/AccountingReportCommand.php
@@ -1919,6 +2009,36 @@ parameters:
 			message: "#^Parameter \\#1 \\$string of method Illuminate\\\\Console\\\\Command\\:\\:line\\(\\) expects string, string\\|false given\\.$#"
 			count: 2
 			path: src/Commands/AccountingReportCommand.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Commands/QuickBooksSyncCommand.php
+
+		-
+			message: "#^Offset 'created' on array\\{created\\: int, updated\\: int, skipped\\: int, errors\\: array\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Commands/QuickBooksSyncCommand.php
+
+		-
+			message: "#^Offset 'errors' on array\\{created\\: int, updated\\: int, skipped\\: int, errors\\: array\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 3
+			path: src/Commands/QuickBooksSyncCommand.php
+
+		-
+			message: "#^Offset 'skipped' on array\\{created\\: int, updated\\: int, skipped\\: int, errors\\: array\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Commands/QuickBooksSyncCommand.php
+
+		-
+			message: "#^Offset 'updated' on array\\{created\\: int, updated\\: int, skipped\\: int, errors\\: array\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Commands/QuickBooksSyncCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of method Illuminate\\\\Console\\\\Command\\:\\:line\\(\\) expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Commands/QuickBooksSyncCommand.php
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Enums\\\\AccountSubtype\\:\\:getLabel\\(\\) has parameter \\$value with no type specified\\.$#"
@@ -2374,6 +2494,46 @@ parameters:
 			message: "#^Part \\$request\\-\\>search \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
 			count: 3
 			path: src/Http/Controllers/Api/JournalEntryController.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 5
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#1 \\$code of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:exchangeCode\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#2 \\$haystack of function in_array expects array, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#2 \\$realmId of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:exchangeCode\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#2 \\$since of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncBills\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#2 \\$since of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncInvoices\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Parameter \\#2 \\$since of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncJournalEntries\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Carbon\\\\Carbon\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: src/Http/Controllers/Api/QuickBooksController.php
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Http\\\\Controllers\\\\Api\\\\ReportController\\:\\:applyQboFormat\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
@@ -4106,6 +4266,11 @@ parameters:
 			path: src/Livewire/AccountingPayablesCard.php
 
 		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Livewire/AccountingQboStatusCard.php
+
+		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
 			count: 1
 			path: src/Livewire/AccountingReceivablesCard.php
@@ -4124,6 +4289,36 @@ parameters:
 			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\AccountingReceivablesCard\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Livewire/AccountingReceivablesCard.php
+
+		-
+			message: "#^Call to method Illuminate\\\\Contracts\\\\View\\\\Factory\\:\\:exists\\(\\) with 'layouts\\.app' will always evaluate to false\\.$#"
+			count: 1
+			path: src/Livewire/ApAgingReport.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\ApAgingReport\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/ApAgingReport.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\ApAgingReport\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/ApAgingReport.php
+
+		-
+			message: "#^Call to method Illuminate\\\\Contracts\\\\View\\\\Factory\\:\\:exists\\(\\) with 'layouts\\.app' will always evaluate to false\\.$#"
+			count: 1
+			path: src/Livewire/ArAgingReport.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\ArAgingReport\\:\\:getCurrency\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: src/Livewire/ArAgingReport.php
+
+		-
+			message: "#^Static property Centrex\\\\Accounting\\\\Livewire\\\\ArAgingReport\\:\\:\\$cachedCurrency \\(string\\|null\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Livewire/ArAgingReport.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$account_id\\.$#"
@@ -8136,6 +8331,406 @@ parameters:
 			path: src/Observers/PaymentObserver.php
 
 		-
+			message: "#^Access to an undefined property object\\:\\:\\$subtype\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksAccountTypeMapper.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksAccountTypeMapper.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksAccountTypeMapper.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksAccountTypeMapper\\:\\:map\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksAccountTypeMapper.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:get\\(\\) has parameter \\$query with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:get\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:persistToken\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:post\\(\\) has parameter \\$body with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:post\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:query\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:report\\(\\) has parameter \\$params with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:report\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:request\\(\\) has parameter \\$body with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:request\\(\\) has parameter \\$query with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:request\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:request\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Parameter \\#2 \\$data of method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksClient\\:\\:persistToken\\(\\) expects array, mixed given\\.$#"
+			count: 2
+			path: src/QuickBooks/QuickBooksClient.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:apAging\\(\\) has parameter \\$aging with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:apAging\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:arAging\\(\\) has parameter \\$aging with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:arAging\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:balanceSheet\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:balanceSheet\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:cashFlow\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:cashFlow\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:formatAging\\(\\) has parameter \\$aging with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:formatAging\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:formatLine\\(\\) has parameter \\$item with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:formatLine\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:profitAndLoss\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:profitAndLoss\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:trialBalance\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksReportFormatter\\:\\:trialBalance\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksReportFormatter.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
+			count: 4
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$is_active\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$bill_date\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$bill_number\\.$#"
+			count: 3
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$due_date\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BillItem\\:\\:\\$description\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$email\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$name\\.$#"
+			count: 3
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$phone\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$due_date\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_date\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
+			count: 3
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\InvoiceItem\\:\\:\\$description\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$date\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$description\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$entry_number\\.$#"
+			count: 2
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$amount\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$email\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$name\\.$#"
+			count: 3
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$phone\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Call to an undefined method DateTimeInterface\\:\\:toDateString\\(\\)\\.$#"
+			count: 5
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:buildQboAccountPayload\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:fetchQboAccountsByCode\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:fetchQboEntityByName\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:fetchQboEntityIdByName\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:handleWebhook\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:handleWebhook\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:pullQboAccounts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:pullQboReport\\(\\) has parameter \\$params with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:pullQboReport\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncAccounts\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncBills\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncCustomers\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncInvoices\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncJournalEntries\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:syncVendors\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'updated_at' given\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'updated_at' given\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'status' given\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'updated_at' given\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Property Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:\\$accounting is never read, only written\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Property Centrex\\\\Accounting\\\\QuickBooks\\\\QuickBooksSyncService\\:\\:\\$formatter is never read, only written\\.$#"
+			count: 1
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Unable to resolve the template type TKey in call to function collect$#"
+			count: 2
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Unable to resolve the template type TValue in call to function collect$#"
+			count: 2
+			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
 			message: "#^Method Centrex\\\\Accounting\\\\Support\\\\AccountingWorkspace\\:\\:mapItem\\(\\) has parameter \\$item with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Support/AccountingWorkspace.php
@@ -8157,7 +8752,7 @@ parameters:
 
 		-
 			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
-			count: 7
+			count: 11
 			path: src/Support/FinancialReportsExporter.php
 
 		-
@@ -8176,13 +8771,38 @@ parameters:
 			path: src/Support/FinancialReportsExporter.php
 
 		-
+			message: "#^Cannot access offset 'amount' on mixed\\.$#"
+			count: 3
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'ap' on mixed\\.$#"
+			count: 3
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'ar' on mixed\\.$#"
+			count: 3
+			path: src/Support/FinancialReportsExporter.php
+
+		-
 			message: "#^Cannot access offset 'balance' on mixed\\.$#"
 			count: 4
 			path: src/Support/FinancialReportsExporter.php
 
 		-
-			message: "#^Cannot access offset 'code' on mixed\\.$#"
+			message: "#^Cannot access offset 'baseline_other' on mixed\\.$#"
 			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'changes_in_working…' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'code' on mixed\\.$#"
+			count: 4
 			path: src/Support/FinancialReportsExporter.php
 
 		-
@@ -8216,13 +8836,38 @@ parameters:
 			path: src/Support/FinancialReportsExporter.php
 
 		-
+			message: "#^Cannot access offset 'expected_inflows' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'expected_outflows' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'expenses' on mixed\\.$#"
+			count: 2
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'label' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
 			message: "#^Cannot access offset 'name' on mixed\\.$#"
+			count: 4
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'net' on mixed\\.$#"
 			count: 1
 			path: src/Support/FinancialReportsExporter.php
 
 		-
 			message: "#^Cannot access offset 'net_income' on mixed\\.$#"
-			count: 1
+			count: 2
 			path: src/Support/FinancialReportsExporter.php
 
 		-
@@ -8237,6 +8882,11 @@ parameters:
 
 		-
 			message: "#^Cannot access offset 'payment' on mixed\\.$#"
+			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Cannot access offset 'projected_balance' on mixed\\.$#"
 			count: 1
 			path: src/Support/FinancialReportsExporter.php
 
@@ -8287,10 +8937,20 @@ parameters:
 
 		-
 			message: "#^Cannot cast mixed to float\\.$#"
-			count: 54
+			count: 79
 			path: src/Support/FinancialReportsExporter.php
 
 		-
 			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
 			count: 1
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Part \\$item\\['code'\\] \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 3
+			path: src/Support/FinancialReportsExporter.php
+
+		-
+			message: "#^Part \\$item\\['name'\\] \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 3
 			path: src/Support/FinancialReportsExporter.php

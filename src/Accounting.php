@@ -1364,12 +1364,17 @@ class Accounting
         $operatingTotal = $netIncome + $operatingAdj;
         $netChange = $operatingTotal + $investingActivities + $financingActivities;
 
+        $openingCash = $this->cashBalanceAsOf($start->copy()->subDay(), $sbuCode);
+        $closingCash = $this->cashBalanceAsOf($end, $sbuCode);
+
         return [
             'period'               => ['start' => $start->toDateString(), 'end' => $end->toDateString()],
             'operating_activities' => round($operatingTotal, 2),
             'investing_activities' => round($investingActivities, 2),
             'financing_activities' => round($financingActivities, 2),
             'net_change'           => round($netChange, 2),
+            'opening_cash_balance' => round($openingCash, 2),
+            'closing_cash_balance' => round($closingCash, 2),
             'sbu_code'             => $this->normalizeSbuCode($sbuCode),
             // Breakdown — shows how invoice payments, AR changes, and other items contribute
             'operating_breakdown' => [
@@ -1379,6 +1384,286 @@ class Accounting
             ],
             'investing_breakdown' => $investingDetails,
             'financing_breakdown' => $financingDetails,
+        ];
+    }
+
+    /**
+     * Cash Flow Forecast — projects future cash position over a rolling weekly horizon.
+     *
+     * Combines two sources:
+     *  - Known items: due dates on open (unpaid/partially-paid) invoices and bills,
+     *    bucketed by week. Overdue items are pulled into "This week" but their total
+     *    is also reported separately under `overdue`, so collection risk stays visible
+     *    instead of blending into a normal week.
+     *  - A baseline "other operating cash flow" run-rate: the trailing average of
+     *    posted cash/bank movements over `$lookbackDays` that are NOT invoice/bill
+     *    payments (payroll, rent, direct cash sales, misc expenses, etc.) — approximates
+     *    the recurring cash flow that has no due-dated document behind it.
+     *
+     * This is a projection based on current data, not a guarantee — it assumes overdue
+     * and near-term items are eventually collected/paid and that recent recurring cash
+     * flow continues at the same rate.
+     */
+    public function getCashFlowForecast(mixed $asOfDate = null, int $forecastWeeks = 12, int $lookbackDays = 90, ?string $sbuCode = null): array
+    {
+        $asOf = ($asOfDate ? Carbon::parse($asOfDate) : now())->startOfDay();
+        $sbuCode = $this->normalizeSbuCode($sbuCode);
+        $horizonEnd = $asOf->copy()->addWeeks($forecastWeeks)->subDay();
+
+        $startingCash = $this->cashBalanceAsOf($asOf, $sbuCode);
+        $runRate = $this->cashRunRate($asOf, $lookbackDays, $sbuCode);
+
+        $buckets = [];
+
+        for ($w = 0; $w < $forecastWeeks; $w++) {
+            $bucketStart = $asOf->copy()->addDays($w * 7);
+            $buckets[] = [
+                'label'             => $w === 0 ? 'This week' : 'Week of ' . $bucketStart->format('M j'),
+                'start'             => $bucketStart->toDateString(),
+                'end'               => $bucketStart->copy()->addDays(6)->toDateString(),
+                'expected_inflows'  => 0.0,
+                'expected_outflows' => 0.0,
+                'baseline_other'    => round($runRate['weekly'], 2),
+            ];
+        }
+
+        $classify = function (Carbon $dueDate, float $amount, bool $isInflow) use ($asOf, $horizonEnd, $forecastWeeks, &$buckets): string {
+            if ($dueDate->lt($asOf)) {
+                $index = 0;
+            } elseif ($dueDate->gt($horizonEnd)) {
+                return 'beyond_horizon';
+            } else {
+                $index = min((int) floor($asOf->diffInDays($dueDate) / 7), $forecastWeeks - 1);
+            }
+
+            if ($isInflow) {
+                $buckets[$index]['expected_inflows'] = round((float) $buckets[$index]['expected_inflows'] + $amount, 2);
+            } else {
+                $buckets[$index]['expected_outflows'] = round((float) $buckets[$index]['expected_outflows'] + $amount, 2);
+            }
+
+            return $index === 0 && $dueDate->lt($asOf) ? 'overdue' : (string) $buckets[$index]['label'];
+        };
+
+        $overdueAr = 0.0;
+        $overdueAp = 0.0;
+        $overdueExpense = 0.0;
+        $beyondHorizonAr = 0.0;
+        $beyondHorizonAp = 0.0;
+        $beyondHorizonExpense = 0.0;
+
+        $arSchedule = Invoice::query()
+            ->whereNotIn('status', [Enums\EntryStatus::DRAFT->value, Enums\EntryStatus::VOID->value])
+            ->when($sbuCode !== null, fn ($q) => $q->where('sbu_code', $sbuCode))
+            ->with('customer')
+            ->get()
+            ->map(function (Invoice $invoice) use ($classify, &$overdueAr, &$beyondHorizonAr): ?array {
+                $amount = round($invoice->base_balance, 2);
+
+                if ($amount <= $this->tolerance()) {
+                    return null;
+                }
+
+                $dueDate = Carbon::parse($invoice->due_date ?? $invoice->invoice_date);
+                $bucket = $classify($dueDate, $amount, true);
+
+                if ($bucket === 'overdue') {
+                    $overdueAr += $amount;
+                } elseif ($bucket === 'beyond_horizon') {
+                    $beyondHorizonAr += $amount;
+                }
+
+                return [
+                    'invoice_number' => $invoice->invoice_number,
+                    'customer'       => $invoice->customer?->name,
+                    'due_date'       => $dueDate->toDateString(),
+                    'amount'         => $amount,
+                    'bucket'         => $bucket,
+                ];
+            })
+            ->filter()
+            ->sortBy('due_date')
+            ->values();
+
+        $apSchedule = Bill::query()
+            ->whereNotIn('status', [Enums\EntryStatus::DRAFT->value, Enums\EntryStatus::VOID->value])
+            ->when($sbuCode !== null, fn ($q) => $q->where('sbu_code', $sbuCode))
+            ->with('vendor')
+            ->get()
+            ->map(function (Bill $bill) use ($classify, &$overdueAp, &$beyondHorizonAp): ?array {
+                $amount = round($bill->base_balance, 2);
+
+                if ($amount <= $this->tolerance()) {
+                    return null;
+                }
+
+                $dueDate = Carbon::parse($bill->due_date ?? $bill->bill_date);
+                $bucket = $classify($dueDate, $amount, false);
+
+                if ($bucket === 'overdue') {
+                    $overdueAp += $amount;
+                } elseif ($bucket === 'beyond_horizon') {
+                    $beyondHorizonAp += $amount;
+                }
+
+                return [
+                    'bill_number' => $bill->bill_number,
+                    'vendor'      => $bill->vendor?->name,
+                    'due_date'    => $dueDate->toDateString(),
+                    'amount'      => $amount,
+                    'bucket'      => $bucket,
+                ];
+            })
+            ->filter()
+            ->sortBy('due_date')
+            ->values();
+
+        // Approved credit expenses (payables not tied to a Bill) due within the window
+        $expenseSchedule = Expense::query()
+            ->where('status', 'approved')
+            ->where('payment_method', 'credit')
+            ->get()
+            ->map(function (Expense $expense) use ($classify, &$overdueExpense, &$beyondHorizonExpense): ?array {
+                $amount = round($expense->balance, 2);
+
+                if ($amount <= $this->tolerance()) {
+                    return null;
+                }
+
+                $dueDate = Carbon::parse($expense->due_date ?? $expense->expense_date);
+                $bucket = $classify($dueDate, $amount, false);
+
+                if ($bucket === 'overdue') {
+                    $overdueExpense += $amount;
+                } elseif ($bucket === 'beyond_horizon') {
+                    $beyondHorizonExpense += $amount;
+                }
+
+                return [
+                    'expense_number' => $expense->expense_number,
+                    'vendor'         => $expense->vendor_name,
+                    'due_date'       => $dueDate->toDateString(),
+                    'amount'         => $amount,
+                    'bucket'         => $bucket,
+                ];
+            })
+            ->filter()
+            ->sortBy('due_date')
+            ->values();
+
+        $running = round($startingCash, 2);
+
+        foreach ($buckets as &$bucket) {
+            $bucket['net'] = round($bucket['expected_inflows'] - $bucket['expected_outflows'] + $bucket['baseline_other'], 2);
+            $running = round($running + $bucket['net'], 2);
+            $bucket['projected_balance'] = $running;
+        }
+        unset($bucket);
+
+        return [
+            'as_of'                    => $asOf->toDateString(),
+            'horizon_end'              => $horizonEnd->toDateString(),
+            'forecast_weeks'           => $forecastWeeks,
+            'starting_cash_balance'    => round($startingCash, 2),
+            'ending_projected_balance' => $running,
+            'run_rate'                 => $runRate,
+            'overdue'                  => ['ar' => round($overdueAr, 2), 'ap' => round($overdueAp, 2), 'expenses' => round($overdueExpense, 2)],
+            'beyond_horizon'           => ['ar' => round($beyondHorizonAr, 2), 'ap' => round($beyondHorizonAp, 2), 'expenses' => round($beyondHorizonExpense, 2)],
+            'buckets'                  => $buckets,
+            'ar_schedule'              => $arSchedule->all(),
+            'ap_schedule'              => $apSchedule->all(),
+            'expense_schedule'         => $expenseSchedule->all(),
+            'sbu_code'                 => $sbuCode,
+        ];
+    }
+
+    /** Sum of cash/bank account balances (codes 1000–1199) as of a given date (inclusive), from posted JE lines. */
+    private function cashBalanceAsOf(Carbon $date, ?string $sbuCode): float
+    {
+        $accountIds = Account::query()
+            ->where('is_active', true)
+            ->whereBetween('code', ['1000', '1199'])
+            ->pluck('id');
+
+        if ($accountIds->isEmpty()) {
+            return 0.0;
+        }
+
+        $prefix = config('accounting.table_prefix', 'acct_');
+
+        $query = DB::table("{$prefix}journal_entry_lines as l")
+            ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+            ->where('je.status', 'posted')
+            ->whereIn('l.account_id', $accountIds->all())
+            ->whereDate('je.date', '<=', $date->toDateString())
+            ->selectRaw(
+                "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
+                SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
+            );
+
+        $row = $this->applySbuFilter($query, $sbuCode)->first();
+
+        return (float) ($row?->total_debit ?? 0) - (float) ($row?->total_credit ?? 0);
+    }
+
+    /**
+     * Trailing average of "other" operating cash flow — posted cash/bank movements
+     * over the lookback window that are NOT invoice/bill payments (payroll, rent,
+     * direct cash sales, misc expenses, etc.). Invoice/bill collections are already
+     * projected explicitly from due dates elsewhere, so excluding them here avoids
+     * double-counting them in the forecast.
+     *
+     * @return array{lookback_days: int, daily: float, weekly: float, basis: string}
+     */
+    private function cashRunRate(Carbon $asOf, int $lookbackDays, ?string $sbuCode): array
+    {
+        $lookbackStart = $asOf->copy()->subDays($lookbackDays);
+
+        $accountIds = Account::query()
+            ->where('is_active', true)
+            ->whereBetween('code', ['1000', '1199'])
+            ->pluck('id');
+
+        $netCashMovement = 0.0;
+
+        if ($accountIds->isNotEmpty()) {
+            $prefix = config('accounting.table_prefix', 'acct_');
+
+            $query = DB::table("{$prefix}journal_entry_lines as l")
+                ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
+                ->where('je.status', 'posted')
+                ->whereIn('l.account_id', $accountIds->all())
+                ->whereDate('je.date', '>=', $lookbackStart->toDateString())
+                ->whereDate('je.date', '<', $asOf->toDateString())
+                ->selectRaw(
+                    "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
+                    SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
+                );
+
+            $row = $this->applySbuFilter($query, $sbuCode)->first();
+            $netCashMovement = (float) ($row?->total_debit ?? 0) - (float) ($row?->total_credit ?? 0);
+        }
+
+        $paymentsQuery = Payment::query()
+            ->whereIn('payable_type', [Invoice::class, Bill::class])
+            ->whereDate('payment_date', '>=', $lookbackStart->toDateString())
+            ->whereDate('payment_date', '<', $asOf->toDateString());
+
+        if ($sbuCode !== null) {
+            $paymentsQuery->whereHas('journalEntry', fn ($q) => $q->where('sbu_code', $sbuCode));
+        }
+
+        $invoicePayments = (float) (clone $paymentsQuery)->where('payable_type', Invoice::class)->sum('amount');
+        $billPayments = (float) (clone $paymentsQuery)->where('payable_type', Bill::class)->sum('amount');
+
+        $otherNetCashFlow = $netCashMovement - ($invoicePayments - $billPayments);
+        $daily = $lookbackDays > 0 ? $otherNetCashFlow / $lookbackDays : 0.0;
+
+        return [
+            'lookback_days' => $lookbackDays,
+            'daily'         => round($daily, 2),
+            'weekly'        => round($daily * 7, 2),
+            'basis'         => "Trailing {$lookbackDays}-day average of cash movements not tied to invoice/bill collections (e.g. payroll, rent, direct cash sales, misc expenses).",
         ];
     }
 

@@ -26,6 +26,7 @@
                 <option value="balance_sheet">Balance Sheet</option>
                 <option value="income_statement">Income Statement (P&L)</option>
                 <option value="cash_flow">Cash Flow Statement</option>
+                <option value="cash_flow_forecast">Cash Flow Forecast</option>
                 <option value="cash_book">Cash Book</option>
                 <option value="sales_tax_liability">Sales Tax Liability</option>
             </x-tallui-select>
@@ -86,6 +87,7 @@
                 @elseif($reportType === 'balance_sheet')    Balance Sheet
                 @elseif($reportType === 'income_statement') Income Statement
                 @elseif($reportType === 'cash_flow')        Cash Flow Statement
+                @elseif($reportType === 'cash_flow_forecast') Cash Flow Forecast
                 @elseif($reportType === 'cash_book')        Cash Book
                 @elseif($reportType === 'sales_tax_liability') Sales Tax Liability Report
                 @endif
@@ -93,6 +95,9 @@
             <p class="text-sm text-base-content/50 mt-0.5">
                 @if($reportType === 'balance_sheet')
                     As of {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
+                @elseif($reportType === 'cash_flow_forecast')
+                    As of {{ \Carbon\Carbon::parse($reportData['as_of'])->format('F d, Y') }}
+                    · next {{ $reportData['forecast_weeks'] }} weeks
                 @else
                     {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} – {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
                 @endif
@@ -322,26 +327,56 @@
         {{-- ── Cash Flow Statement ────────────────────────────────────────── --}}
         @if($reportType === 'cash_flow' && isset($reportData['net_change']))
             <div class="space-y-3">
+                <div class="stats shadow w-full stats-vertical sm:stats-horizontal mb-2">
+                    <x-tallui-stat title="Opening Cash Balance" value="{{ $currency }} {{ number_format($reportData['opening_cash_balance'] ?? 0, 2) }}" icon="o-banknotes" />
+                    <x-tallui-stat title="Closing Cash Balance" value="{{ $currency }} {{ number_format($reportData['closing_cash_balance'] ?? 0, 2) }}" icon="o-scale" />
+                </div>
+
                 @foreach([
-                    ['key' => 'operating_activities', 'label' => 'Operating Activities',  'icon' => 'o-cog-6-tooth',    'color' => 'info'],
-                    ['key' => 'investing_activities',  'label' => 'Investing Activities',  'icon' => 'o-building-office', 'color' => 'secondary'],
-                    ['key' => 'financing_activities',  'label' => 'Financing Activities',  'icon' => 'o-banknotes',       'color' => 'accent'],
+                    ['key' => 'operating_activities', 'label' => 'Operating Activities',  'icon' => 'o-cog-6-tooth',    'color' => 'info',      'breakdown' => 'operating_breakdown'],
+                    ['key' => 'investing_activities',  'label' => 'Investing Activities',  'icon' => 'o-building-office', 'color' => 'secondary', 'breakdown' => 'investing_breakdown'],
+                    ['key' => 'financing_activities',  'label' => 'Financing Activities',  'icon' => 'o-banknotes',       'color' => 'accent',    'breakdown' => 'financing_breakdown'],
                 ] as $row)
                     @php $val = $reportData[$row['key']] ?? 0; @endphp
-                    <div class="flex items-center justify-between p-4 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-lg bg-{{ $row['color'] }}/10 flex items-center justify-center">
-                                <x-tallui-icon :name="$row['icon']" class="w-4 h-4 text-{{ $row['color'] }}" />
+                    <div class="rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors">
+                        <div class="flex items-center justify-between p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-{{ $row['color'] }}/10 flex items-center justify-center">
+                                    <x-tallui-icon :name="$row['icon']" class="w-4 h-4 text-{{ $row['color'] }}" />
+                                </div>
+                                <span class="font-medium text-sm">{{ $row['label'] }}</span>
                             </div>
-                            <span class="font-medium text-sm">{{ $row['label'] }}</span>
+                            <span @class([
+                                'font-mono font-bold text-sm',
+                                'text-success' => $val >= 0,
+                                'text-error'   => $val < 0,
+                            ])>
+                                {{ $val >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($val), 2) }}
+                            </span>
                         </div>
-                        <span @class([
-                            'font-mono font-bold text-sm',
-                            'text-success' => $val >= 0,
-                            'text-error'   => $val < 0,
-                        ])>
-                            {{ $val >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($val), 2) }}
-                        </span>
+
+                        @php
+                            $breakdown = $row['key'] === 'operating_activities'
+                                ? ($reportData['operating_breakdown']['changes_in_working_capital'] ?? [])
+                                : ($reportData[$row['breakdown']] ?? []);
+                            $netIncome = $row['key'] === 'operating_activities' ? ($reportData['operating_breakdown']['net_income'] ?? null) : null;
+                        @endphp
+                        @if($netIncome !== null || !empty($breakdown))
+                            <div class="px-4 pb-4 pl-16 space-y-1">
+                                @if($netIncome !== null)
+                                    <div class="flex items-center justify-between text-xs text-base-content/60">
+                                        <span>Net Income</span>
+                                        <span class="font-mono">{{ $currency }} {{ number_format($netIncome, 2) }}</span>
+                                    </div>
+                                @endif
+                                @foreach($breakdown as $item)
+                                    <div class="flex items-center justify-between text-xs text-base-content/60">
+                                        <span>{{ $item['name'] }} ({{ $item['code'] }})</span>
+                                        <span class="font-mono">{{ $item['amount'] >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($item['amount']), 2) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endforeach
 
@@ -371,6 +406,158 @@
             </div>
         @endif
 
+        {{-- ── Cash Flow Forecast ─────────────────────────────────────────── --}}
+        @if($reportType === 'cash_flow_forecast' && isset($reportData['buckets']))
+            <div class="space-y-4">
+                <div class="stats shadow w-full stats-vertical sm:stats-horizontal">
+                    <x-tallui-stat title="Starting Cash" value="{{ $currency }} {{ number_format($reportData['starting_cash_balance'], 2) }}" icon="o-banknotes" />
+                    <x-tallui-stat title="Projected Balance ({{ $reportData['forecast_weeks'] }}w)" value="{{ $currency }} {{ number_format($reportData['ending_projected_balance'], 2) }}" icon="o-flag" />
+                    <x-tallui-stat title="Overdue Receivables" value="{{ $currency }} {{ number_format($reportData['overdue']['ar'], 2) }}" icon="o-exclamation-triangle" icon-color="text-warning" />
+                    <x-tallui-stat title="Overdue Payables" value="{{ $currency }} {{ number_format($reportData['overdue']['ap'] + $reportData['overdue']['expenses'], 2) }}" icon="o-exclamation-triangle" icon-color="text-error" desc="Bills + credit expenses" />
+                </div>
+
+                <x-tallui-alert type="info">
+                    Baseline "other" cash flow of {{ $currency }} {{ number_format($reportData['run_rate']['weekly'], 2) }}/week applied to every bucket below.
+                    {{ $reportData['run_rate']['basis'] }}
+                </x-tallui-alert>
+
+                @if(($reportData['beyond_horizon']['ar'] ?? 0) != 0 || ($reportData['beyond_horizon']['ap'] ?? 0) != 0 || ($reportData['beyond_horizon']['expenses'] ?? 0) != 0)
+                    <p class="text-xs text-base-content/50">
+                        Not shown below (due beyond the {{ $reportData['forecast_weeks'] }}-week horizon):
+                        {{ $currency }} {{ number_format($reportData['beyond_horizon']['ar'], 2) }} receivable,
+                        {{ $currency }} {{ number_format($reportData['beyond_horizon']['ap'], 2) }} payable,
+                        {{ $currency }} {{ number_format($reportData['beyond_horizon']['expenses'], 2) }} credit expenses.
+                    </p>
+                @endif
+
+                <div class="overflow-x-auto">
+                    <table class="table table-sm w-full">
+                        <thead>
+                            <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
+                                <th class="py-3">Week</th>
+                                <th class="text-right">Expected Inflows</th>
+                                <th class="text-right">Expected Outflows</th>
+                                <th class="text-right">Other (Run-Rate)</th>
+                                <th class="text-right">Net</th>
+                                <th class="text-right">Projected Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-base-200">
+                            @foreach($reportData['buckets'] as $bucket)
+                                <tr class="even:bg-base-200/50 hover:bg-base-200">
+                                    <td class="text-sm whitespace-nowrap">{{ $bucket['label'] }}</td>
+                                    <td class="text-right text-sm font-mono text-success">{{ $currency }} {{ number_format($bucket['expected_inflows'], 2) }}</td>
+                                    <td class="text-right text-sm font-mono text-error">{{ $currency }} {{ number_format($bucket['expected_outflows'], 2) }}</td>
+                                    <td class="text-right text-sm font-mono text-base-content/60">{{ $bucket['baseline_other'] >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($bucket['baseline_other']), 2) }}</td>
+                                    <td @class(['text-right text-sm font-mono font-semibold', 'text-success' => $bucket['net'] >= 0, 'text-error' => $bucket['net'] < 0])>
+                                        {{ $bucket['net'] >= 0 ? '' : '-' }}{{ $currency }} {{ number_format(abs($bucket['net']), 2) }}
+                                    </td>
+                                    <td @class(['text-right text-sm font-mono font-bold', 'text-error' => $bucket['projected_balance'] < 0])>
+                                        {{ $currency }} {{ number_format($bucket['projected_balance'], 2) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                @if(!empty($reportData['ar_schedule']) || !empty($reportData['ap_schedule']) || !empty($reportData['expense_schedule']))
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="text-sm font-semibold mb-2">Outstanding Invoices (Inflows)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs w-full">
+                                    <thead>
+                                        <tr class="text-xs text-base-content/60 uppercase">
+                                            <th>Invoice</th>
+                                            <th>Customer</th>
+                                            <th>Due</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-base-200">
+                                        @forelse($reportData['ar_schedule'] as $item)
+                                            <tr>
+                                                <td class="font-mono text-primary">{{ $item['invoice_number'] }}</td>
+                                                <td>{{ $item['customer'] ?? '—' }}</td>
+                                                <td @class(['whitespace-nowrap', 'text-warning' => $item['bucket'] === 'overdue'])>
+                                                    {{ \Illuminate\Support\Carbon::parse($item['due_date'])->format('M j, Y') }}
+                                                    @if($item['bucket'] === 'overdue') (overdue) @endif
+                                                </td>
+                                                <td class="text-right font-mono">{{ $currency }} {{ number_format($item['amount'], 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="4" class="py-4 text-center text-base-content/40">No outstanding invoices.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold mb-2">Outstanding Bills (Outflows)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs w-full">
+                                    <thead>
+                                        <tr class="text-xs text-base-content/60 uppercase">
+                                            <th>Bill</th>
+                                            <th>Vendor</th>
+                                            <th>Due</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-base-200">
+                                        @forelse($reportData['ap_schedule'] as $item)
+                                            <tr>
+                                                <td class="font-mono text-primary">{{ $item['bill_number'] }}</td>
+                                                <td>{{ $item['vendor'] ?? '—' }}</td>
+                                                <td @class(['whitespace-nowrap', 'text-warning' => $item['bucket'] === 'overdue'])>
+                                                    {{ \Illuminate\Support\Carbon::parse($item['due_date'])->format('M j, Y') }}
+                                                    @if($item['bucket'] === 'overdue') (overdue) @endif
+                                                </td>
+                                                <td class="text-right font-mono">{{ $currency }} {{ number_format($item['amount'], 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="4" class="py-4 text-center text-base-content/40">No outstanding bills.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold mb-2">Outstanding Credit Expenses (Outflows)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs w-full">
+                                    <thead>
+                                        <tr class="text-xs text-base-content/60 uppercase">
+                                            <th>Expense</th>
+                                            <th>Vendor</th>
+                                            <th>Due</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-base-200">
+                                        @forelse($reportData['expense_schedule'] as $item)
+                                            <tr>
+                                                <td class="font-mono text-primary">{{ $item['expense_number'] }}</td>
+                                                <td>{{ $item['vendor'] ?? '—' }}</td>
+                                                <td @class(['whitespace-nowrap', 'text-warning' => $item['bucket'] === 'overdue'])>
+                                                    {{ \Illuminate\Support\Carbon::parse($item['due_date'])->format('M j, Y') }}
+                                                    @if($item['bucket'] === 'overdue') (overdue) @endif
+                                                </td>
+                                                <td class="text-right font-mono">{{ $currency }} {{ number_format($item['amount'], 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="4" class="py-4 text-center text-base-content/40">No outstanding credit expenses.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         {{-- ── Cash Book ──────────────────────────────────────────────────── --}}
         @if($reportType === 'cash_book' && isset($reportData['entries']))
             <div class="space-y-4">
@@ -392,8 +579,7 @@
                     <table class="table table-sm w-full">
                         <thead>
                             <tr class="bg-base-300 text-xs text-base-content/60 uppercase tracking-wide border-b border-base-300">
-                                <th class="py-3">Date</th>
-                                <th>Reference</th>
+                                <th class="py-3">Reference</th>
                                 <th>Description</th>
                                 @if(count($reportData['accounts']) > 1)
                                     <th>Account</th>
@@ -403,34 +589,48 @@
                                 <th class="text-right">Balance</th>
                             </tr>
                         </thead>
+                        @php $cashBookCols = count($reportData['accounts']) > 1 ? 6 : 5; @endphp
                         <tbody class="divide-y divide-base-200">
-                            @forelse($reportData['entries'] as $entry)
-                                <tr class="even:bg-base-200/50 hover:bg-base-200">
-                                    <td class="text-sm whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($entry['date'])->format('M j, Y') }}</td>
-                                    <td class="text-sm font-mono text-primary">{{ $entry['entry_number'] ?? $entry['reference'] }}</td>
-                                    <td class="text-sm">{{ $entry['description'] }}</td>
-                                    @if(count($reportData['accounts']) > 1)
-                                        <td class="text-sm text-base-content/60">{{ $entry['account_label'] }}</td>
-                                    @endif
-                                    <td class="text-right text-sm font-mono">
-                                        @if($entry['receipt'] > 0)
-                                            <span class="text-success">{{ $currency }} {{ number_format($entry['receipt'], 2) }}</span>
-                                        @else
-                                            <span class="text-base-content/30">—</span>
-                                        @endif
+                            @forelse(collect($reportData['entries'])->groupBy(fn ($e) => \Illuminate\Support\Carbon::parse($e['date'])->toDateString()) as $day => $dayEntries)
+                                <tr class="bg-base-300/40">
+                                    <td colspan="{{ $cashBookCols }}" class="py-1.5 text-xs font-semibold text-base-content/70">
+                                        {{ \Illuminate\Support\Carbon::parse($day)->format('l, M j, Y') }}
+                                        <span class="font-normal text-base-content/40">— {{ $dayEntries->count() }} {{ $dayEntries->count() === 1 ? 'transaction' : 'transactions' }}</span>
                                     </td>
-                                    <td class="text-right text-sm font-mono">
-                                        @if($entry['payment'] > 0)
-                                            <span class="text-error">{{ $currency }} {{ number_format($entry['payment'], 2) }}</span>
-                                        @else
-                                            <span class="text-base-content/30">—</span>
+                                </tr>
+                                @foreach($dayEntries as $entry)
+                                    <tr class="even:bg-base-200/50 hover:bg-base-200">
+                                        <td class="text-sm font-mono text-primary">{{ $entry['entry_number'] ?? $entry['reference'] }}</td>
+                                        <td class="text-sm">{{ $entry['description'] }}</td>
+                                        @if(count($reportData['accounts']) > 1)
+                                            <td class="text-sm text-base-content/60">{{ $entry['account_label'] }}</td>
                                         @endif
-                                    </td>
-                                    <td class="text-right text-sm font-mono font-semibold">{{ $currency }} {{ number_format($entry['running_balance'], 2) }}</td>
+                                        <td class="text-right text-sm font-mono">
+                                            @if($entry['receipt'] > 0)
+                                                <span class="text-success">{{ $currency }} {{ number_format($entry['receipt'], 2) }}</span>
+                                            @else
+                                                <span class="text-base-content/30">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right text-sm font-mono">
+                                            @if($entry['payment'] > 0)
+                                                <span class="text-error">{{ $currency }} {{ number_format($entry['payment'], 2) }}</span>
+                                            @else
+                                                <span class="text-base-content/30">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right text-sm font-mono font-semibold">{{ $currency }} {{ number_format($entry['running_balance'], 2) }}</td>
+                                    </tr>
+                                @endforeach
+                                <tr class="border-t border-base-300 bg-base-100">
+                                    <td class="text-xs text-base-content/50 italic" colspan="{{ count($reportData['accounts']) > 1 ? 3 : 2 }}">Day total</td>
+                                    <td class="text-right text-xs font-mono text-success">{{ $currency }} {{ number_format($dayEntries->sum('receipt'), 2) }}</td>
+                                    <td class="text-right text-xs font-mono text-error">{{ $currency }} {{ number_format($dayEntries->sum('payment'), 2) }}</td>
+                                    <td class="text-right text-xs font-mono font-semibold">{{ $currency }} {{ number_format($dayEntries->last()['running_balance'], 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ count($reportData['accounts']) > 1 ? 7 : 6 }}" class="py-8 text-center text-sm text-base-content/40">
+                                    <td colspan="{{ $cashBookCols }}" class="py-8 text-center text-sm text-base-content/40">
                                         No cash/bank transactions in this period.
                                     </td>
                                 </tr>

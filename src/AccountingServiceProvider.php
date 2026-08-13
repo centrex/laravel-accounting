@@ -4,12 +4,13 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
-use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand};
+use Centrex\Accounting\Commands\{AccountingDemoCommand, AccountingReportCommand, QuickBooksSyncCommand};
 use Centrex\Accounting\Events\{BillPosted, InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Listeners\{NotifyAccountingTeam, SyncCustomerOutstanding, SyncVendorOutstanding};
-use Centrex\Accounting\Livewire\{AccountingBalanceSnapshotCard, AccountingCurrentAssetsCard, AccountingDashboard, AccountingKpiCard, AccountingPayablesCard, AccountingReceivablesCard, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
+use Centrex\Accounting\Livewire\{AccountingBalanceSnapshotCard, AccountingCurrentAssetsCard, AccountingDashboard, AccountingKpiCard, AccountingPayablesCard, AccountingQboStatusCard, AccountingReceivablesCard, ApAgingReport, ArAgingReport, BillDetails, BillTable, Bills, Budgets, ChartOfAccounts, CreditMemoDetails, CreditMemos, CustomerLedger, CustomerLedgerIndex, Customers, ExpenseDetails, ExpenseTable, Expenses, FinancialReports, GeneralLedger, InvoiceDetails, InvoiceTable, Invoices, JournalEntries, PeriodClose, Requisitions, VendorLedger, VendorLedgerIndex, Vendors};
 use Centrex\Accounting\Models\{BillItem, ExpenseItem, InvoiceItem, JournalEntry, Payment};
 use Centrex\Accounting\Observers\{BillItemObserver, ExpenseItemObserver, InvoiceItemObserver, JournalEntryObserver, PaymentObserver};
+use Centrex\Accounting\QuickBooks\{QuickBooksAccountTypeMapper, QuickBooksClient, QuickBooksReportFormatter, QuickBooksSyncService};
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\{Event, Gate};
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,7 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('accounting-payables-card', AccountingPayablesCard::class);
         Livewire::component('accounting-balance-snapshot-card', AccountingBalanceSnapshotCard::class);
         Livewire::component('accounting-current-assets-card', AccountingCurrentAssetsCard::class);
+        Livewire::component('accounting-qbo-status-card', AccountingQboStatusCard::class);
         Livewire::component('chart-of-accounts', ChartOfAccounts::class);
         Livewire::component('financial-reports', FinancialReports::class);
         Livewire::component('journal-entries', JournalEntries::class);
@@ -63,6 +65,8 @@ class AccountingServiceProvider extends ServiceProvider
         Livewire::component('accounting-budgets', Budgets::class);
         Livewire::component('accounting-period-close', PeriodClose::class);
         Livewire::component('accounting-requisitions', Requisitions::class);
+        Livewire::component('accounting-ar-aging-report', ArAgingReport::class);
+        Livewire::component('accounting-ap-aging-report', ApAgingReport::class);
 
         // Register model observers
         JournalEntry::observe(JournalEntryObserver::class);
@@ -114,6 +118,7 @@ class AccountingServiceProvider extends ServiceProvider
             $this->commands([
                 AccountingReportCommand::class,
                 AccountingDemoCommand::class,
+                QuickBooksSyncCommand::class,
             ]);
         }
     }
@@ -213,6 +218,9 @@ class AccountingServiceProvider extends ServiceProvider
             'accounting.bank-reconciliation.view',
             'accounting.bank-reconciliation.create',
             'accounting.bank-reconciliation.reconcile',
+
+            // QuickBooks Online integration — sensitive, admin-level action
+            'accounting.qbo.manage',
         ];
 
         foreach ($abilities as $ability) {
@@ -243,5 +251,22 @@ class AccountingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
         $this->app->singleton('accounting', fn (): Accounting => new Accounting());
+
+        // QuickBooks Online singletons
+        $this->app->singleton(QuickBooksAccountTypeMapper::class);
+        $this->app->singleton(QuickBooksReportFormatter::class);
+
+        $this->app->singleton(QuickBooksClient::class, static function (): QuickBooksClient {
+            $cfg = config('accounting.quickbooks', []);
+
+            return new QuickBooksClient(
+                clientId: (string) ($cfg['client_id'] ?? ''),
+                clientSecret: (string) ($cfg['client_secret'] ?? ''),
+                redirectUri: (string) ($cfg['redirect_uri'] ?? ''),
+                sandbox: ($cfg['environment'] ?? 'sandbox') !== 'production',
+            );
+        });
+
+        $this->app->singleton(QuickBooksSyncService::class);
     }
 }

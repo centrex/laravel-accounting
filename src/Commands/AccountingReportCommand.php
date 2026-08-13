@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 final class AccountingReportCommand extends Command
 {
     protected $signature = 'accounting:report
-        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|cash-book|sales-tax-liability|all)}
+        {type=all : report type (trial-balance|balance-sheet|income-statement|cash-flow|cash-flow-forecast|cash-book|sales-tax-liability|all)}
         {--start= : Start date (YYYY-MM-DD) for period reports}
         {--end= : End date (YYYY-MM-DD) for period reports}
         {--date= : Single date (YYYY-MM-DD) for balance-sheet}
@@ -39,7 +39,7 @@ final class AccountingReportCommand extends Command
         $results = [];
 
         // Gather requested reports
-        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow', 'cash-book', 'sales-tax-liability'] : [$type];
+        $typesToRun = $type === 'all' ? ['trial-balance', 'balance-sheet', 'income-statement', 'cash-flow', 'cash-flow-forecast', 'cash-book', 'sales-tax-liability'] : [$type];
 
         foreach ($typesToRun as $t) {
             switch ($t) {
@@ -83,6 +83,14 @@ final class AccountingReportCommand extends Command
                     $data = $acct->getCashFlowStatement($start, $end);
                     $results['cash_flow'] = $data;
                     $this->renderCashFlow($data, $format, $outputPath, 'cash_flow');
+
+                    break;
+
+                case 'cash-flow-forecast':
+                    $this->line('<fg=cyan>--- Cash Flow Forecast ---</>');
+                    $data = $acct->getCashFlowForecast($end);
+                    $results['cash_flow_forecast'] = $data;
+                    $this->renderCashFlowForecast($data, $format, $outputPath, 'cash_flow_forecast');
 
                     break;
 
@@ -245,6 +253,31 @@ final class AccountingReportCommand extends Command
 
         $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers): void {
             $this->table($headers, array_map('array_values', $rows));
+        });
+    }
+
+    private function renderCashFlowForecast(array $data, string $format, ?string $outputPath = null, string $suffix = 'cash_flow_forecast'): void
+    {
+        $rows = [];
+
+        foreach ($data['buckets'] as $bucket) {
+            $rows[] = [
+                'week'     => $bucket['label'],
+                'inflows'  => number_format($bucket['expected_inflows'], 2),
+                'outflows' => number_format($bucket['expected_outflows'], 2),
+                'other'    => number_format($bucket['baseline_other'], 2),
+                'net'      => number_format($bucket['net'], 2),
+                'balance'  => number_format($bucket['projected_balance'], 2),
+            ];
+        }
+
+        $headers = ['Week', 'Inflows', 'Outflows', 'Other (Run-Rate)', 'Net', 'Projected Balance'];
+
+        $this->renderOutput($rows, $headers, $format, $outputPath, $suffix, function () use ($rows, $headers, $data): void {
+            $this->table($headers, array_map('array_values', $rows));
+            $this->line('<fg=green>Starting Cash    : ' . number_format($data['starting_cash_balance'], 2) . '</>');
+            $this->line('<fg=green>Overdue AR / AP / Expenses : ' . number_format($data['overdue']['ar'], 2) . ' / ' . number_format($data['overdue']['ap'], 2) . ' / ' . number_format($data['overdue']['expenses'], 2) . '</>');
+            $this->line('<fg=yellow>Ending Projected : ' . number_format($data['ending_projected_balance'], 2) . '</>');
         });
     }
 

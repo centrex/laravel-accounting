@@ -268,6 +268,10 @@
         </div>
     </a>
     @endcan
+
+    @if(config('accounting.quickbooks.client_id'))
+        <livewire:accounting-qbo-status-card lazy />
+    @endif
 </div>
 
 {{-- ── Pending Approvals + Period Status ───────────────────────────────── --}}
