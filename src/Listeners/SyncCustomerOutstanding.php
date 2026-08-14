@@ -39,9 +39,12 @@ class SyncCustomerOutstanding implements ShouldQueue
     private function resync(Customer $customer, int $invoiceId): void
     {
         try {
-            // Recompute outstanding balance from all non-settled, non-void invoices
+            // Recompute outstanding balance from all non-settled, non-void invoices.
+            // toBase() drops down to the query builder so this aggregate never hydrates
+            // an Invoice model missing the `id` column (which trips strict-attribute mode).
             $outstanding = Invoice::where('customer_id', $customer->id)
                 ->whereNotIn('status', ['settled', 'draft', 'void'])
+                ->toBase()
                 ->selectRaw('SUM(total - paid_amount) as balance')
                 ->value('balance') ?? 0.0;
 
