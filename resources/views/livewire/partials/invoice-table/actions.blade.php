@@ -1,40 +1,33 @@
-@php $status = $row->status->value; @endphp
-<div class="flex justify-end">
-    <a href="{{ route('accounting.invoices.show', $row) }}" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary transition hover:bg-primary/10">
-        <x-tallui-icon name="o-eye" class="h-4 w-4" /> View
-    </a>
-    
-    <div x-data="{ open: false }" class="relative">
-        <button type="button" @click="open = !open" class="btn btn-ghost btn-xs btn-circle" aria-label="Row actions">
-            <x-tallui-icon name="o-ellipsis-horizontal" class="h-4 w-4" />
-        </button>
+@php
+    $status = $row->status->value;
 
-        @if($status === 'draft')
-                <button type="button" @click="open = false; $dispatch('open-dialog', 'confirm-post-{{ $row->id }}')" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-info transition hover:bg-info/10">
-                    <x-tallui-icon name="o-paper-airplane" class="h-4 w-4" /> Post
-                </button>
-        @endif
+    $moreActions = [];
 
-        <div
-            x-show="open"
-            x-transition.opacity
-            @click.outside="open = false"
-            @click="open = false"
-            class="absolute right-0 top-9 z-50 w-52 rounded-xl border border-base-300 bg-base-100 p-1.5 shadow-theme-xl"
-            style="display: none;"
-        >
-                        
-            @if(in_array($status, ['sent', 'issued', 'partially_settled', 'overdue'], true) && $row->base_balance > 0)
-                <button type="button" wire:click="$dispatch('invoice-table:pay', { id: {{ $row->id }} })" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-success transition hover:bg-success/10">
-                    <x-tallui-icon name="o-banknotes" class="h-4 w-4" /> Record payment
-                </button>
-            @endif
+    if (in_array($status, ['sent', 'issued', 'partially_settled', 'overdue'], true) && $row->base_balance > 0) {
+        $moreActions[] = [
+            'label'      => 'Record payment',
+            'icon'       => 'o-banknotes',
+            'color'      => 'success',
+            'attributes' => ['wire:click' => "\$dispatch('invoice-table:pay', { id: {$row->id} })"],
+        ];
+    }
 
-            <button type="button" wire:click="$dispatch('invoice-table:audit', { id: {{ $row->id }} })" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-base-200">
-                <x-tallui-icon name="o-clock" class="h-4 w-4 text-base-content/40" /> Audit trail
-            </button>
-        </div>
-    </div>
+    $moreActions[] = [
+        'label'      => 'Audit trail',
+        'icon'       => 'o-clock',
+        'attributes' => ['wire:click' => "\$dispatch('invoice-table:audit', { id: {$row->id} })"],
+    ];
+@endphp
+<div class="flex justify-end items-center gap-1">
+    <x-tallui-button icon="o-eye" :link="route('accounting.invoices.show', $row)" class="btn-ghost btn-xs" label="View" :responsive="true" wire:navigate />
+    @if($status === 'draft')
+        <x-tallui-button icon="o-paper-airplane" @click="$dispatch('open-dialog', 'confirm-post-{{ $row->id }}')" class="btn-ghost btn-xs text-info" label="Post" :responsive="true" />
+    @endif
+    <x-tallui-dropdown position="bottom-end" :items="$moreActions">
+        <x-slot:trigger>
+            <x-tallui-button icon="o-ellipsis-vertical" class="btn-ghost btn-xs" />
+        </x-slot:trigger>
+    </x-tallui-dropdown>
 
     @if($status === 'draft')
         <x-tallui-dialog id="confirm-post-{{ $row->id }}" type="confirm" title="Post this invoice?" size="sm">
