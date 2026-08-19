@@ -158,6 +158,7 @@ class AccountingServiceProvider extends ServiceProvider
 
             // Invoices & bills
             'accounting.invoice.view',
+            'accounting.invoice.number.view',
             'accounting.invoice.create',
             'accounting.invoice.post',
             'accounting.invoice.payment',
