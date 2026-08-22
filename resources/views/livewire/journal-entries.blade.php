@@ -124,7 +124,7 @@
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="viewEntry({{ $entry->id }})" icon="o-eye" class="btn-ghost btn-xs" />
-                                <x-tallui-button wire:click="openAuditTrail(@js($entry::class), {{ $entry->getKey() }}, @js($entry->entry_number))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
+                                <x-tallui-button wire:click="openAuditTrail({{ \Illuminate\Support\Js::from($entry::class) }}, {{ $entry->getKey() }}, {{ \Illuminate\Support\Js::from($entry->entry_number) }})" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($statusVal === 'draft')
                                     <x-tallui-button wire:click="openEditModal({{ $entry->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                     <x-tallui-button
@@ -268,7 +268,7 @@
 
     @if($viewingEntry)
         <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
                 <div class="rounded-xl border border-base-200 bg-base-50 p-3">
                     <div class="text-xs uppercase text-base-content/50">Date</div>
                     <div class="mt-1 text-sm font-medium">{{ $viewingEntry->date->format('M d, Y') }}</div>
@@ -284,6 +284,10 @@
                 <div class="rounded-xl border border-base-200 bg-base-50 p-3">
                     <div class="text-xs uppercase text-base-content/50">Currency</div>
                     <div class="mt-1 text-sm font-medium">{{ $viewingEntry->currency }}</div>
+                </div>
+                <div class="rounded-xl border border-base-200 bg-base-50 p-3">
+                    <div class="text-xs uppercase text-base-content/50">Created</div>
+                    <div class="mt-1 text-sm font-medium">{{ $viewingEntry->created_at?->format('M d, Y H:i') ?: '—' }}</div>
                 </div>
             </div>
 

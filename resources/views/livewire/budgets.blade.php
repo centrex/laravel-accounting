@@ -66,7 +66,7 @@
                             <div class="flex justify-end gap-1">
                                 <x-tallui-button wire:click="openDetail({{ $budget->id }})"
                                     class="btn-ghost btn-xs" icon="o-eye">View</x-tallui-button>
-                                <x-tallui-button wire:click="openAuditTrail(@js($budget::class), {{ $budget->getKey() }}, @js($budget->name))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
+                                <x-tallui-button wire:click="openAuditTrail({{ \Illuminate\Support\Js::from($budget::class) }}, {{ $budget->getKey() }}, {{ \Illuminate\Support\Js::from($budget->name) }})" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 @if($budget->status === 'draft')
                                     @can('accounting.budget.approve')
                                         <x-tallui-button wire:click="approveBudget({{ $budget->id }})"

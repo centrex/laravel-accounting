@@ -54,7 +54,7 @@
                         </td>
                         <td class="pr-5">
                             <div class="flex justify-end gap-1">
-                                <x-tallui-button wire:click="openAuditTrail(@js($owner::class), {{ $owner->getKey() }}, @js($owner->name))" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
+                                <x-tallui-button wire:click="openAuditTrail({{ \Illuminate\Support\Js::from($owner::class) }}, {{ $owner->getKey() }}, {{ \Illuminate\Support\Js::from($owner->name) }})" icon="o-clock" class="btn-ghost btn-xs" title="Audit trail" />
                                 <x-tallui-button wire:click="openModal({{ $owner->id }})" icon="o-pencil" class="btn-ghost btn-xs" />
                                 <x-tallui-button wire:click="toggleStatus({{ $owner->id }})" icon="{{ $owner->is_active ? 'o-eye-slash' : 'o-eye' }}" class="btn-ghost btn-xs" />
                             </div>
