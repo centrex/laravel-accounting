@@ -12,8 +12,13 @@ return new class() extends Migration
     {
         $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
+        $schema = Schema::connection($connection);
 
-        Schema::connection($connection)->create($prefix . 'quickbooks_tokens', function (Blueprint $table): void {
+        if ($schema->hasTable($prefix . 'quickbooks_tokens')) {
+            return;
+        }
+
+        $schema->create($prefix . 'quickbooks_tokens', function (Blueprint $table): void {
             $table->id();
             $table->string('realm_id')->unique()->comment('QBO company realm ID');
             $table->text('access_token');
