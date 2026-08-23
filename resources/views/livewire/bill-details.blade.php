@@ -60,6 +60,7 @@
 <x-tallui-page-header title="Bill {{ $bill->bill_number }}" subtitle="Vendor bill details and payment history" icon="o-shopping-cart">
     <x-slot:actions>
         <a href="{{ route('accounting.bills') }}" class="btn btn-ghost btn-sm">Back to Bills</a>
+        <x-tallui-button wire:click="exportPdf" spinner="exportPdf" icon="o-arrow-down-tray" class="btn-outline btn-sm">Print Bill</x-tallui-button>
         @if(!in_array($status, ['void']))
             <button wire:click="openDiscountModal" class="btn btn-outline btn-sm">
                 Record Discount

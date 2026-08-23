@@ -4402,7 +4402,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$bill_number\\.$#"
-			count: 8
+			count: 9
 			path: src/Livewire/BillDetails.php
 
 		-
@@ -4417,6 +4417,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\BillDetails\\:\\:discountAccounts\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: src/Livewire/BillDetails.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\BillDetails\\:\\:exportPdf\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: src/Livewire/BillDetails.php
 

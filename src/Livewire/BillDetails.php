@@ -242,6 +242,27 @@ class BillDetails extends Component
         }
     }
 
+    public function exportPdf()
+    {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            session()->flash('error', 'PDF export is not available in this environment.');
+
+            return null;
+        }
+
+        $this->bill->load(['vendor', 'items']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.bill', [
+            'bill'        => $this->bill,
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            static fn () => print ($pdf->output()),
+            $this->bill->bill_number . '.pdf',
+        );
+    }
+
     public function render(): View
     {
         $this->bill->load([
