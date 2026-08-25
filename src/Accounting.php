@@ -430,7 +430,13 @@ class Accounting
             // reduces the customer's balance without an extra cash leg.
             $chargeAmount = (float) ($paymentData['charge_amount'] ?? 0);
             $arReduction = round($amount + $chargeAmount, 6);
-            $outstanding = round((float) $invoice->total - (float) $invoice->paid_amount, 6);
+            // Invoice::$balance (total − paid_amount − AR-reducing discounts − issued credit
+            // memos), not the bare total − paid_amount: a discount or a sale-return credit memo
+            // already reduces what's actually collectible, and comparing against the wider
+            // total-paid figure let a payment be accepted for more than that true remaining
+            // balance — driving paid_amount past what the invoice can support and corrupting
+            // the resynced SaleOrder::due_amount (see ErpIntegration::resyncSaleOrderDueAmount()).
+            $outstanding = round((float) $invoice->balance, 6);
 
             if ($arReduction > $outstanding + $this->tolerance()) {
                 throw OverpaymentException::make($arReduction, $outstanding);
@@ -821,7 +827,9 @@ class Accounting
             $bill = Bill::lockForUpdate()->findOrFail($bill->id);
 
             $amount = (float) $paymentData['amount'];
-            $outstanding = round((float) $bill->total - (float) $bill->paid_amount, 6);
+            // Bill::$balance (total − paid_amount − AP-reducing discounts), not the bare
+            // total − paid_amount — see the matching fix in recordInvoicePayment() above.
+            $outstanding = round((float) $bill->balance, 6);
 
             if ($amount > $outstanding + $this->tolerance()) {
                 throw OverpaymentException::make($amount, $outstanding);
