@@ -196,4 +196,15 @@ class Invoice extends Model implements Auditable
 
         return round((float) $this->total - (float) $this->paid_amount - (float) $discounts - (float) $credits, 2);
     }
+
+    /**
+     * Whether the invoice has been finalized (postInvoice() has run) and is safe to record
+     * payments, charges, or discounts against. Matches the 'draft'/'void' exclusion already
+     * used by the reporting queries elsewhere in this class — draft has no GL impact yet, and
+     * void has none any more.
+     */
+    public function getIsPostedAttribute(): bool
+    {
+        return !in_array($this->status, [EntryStatus::DRAFT, EntryStatus::VOID], true);
+    }
 }

@@ -352,7 +352,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$paid_amount\\.$#"
-			count: 3
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -362,7 +362,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$status\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -377,7 +377,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$total\\.$#"
-			count: 4
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -677,7 +677,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$paid_amount\\.$#"
-			count: 3
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -687,7 +687,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$status\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -702,7 +702,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$total\\.$#"
-			count: 4
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -7276,6 +7276,11 @@ parameters:
 			path: src/Models/Bill.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$status\\.$#"
+			count: 1
+			path: src/Models/Bill.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$subtotal\\.$#"
 			count: 1
 			path: src/Models/Bill.php
@@ -7792,6 +7797,11 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$shipping_amount\\.$#"
+			count: 1
+			path: src/Models/Invoice.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$status\\.$#"
 			count: 1
 			path: src/Models/Invoice.php
 

@@ -89,6 +89,12 @@ class InvoiceDetails extends Component
 
     public function recordCharge(): void
     {
+        if (!$this->invoice->is_posted) {
+            $this->dispatch('notify', type: 'error', message: 'Invoice must be posted before recording a charge.');
+
+            return;
+        }
+
         $this->validate([
             'charge_type'         => 'required|in:4210,4220,6310,6320,6330,6340',
             'charge_amount'       => 'required|numeric|min:0.01',
@@ -169,6 +175,12 @@ class InvoiceDetails extends Component
 
     public function recordDiscount(): void
     {
+        if (!$this->invoice->is_posted) {
+            $this->dispatch('notify', type: 'error', message: 'Invoice must be posted before recording a discount.');
+
+            return;
+        }
+
         $availableAr = $this->availableAr();
 
         $this->validate([

@@ -425,6 +425,10 @@ class Accounting
             // Pessimistic lock — blocks concurrent payments for the same invoice
             $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
 
+            if (!$invoice->is_posted) {
+                throw InvalidStatusTransitionException::make('Invoice', $invoice->status->value, 'payment');
+            }
+
             $amount = (float) $paymentData['amount'];
             // Optional shipping/handling charge netted off AR alongside the cash received —
             // reduces the customer's balance without an extra cash leg.
@@ -825,6 +829,10 @@ class Accounting
     {
         $payment = DB::transaction(function () use ($bill, $paymentData): Payment {
             $bill = Bill::lockForUpdate()->findOrFail($bill->id);
+
+            if (!$bill->is_posted) {
+                throw InvalidStatusTransitionException::make('Bill', $bill->status->value, 'payment');
+            }
 
             $amount = (float) $paymentData['amount'];
             // Bill::$balance (total − paid_amount − AP-reducing discounts), not the bare

@@ -91,6 +91,12 @@ class BillDetails extends Component
 
     public function recordCharge(): void
     {
+        if (!$this->bill->is_posted) {
+            $this->dispatch('notify', type: 'error', message: 'Bill must be posted before recording a charge.');
+
+            return;
+        }
+
         $this->validate([
             'charge_type'         => 'required|in:4210,4220,6310,6320,6330,6340',
             'charge_amount'       => 'required|numeric|min:0.01',
@@ -171,6 +177,12 @@ class BillDetails extends Component
 
     public function recordDiscount(): void
     {
+        if (!$this->bill->is_posted) {
+            $this->dispatch('notify', type: 'error', message: 'Bill must be posted before recording a discount.');
+
+            return;
+        }
+
         $availableAp = $this->availableAp();
 
         $this->validate([
