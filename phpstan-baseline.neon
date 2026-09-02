@@ -5031,6 +5031,11 @@ parameters:
 			path: src/Livewire/CreditMemos.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$code\\.$#"
+			count: 1
+			path: src/Livewire/CustomerLedger.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$name\\.$#"
 			count: 1
 			path: src/Livewire/CustomerLedger.php
@@ -5127,6 +5132,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\CustomerLedger\\:\\:creditMemosQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Livewire/CustomerLedger.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\CustomerLedger\\:\\:exportPdf\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: src/Livewire/CustomerLedger.php
 
@@ -6866,6 +6876,11 @@ parameters:
 			path: src/Livewire/VendorLedger.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$code\\.$#"
+			count: 1
+			path: src/Livewire/VendorLedger.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:\\$name\\.$#"
 			count: 1
 			path: src/Livewire/VendorLedger.php
@@ -6907,6 +6922,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\VendorLedger\\:\\:billIds\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/Livewire/VendorLedger.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\VendorLedger\\:\\:exportPdf\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: src/Livewire/VendorLedger.php
 

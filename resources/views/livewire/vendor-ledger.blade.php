@@ -9,7 +9,14 @@
     icon="o-book-open"
 >
     <x-slot:actions>
-        <button onclick="window.print()" class="btn btn-outline btn-sm">Print / Export</button>
+        <button onclick="window.print()" class="btn btn-outline btn-sm">Print</button>
+        <x-tallui-button
+            wire:click="exportPdf"
+            spinner="exportPdf"
+            label="Download PDF"
+            icon="o-arrow-down-tray"
+            class="btn-primary btn-sm"
+        />
     </x-slot:actions>
 </x-tallui-page-header>
 

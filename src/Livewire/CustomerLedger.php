@@ -202,6 +202,28 @@ class CustomerLedger extends Component
         ];
     }
 
+    public function exportPdf()
+    {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            session()->flash('error', 'PDF export is not available in this environment.');
+
+            return null;
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.customer-ledger', [
+            'customer'    => $this->customer,
+            'ledger'      => $this->getLedgerData(),
+            'startDate'   => $this->startDate,
+            'endDate'     => $this->endDate,
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            static fn () => print ($pdf->output()),
+            'customer-ledger-' . $this->customer->code . '-' . now()->format('Ymd_His') . '.pdf',
+        );
+    }
+
     public function render(): View
     {
         $layout = view()->exists('layouts.app') ? 'layouts.app' : 'components.layouts.app';
