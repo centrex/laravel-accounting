@@ -284,39 +284,42 @@ class AccountingSeeder extends Seeder
                 'subtype'   => AccountSubtype::RENT_EXPENSE,
                 'is_system' => true,
             ],
+            // Contra-revenue (IFRS 15 variable consideration), not operating expenses —
+            // netted against Sales Revenue (4000) in getIncomeStatement() so Gross Profit
+            // reflects Net Revenue - COGS. See AccountSubtype::CONTRA_REVENUE.
             [
                 'code'      => '6130',
                 'name'      => 'Sales Discount',
-                'type'      => AccountType::EXPENSE,
-                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::CONTRA_REVENUE,
                 'is_system' => true,
             ],
             [
                 'code'      => '6131',
                 'name'      => 'Early Payment Discount (Sales)',
-                'type'      => AccountType::EXPENSE,
-                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::CONTRA_REVENUE,
                 'is_system' => true,
             ],
             [
                 'code'      => '6132',
                 'name'      => 'Volume Discount (Sales)',
-                'type'      => AccountType::EXPENSE,
-                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::CONTRA_REVENUE,
                 'is_system' => true,
             ],
             [
                 'code'      => '6133',
                 'name'      => 'Promotional Discount (Sales)',
-                'type'      => AccountType::EXPENSE,
-                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::CONTRA_REVENUE,
                 'is_system' => true,
             ],
             [
                 'code'      => '6134',
                 'name'      => 'Sales Returns & Allowances',
-                'type'      => AccountType::EXPENSE,
-                'subtype'   => AccountSubtype::SELLING_EXPENSE,
+                'type'      => AccountType::REVENUE,
+                'subtype'   => AccountSubtype::CONTRA_REVENUE,
                 'is_system' => true,
             ],
             [

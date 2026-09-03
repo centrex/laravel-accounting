@@ -85,6 +85,7 @@ final class QuickBooksAccountTypeMapper
         // ----- INCOME -----
         AccountSubtype::INCOME->value            => ['AccountType' => 'Income', 'AccountSubType' => 'OtherPrimaryIncome'],
         AccountSubtype::OPERATING_REVENUE->value => ['AccountType' => 'Income', 'AccountSubType' => 'SalesOfProductIncome'],
+        AccountSubtype::CONTRA_REVENUE->value    => ['AccountType' => 'Income', 'AccountSubType' => 'DiscountsRefundsGiven'],
 
         // ----- OTHER INCOME -----
         AccountSubtype::NON_OPERATING_REVENUE->value => ['AccountType' => 'Other Income', 'AccountSubType' => 'OtherMiscellaneousIncome'],

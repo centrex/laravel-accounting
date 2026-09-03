@@ -204,7 +204,7 @@ class CreditMemoTest extends TestCase
             ['code' => '1200', 'name' => 'Accounts Receivable',        'type' => 'asset',     'subtype' => 'current_asset'],
             ['code' => '2300', 'name' => 'Sales Tax Payable',          'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '4000', 'name' => 'Sales Revenue',              'type' => 'revenue',   'subtype' => 'operating_revenue'],
-            ['code' => '6134', 'name' => 'Sales Returns & Allowances', 'type' => 'expense',   'subtype' => 'selling_expense'],
+            ['code' => '6134', 'name' => 'Sales Returns & Allowances', 'type' => 'revenue',   'subtype' => 'contra_revenue'],
         ];
 
         foreach ($accounts as $data) {

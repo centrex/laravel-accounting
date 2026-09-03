@@ -180,7 +180,7 @@ class DiscountBalanceTest extends TestCase
             ['code' => '1300', 'name' => 'Inventory Asset',      'type' => 'asset',     'subtype' => 'current_asset'],
             ['code' => '2300', 'name' => 'Sales Tax Payable',    'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '4000', 'name' => 'Sales Revenue',        'type' => 'revenue',   'subtype' => 'operating_revenue'],
-            ['code' => '6130', 'name' => 'Sales Discount',       'type' => 'expense',   'subtype' => 'selling_expense'],
+            ['code' => '6130', 'name' => 'Sales Discount',       'type' => 'revenue',   'subtype' => 'contra_revenue'],
             ['code' => '5500', 'name' => 'Purchase Discount',    'type' => 'expense',   'subtype' => 'cost_of_goods_sold'],
         ];
 

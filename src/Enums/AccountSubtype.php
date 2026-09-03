@@ -80,6 +80,16 @@ enum AccountSubtype: string
     case OPERATING_REVENUE = 'operating_revenue';
     case NON_OPERATING_REVENUE = 'non_operating_revenue';
 
+    /**
+     * Contra-revenue (IFRS 15 variable consideration — sales returns,
+     * allowances, and discounts). type: 'revenue' + this subtype nets
+     * against gross revenue in getIncomeStatement() rather than landing
+     * below Gross Profit as an operating expense — mirrors how
+     * CONTRA_ACCOUNT (below) offsets a fixed asset rather than being its
+     * own asset line.
+     */
+    case CONTRA_REVENUE = 'contra_revenue';
+
     /* -----------------------------------------------------------------
      | COST OF SALES (IAS 2)
      |------------------------------------------------------------------*/

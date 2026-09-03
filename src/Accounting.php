@@ -2073,11 +2073,14 @@ class Accounting
             ['code' => '5505', 'name' => 'Inventory Shrinkage & Write-offs', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold'],
             ['code' => '6000', 'name' => 'Salaries & Wages',        'type' => 'expense',   'subtype' => 'salaries_and_wages_expense'],
             ['code' => '6100', 'name' => 'Rent Expense',            'type' => 'expense',   'subtype' => 'rent_expense'],
-            ['code' => '6130', 'name' => 'Sales Discount',          'type' => 'expense',   'subtype' => 'selling_expense'],
-            ['code' => '6131', 'name' => 'Early Payment Discount (Sales)', 'type' => 'expense', 'subtype' => 'selling_expense'],
-            ['code' => '6132', 'name' => 'Volume Discount (Sales)', 'type' => 'expense', 'subtype' => 'selling_expense'],
-            ['code' => '6133', 'name' => 'Promotional Discount (Sales)', 'type' => 'expense', 'subtype' => 'selling_expense'],
-            ['code' => '6134', 'name' => 'Sales Returns & Allowances', 'type' => 'expense', 'subtype' => 'selling_expense'],
+            // Contra-revenue (IFRS 15 variable consideration), not operating expenses —
+            // netted against Sales Revenue (4000) in getIncomeStatement() so Gross Profit
+            // reflects Net Revenue - COGS. See AccountSubtype::CONTRA_REVENUE.
+            ['code' => '6130', 'name' => 'Sales Discount',          'type' => 'revenue',   'subtype' => 'contra_revenue'],
+            ['code' => '6131', 'name' => 'Early Payment Discount (Sales)', 'type' => 'revenue', 'subtype' => 'contra_revenue'],
+            ['code' => '6132', 'name' => 'Volume Discount (Sales)', 'type' => 'revenue', 'subtype' => 'contra_revenue'],
+            ['code' => '6133', 'name' => 'Promotional Discount (Sales)', 'type' => 'revenue', 'subtype' => 'contra_revenue'],
+            ['code' => '6134', 'name' => 'Sales Returns & Allowances', 'type' => 'revenue', 'subtype' => 'contra_revenue'],
             ['code' => '6200', 'name' => 'Utilities',               'type' => 'expense',   'subtype' => 'utilities_expense'],
             ['code' => '6300', 'name' => 'Office Supplies',         'type' => 'expense',   'subtype' => 'office_supplies_expense'],
             ['code' => '6310', 'name' => 'Courier Bill / Charge',   'type' => 'expense',   'subtype' => 'postage_and_shipping_expense'],

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Tests\Feature;
 
-use Centrex\Accounting\Enums\{AccountSubtype};
+use Centrex\Accounting\Enums\AccountSubtype;
 use Centrex\Accounting\Models\Account;
 use Centrex\Accounting\QuickBooks\QuickBooksAccountTypeMapper;
 use Centrex\Accounting\Tests\TestCase;
@@ -55,6 +55,15 @@ class QuickBooksAccountTypeMapperTest extends TestCase
 
         $this->assertSame('Cost of Goods Sold', $this->mapper->qboType($account));
         $this->assertSame('cogs', $this->mapper->section($account));
+    }
+
+    public function test_maps_contra_revenue_subtype_to_qbo_discounts_refunds_given(): void
+    {
+        $account = Account::factory()->create(['type' => 'revenue', 'subtype' => AccountSubtype::CONTRA_REVENUE->value]);
+
+        $this->assertSame('Income', $this->mapper->qboType($account));
+        $this->assertSame('DiscountsRefundsGiven', $this->mapper->qboSubType($account));
+        $this->assertSame('income', $this->mapper->section($account));
     }
 
     public function test_falls_back_to_account_type_when_subtype_is_unmapped(): void
