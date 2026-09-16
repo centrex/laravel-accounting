@@ -144,6 +144,48 @@ class CreditMemoTest extends TestCase
         $this->assertEquals(0.0, $memo->refundable_amount);
     }
 
+    public function test_unpaid_invoice_credit_memo_is_not_refundable(): void
+    {
+        $invoice = $this->postedInvoice(100);
+        // Invoice was never paid — the return only lowers what the customer owes.
+        $memo = $this->accounting->createCreditMemo($invoice, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+        $memo->refresh();
+
+        $this->assertEquals(0.0, $memo->refundable_amount);
+
+        $this->expectException(OverpaymentException::class);
+        $this->accounting->recordCreditMemoRefund($memo, [
+            'date' => now()->toDateString(), 'amount' => 10, 'method' => 'cash',
+        ]);
+    }
+
+    public function test_credit_memo_refundable_amount_is_capped_by_cash_received_on_invoice(): void
+    {
+        $invoice = $this->postedInvoice(100);
+        // Only half the invoice was paid before the return.
+        $this->accounting->recordInvoicePayment($invoice, [
+            'date' => now()->toDateString(), 'amount' => 50, 'method' => 'cash',
+        ]);
+
+        $memo = $this->accounting->createCreditMemo($invoice, ['subtotal' => 80]);
+        $this->accounting->issueCreditMemo($memo);
+        $memo->refresh();
+
+        // Memo total is 80, but only 50 in cash was ever received — that's the cap.
+        $this->assertEquals(50.0, $memo->refundable_amount);
+
+        $payment = $this->accounting->recordCreditMemoRefund($memo, [
+            'date' => now()->toDateString(), 'amount' => 50, 'method' => 'cash',
+        ]);
+        $this->assertNotNull($payment->id);
+
+        $this->expectException(OverpaymentException::class);
+        $this->accounting->recordCreditMemoRefund($memo, [
+            'date' => now()->addDay()->toDateString(), 'amount' => 0.01, 'method' => 'cash',
+        ]);
+    }
+
     public function test_refund_cannot_exceed_the_remaining_credit(): void
     {
         $invoice = $this->postedInvoice(100);

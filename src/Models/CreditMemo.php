@@ -105,9 +105,27 @@ class CreditMemo extends Model implements Auditable
             ->where('payable_type', self::class);
     }
 
-    /** Amount still owed to the customer in cash — total less whatever has already been refunded. */
+    /**
+     * Amount still owed to the customer in cash.
+     *
+     * Issuing a memo only credits AR — it never implies cash changed hands, so a memo
+     * against an invoice the customer hasn't paid has nothing to refund (the return just
+     * lowers what they owe). This caps `total - amount_refunded` by the cash actually
+     * received on the invoice, net of everything already refunded against any of its
+     * credit memos (including this one), so an unpaid (or only partially paid) invoice's
+     * memo can't be refunded out of cash the company never took in.
+     */
     public function getRefundableAmountAttribute(): float
     {
-        return round((float) $this->total - (float) $this->amount_refunded, 2);
+        $remaining = round((float) $this->total - (float) $this->amount_refunded, 2);
+
+        if ($remaining <= 0 || !$this->invoice) {
+            return max(0.0, $remaining);
+        }
+
+        $totalRefundedOnInvoice = (float) $this->invoice->creditMemos()->sum('amount_refunded');
+        $cashAvailable = round((float) $this->invoice->paid_amount - $totalRefundedOnInvoice, 2);
+
+        return max(0.0, min($remaining, $cashAvailable));
     }
 }

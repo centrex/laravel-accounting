@@ -75,6 +75,10 @@ class CreditMemoModalTest extends TestCase
     public function test_recording_a_refund_dispatches_the_close_modal_event(): void
     {
         $invoice = $this->postedInvoice(100);
+        // The invoice must actually be paid for its credit memo to have cash to refund.
+        app(Accounting::class)->recordInvoicePayment($invoice, [
+            'date' => now()->toDateString(), 'amount' => 100, 'method' => 'cash',
+        ]);
         $memo = app(Accounting::class)->createCreditMemo($invoice, ['subtotal' => 40]);
         app(Accounting::class)->issueCreditMemo($memo);
 

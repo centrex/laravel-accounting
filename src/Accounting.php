@@ -680,7 +680,8 @@ class Accounting
             }
 
             $amount = round((float) $paymentData['amount'], 2);
-            $refundable = round((float) $creditMemo->total - (float) $creditMemo->amount_refunded, 2);
+            // Capped by cash actually received on the invoice — see CreditMemo::getRefundableAmountAttribute().
+            $refundable = $creditMemo->refundable_amount;
 
             if ($amount <= 0) {
                 throw new AccountingException('Refund amount must be greater than zero.');

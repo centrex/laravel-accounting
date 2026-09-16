@@ -412,7 +412,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$amount_refunded\\.$#"
-			count: 2
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -452,7 +452,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$total\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -7537,6 +7537,11 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$total\\.$#"
+			count: 1
+			path: src/Models/CreditMemo.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$paid_amount\\.$#"
 			count: 1
 			path: src/Models/CreditMemo.php
 
