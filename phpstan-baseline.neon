@@ -412,7 +412,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$amount_refunded\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -422,22 +422,27 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$credit_memo_number\\.$#"
-			count: 4
+			count: 9
 			path: src/Accounting.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$invoice_id\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$customer_id\\.$#"
 			count: 1
 			path: src/Accounting.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$sbu_code\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$invoice_id\\.$#"
 			count: 2
 			path: src/Accounting.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$status\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$sbu_code\\.$#"
 			count: 3
+			path: src/Accounting.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$status\\.$#"
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -452,7 +457,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$total\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -652,7 +657,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$customer_id\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -667,7 +672,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
-			count: 6
+			count: 11
 			path: src/Accounting.php
 
 		-
@@ -677,7 +682,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$paid_amount\\.$#"
-			count: 2
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -687,7 +692,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$status\\.$#"
-			count: 2
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -702,7 +707,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$total\\.$#"
-			count: 3
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -822,7 +827,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:\\$payment_number\\.$#"
-			count: 6
+			count: 7
 			path: src/Accounting.php
 
 		-
@@ -966,16 +971,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Cannot access property \\$total_credit on mixed\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Cannot access property \\$total_debit on mixed\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
 			message: "#^Cannot call method first\\(\\) on mixed\\.$#"
 			count: 3
 			path: src/Accounting.php
@@ -1022,11 +1017,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:approveRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:buildBalanceMap\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1246,6 +1236,11 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Offset 'payment_number' on array\\{date\\: mixed, amount\\: float\\|int\\|string, reference\\?\\: string, notes\\?\\: string, sbu_code\\?\\: string\\} on left side of \\?\\? does not exist\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
 			message: "#^Offset 'quantity' on array\\{description\\: string, quantity\\: float, unit_price\\: float\\} on left side of \\?\\? always exists and is not nullable\\.$#"
 			count: 2
 			path: src/Accounting.php
@@ -1292,7 +1287,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -1332,7 +1327,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -1347,7 +1342,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, int\\> given\\.$#"
-			count: 4
+			count: 6
 			path: src/Accounting.php
 
 		-
@@ -1447,7 +1442,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 4
+			count: 6
 			path: src/Accounting.php
 
 		-
@@ -1477,6 +1472,16 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'sbu_code' given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, 'period_end' given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, 'period_start' given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1527,12 +1532,12 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'amount' given\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_id' given\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1541,8 +1546,18 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payment_date' given\\.$#"
+			count: 2
+			path: src/Accounting.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payment_method' given\\.$#"
-			count: 4
+			count: 5
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'reference' given\\.$#"
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -1592,7 +1607,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_type' given\\.$#"
-			count: 4
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1617,6 +1632,11 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, description\\: non\\-falsy\\-string, currency\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Expense payable'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Cash paid'\\}\\}\\} given\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, description\\: non\\-falsy\\-string, currency\\: mixed, sbu_code\\: string\\|null, source_type\\: 'Centrex\\\\\\\\Accounting\\\\\\\\Models\\\\\\\\CreditMemo', source_id\\: int, source_action\\: 'credit_memo_applied', \\.\\.\\.\\} given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1701,11 +1721,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#2 \\$operator of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#2 \\$userId of method Centrex\\\\Accounting\\\\Models\\\\Requisition\\:\\:reject\\(\\) expects int\\|null, int\\|string\\|null given\\.$#"
 			count: 1
 			path: src/Accounting.php
@@ -1721,13 +1736,8 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Query\\\\Builder\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 9
-			path: src/Accounting.php
-
-		-
 			message: "#^Part \\$paymentData\\['date'\\] \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
-			count: 1
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -2211,6 +2221,11 @@ parameters:
 			path: src/Http/Controllers/Api/BillController.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'bill_date' given\\.$#"
+			count: 2
+			path: src/Http/Controllers/Api/BillController.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Bill, 'bill_number' given\\.$#"
 			count: 1
 			path: src/Http/Controllers/Api/BillController.php
@@ -2228,11 +2243,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'name' given\\.$#"
 			count: 1
-			path: src/Http/Controllers/Api/BillController.php
-
-		-
-			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Bill\\>\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 2
 			path: src/Http/Controllers/Api/BillController.php
 
 		-
@@ -2371,6 +2381,11 @@ parameters:
 			path: src/Http/Controllers/Api/ExpenseController.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'expense_date' given\\.$#"
+			count: 2
+			path: src/Http/Controllers/Api/ExpenseController.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'expense_number' given\\.$#"
 			count: 1
 			path: src/Http/Controllers/Api/ExpenseController.php
@@ -2378,11 +2393,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'status' given\\.$#"
 			count: 1
-			path: src/Http/Controllers/Api/ExpenseController.php
-
-		-
-			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 2
 			path: src/Http/Controllers/Api/ExpenseController.php
 
 		-
@@ -2436,6 +2446,11 @@ parameters:
 			path: src/Http/Controllers/Api/InvoiceController.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'invoice_date' given\\.$#"
+			count: 2
+			path: src/Http/Controllers/Api/InvoiceController.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, 'invoice_number' given\\.$#"
 			count: 1
 			path: src/Http/Controllers/Api/InvoiceController.php
@@ -2448,11 +2463,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'name' given\\.$#"
 			count: 1
-			path: src/Http/Controllers/Api/InvoiceController.php
-
-		-
-			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 2
 			path: src/Http/Controllers/Api/InvoiceController.php
 
 		-
@@ -2471,6 +2481,11 @@ parameters:
 			path: src/Http/Controllers/Api/JournalEntryController.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'date' given\\.$#"
+			count: 2
+			path: src/Http/Controllers/Api/JournalEntryController.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'entry_number' given\\.$#"
 			count: 1
 			path: src/Http/Controllers/Api/JournalEntryController.php
@@ -2483,11 +2498,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\<string, mixed\\> given\\.$#"
 			count: 1
-			path: src/Http/Controllers/Api/JournalEntryController.php
-
-		-
-			message: "#^Parameter \\#3 \\$value of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:whereDate\\(\\) expects DateTimeInterface\\|string\\|null, mixed given\\.$#"
-			count: 2
 			path: src/Http/Controllers/Api/JournalEntryController.php
 
 		-
@@ -4986,6 +4996,11 @@ parameters:
 			path: src/Livewire/CreditMemos.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, 'credit_memo_date' given\\.$#"
+			count: 2
+			path: src/Livewire/CreditMemos.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, 'credit_memo_number' given\\.$#"
 			count: 1
 			path: src/Livewire/CreditMemos.php
@@ -5762,7 +5777,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
-			count: 8
+			count: 9
 			path: src/Livewire/InvoiceDetails.php
 
 		-
@@ -5777,6 +5792,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\InvoiceDetails\\:\\:discountAccounts\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: src/Livewire/InvoiceDetails.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\InvoiceDetails\\:\\:exportPdf\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: src/Livewire/InvoiceDetails.php
 
@@ -5866,6 +5886,11 @@ parameters:
 			path: src/Livewire/InvoiceTable.php
 
 		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Livewire\\\\Invoices\\:\\:\\$payingInvoice\\.$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Livewire\\\\Invoices\\:\\:\\$subtotal\\.$#"
 			count: 1
 			path: src/Livewire/Invoices.php
@@ -5876,8 +5901,13 @@ parameters:
 			path: src/Livewire/Invoices.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$currency\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:\\$credit_memo_number\\.$#"
 			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$currency\\.$#"
+			count: 2
 			path: src/Livewire/Invoices.php
 
 		-
@@ -5912,6 +5942,11 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\Invoices\\:\\:activeTaxRates\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Livewire\\\\Invoices\\:\\:availableCreditMemos\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: src/Livewire/Invoices.php
 
@@ -5981,12 +6016,22 @@ parameters:
 			path: src/Livewire/Invoices.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, 'invoice_id' given\\.$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Customer, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Customer, 'is_active' given\\.$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
 			count: 1
 			path: src/Livewire/Invoices.php
 
 		-
-			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Customer, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Customer, 'is_active' given\\.$#"
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\CreditMemo, 'customer_id' given\\.$#"
 			count: 1
 			path: src/Livewire/Invoices.php
 
@@ -6001,7 +6046,17 @@ parameters:
 			path: src/Livewire/Invoices.php
 
 		-
+			message: "#^Parameter \\#1 \\$columns of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\:\\:get\\(\\) expects array\\<int, model property of Centrex\\\\Accounting\\\\Models\\\\Customer\\>\\|model property of Centrex\\\\Accounting\\\\Models\\\\Customer, array\\<int, string\\> given\\.$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
 			message: "#^Parameter \\#1 \\$columns of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\TaxRate\\>\\:\\:get\\(\\) expects array\\<int, model property of Centrex\\\\Accounting\\\\Models\\\\TaxRate\\>\\|model property of Centrex\\\\Accounting\\\\Models\\\\TaxRate, array\\<int, string\\> given\\.$#"
+			count: 1
+			path: src/Livewire/Invoices.php
+
+		-
+			message: "#^Parameter \\#3 \\$paymentData of method Centrex\\\\Accounting\\\\Accounting\\:\\:applyCreditMemoToInvoice\\(\\) expects array\\{date\\: mixed, amount\\: float\\|int\\|string, reference\\?\\: string, notes\\?\\: string, sbu_code\\?\\: string\\}, array\\{date\\: string, amount\\: string, reference\\: non\\-falsy\\-string\\|null, notes\\: non\\-falsy\\-string\\|null\\} given\\.$#"
 			count: 1
 			path: src/Livewire/Invoices.php
 
@@ -6148,6 +6203,11 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:orWhere\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'reference' given\\.$#"
 			count: 1
+			path: src/Livewire/JournalEntries.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'date' given\\.$#"
+			count: 2
 			path: src/Livewire/JournalEntries.php
 
 		-
@@ -6716,6 +6776,11 @@ parameters:
 			path: src/Livewire/Requisitions.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Requisition\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Requisition, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Requisition\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Requisition, 'requested_date' given\\.$#"
+			count: 2
+			path: src/Livewire/Requisitions.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Requisition\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Requisition, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Requisition\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Requisition, 'requisition_number' given\\.$#"
 			count: 1
 			path: src/Livewire/Requisitions.php
@@ -7156,11 +7221,6 @@ parameters:
 			path: src/Models/Account.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Account.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:balances\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Account.php
@@ -7191,16 +7251,6 @@ parameters:
 			path: src/Models/Account.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Account.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\AccountBalance\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/AccountBalance.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\AccountBalance\\:\\:account\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/AccountBalance.php
@@ -7211,17 +7261,7 @@ parameters:
 			path: src/Models/AccountBalance.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/AccountBalance.php
-
-		-
 			message: "#^Class Centrex\\\\Accounting\\\\Models\\\\BankReconciliation uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
-			count: 1
-			path: src/Models/BankReconciliation.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/BankReconciliation.php
 
@@ -7241,17 +7281,7 @@ parameters:
 			path: src/Models/BankReconciliation.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/BankReconciliation.php
-
-		-
 			message: "#^Class Centrex\\\\Accounting\\\\Models\\\\BankStatementLine uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
-			count: 1
-			path: src/Models/BankStatementLine.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/BankStatementLine.php
 
@@ -7262,11 +7292,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:matchedJournalEntryLine\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/BankStatementLine.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/BankStatementLine.php
 
@@ -7326,11 +7351,6 @@ parameters:
 			path: src/Models/Bill.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Bill.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:expenses\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Bill.php
@@ -7361,22 +7381,12 @@ parameters:
 			path: src/Models/Bill.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Bill.php
-
-		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BillItem\\:\\:\\$amount\\.$#"
 			count: 1
 			path: src/Models/BillItem.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BillItem\\:\\:\\$tax_amount\\.$#"
-			count: 1
-			path: src/Models/BillItem.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BillItem\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/BillItem.php
 
@@ -7392,11 +7402,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BillItem\\:\\:taxRate\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/BillItem.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/BillItem.php
 
@@ -7426,11 +7431,6 @@ parameters:
 			path: src/Models/Budget.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Budget\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Budget.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Budget\\:\\:fiscalYear\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Budget.php
@@ -7457,11 +7457,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'account_id' given\\.$#"
-			count: 1
-			path: src/Models/Budget.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/Budget.php
 
@@ -7496,11 +7491,6 @@ parameters:
 			path: src/Models/BudgetItem.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BudgetItem\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/BudgetItem.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\BudgetItem\\:\\:account\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/BudgetItem.php
@@ -7517,11 +7507,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'account_id' given\\.$#"
-			count: 1
-			path: src/Models/BudgetItem.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/BudgetItem.php
 
@@ -7551,11 +7536,6 @@ parameters:
 			path: src/Models/CreditMemo.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/CreditMemo.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\CreditMemo\\:\\:customer\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/CreditMemo.php
@@ -7581,22 +7561,12 @@ parameters:
 			path: src/Models/CreditMemo.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/CreditMemo.php
-
-		-
 			message: "#^Cannot cast mixed to float\\.$#"
 			count: 1
 			path: src/Models/Customer.php
 
 		-
 			message: "#^Class Centrex\\\\Accounting\\\\Models\\\\Customer uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
-			count: 1
-			path: src/Models/Customer.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/Customer.php
 
@@ -7621,11 +7591,6 @@ parameters:
 			path: src/Models/Customer.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Customer.php
-
-		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$expense_number\\.$#"
 			count: 2
 			path: src/Models/Expense.php
@@ -7638,11 +7603,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:\\$total\\.$#"
 			count: 2
-			path: src/Models/Expense.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Expense\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
 			path: src/Models/Expense.php
 
 		-
@@ -7666,29 +7626,9 @@ parameters:
 			path: src/Models/Expense.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Expense.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/ExpenseItem.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\ExpenseItem\\:\\:expense\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/ExpenseItem.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/ExpenseItem.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/FiscalPeriod.php
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\:\\:accountBalances\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
@@ -7701,27 +7641,12 @@ parameters:
 			path: src/Models/FiscalPeriod.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/FiscalPeriod.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FiscalYear\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/FiscalYear.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FiscalYear\\:\\:periods\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/FiscalYear.php
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalYear\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalYear, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalYear\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalYear, 'is_current' given\\.$#"
-			count: 1
-			path: src/Models/FiscalYear.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/FiscalYear.php
 
@@ -7761,11 +7686,6 @@ parameters:
 			path: src/Models/FixedAsset.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/FixedAsset.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:accumulatedDepreciationAccount\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/FixedAsset.php
@@ -7777,11 +7697,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:disposalJournalEntry\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/FixedAsset.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/FixedAsset.php
 
@@ -7856,11 +7771,6 @@ parameters:
 			path: src/Models/Invoice.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Invoice.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:creditMemos\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Invoice.php
@@ -7896,11 +7806,6 @@ parameters:
 			path: src/Models/Invoice.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Invoice.php
-
-		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\InvoiceItem\\:\\:\\$amount\\.$#"
 			count: 2
 			path: src/Models/InvoiceItem.php
@@ -7926,11 +7831,6 @@ parameters:
 			path: src/Models/InvoiceItem.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\InvoiceItem\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/InvoiceItem.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\InvoiceItem\\:\\:invoice\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/InvoiceItem.php
@@ -7942,11 +7842,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\InvoiceItem\\:\\:taxRate\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/InvoiceItem.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/InvoiceItem.php
 
@@ -7968,11 +7863,6 @@ parameters:
 		-
 			message: "#^Cannot cast mixed to float\\.$#"
 			count: 3
-			path: src/Models/JournalEntry.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
 			path: src/Models/JournalEntry.php
 
 		-
@@ -8011,18 +7901,23 @@ parameters:
 			path: src/Models/JournalEntry.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, 'end_date' given\\.$#"
+			count: 1
+			path: src/Models/JournalEntry.php
+
+		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, 'is_closed' given\\.$#"
+			count: 1
+			path: src/Models/JournalEntry.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FiscalPeriod, 'start_date' given\\.$#"
 			count: 1
 			path: src/Models/JournalEntry.php
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, 'type' given\\.$#"
 			count: 2
-			path: src/Models/JournalEntry.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
 			path: src/Models/JournalEntry.php
 
 		-
@@ -8041,11 +7936,6 @@ parameters:
 			path: src/Models/JournalEntry.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/JournalEntryLine.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:account\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/JournalEntryLine.php
@@ -8057,11 +7947,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:journalEntry\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/JournalEntryLine.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/JournalEntryLine.php
 
@@ -8111,11 +7996,6 @@ parameters:
 			path: src/Models/Owner.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Owner\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Owner.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Owner\\:\\:capitalAccount\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Owner.php
@@ -8124,16 +8004,6 @@ parameters:
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Owner\\:\\:drawingsAccount\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/Owner.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Owner.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/Payment.php
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:journalEntry\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
@@ -8146,22 +8016,17 @@ parameters:
 			path: src/Models/Payment.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
+			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:scopeCashMovement\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
 			count: 1
 			path: src/Models/Payment.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\PeriodInventorySnapshot\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:scopeCashMovement\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
 			count: 1
-			path: src/Models/PeriodInventorySnapshot.php
+			path: src/Models/Payment.php
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\PeriodInventorySnapshot\\:\\:fiscalPeriod\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
-			count: 1
-			path: src/Models/PeriodInventorySnapshot.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Models/PeriodInventorySnapshot.php
 
@@ -8173,11 +8038,6 @@ parameters:
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Requisition\\:\\:\\$type\\.$#"
 			count: 3
-			path: src/Models/Requisition.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Requisition\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
 			path: src/Models/Requisition.php
 
 		-
@@ -8221,32 +8081,12 @@ parameters:
 			path: src/Models/Requisition.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Requisition.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\RequisitionItem\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Models/RequisitionItem.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\RequisitionItem\\:\\:requisition\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo does not specify its types\\: TRelatedModel, TDeclaringModel$#"
 			count: 1
 			path: src/Models/RequisitionItem.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/RequisitionItem.php
-
-		-
 			message: "#^Class Centrex\\\\Accounting\\\\Models\\\\TaxRate uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
-			count: 1
-			path: src/Models/TaxRate.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\TaxRate\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/TaxRate.php
 
@@ -8261,22 +8101,12 @@ parameters:
 			path: src/Models/TaxRate.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/TaxRate.php
-
-		-
 			message: "#^Cannot cast mixed to float\\.$#"
 			count: 1
 			path: src/Models/Vendor.php
 
 		-
 			message: "#^Class Centrex\\\\Accounting\\\\Models\\\\Vendor uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
-			count: 1
-			path: src/Models/Vendor.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Models\\\\Vendor\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Models/Vendor.php
 
@@ -8296,12 +8126,7 @@ parameters:
 			path: src/Models/Vendor.php
 
 		-
-			message: "#^Parameter \\#1 \\$name of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:setConnection\\(\\) expects string\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Models/Vendor.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\TaxRate\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\TaxRate\\>\\:\\:\\$rate\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\TaxRate\\:\\:\\$rate\\.$#"
 			count: 1
 			path: src/Observers/BillItemObserver.php
 
@@ -8331,7 +8156,7 @@ parameters:
 			path: src/Observers/BillItemObserver.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\TaxRate\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\TaxRate\\>\\:\\:\\$rate\\.$#"
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\TaxRate\\:\\:\\$rate\\.$#"
 			count: 1
 			path: src/Observers/InvoiceItemObserver.php
 
