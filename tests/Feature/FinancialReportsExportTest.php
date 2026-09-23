@@ -41,7 +41,7 @@ it('exports the currently generated report as its own single-sheet .xlsx', funct
         ],
     ])->post();
 
-    $component = new FinancialReports();
+    $component = new FinancialReports;
     $component->mount();
     $component->reportType = 'trial_balance';
     $component->startDate = today()->startOfMonth()->format('Y-m-d');
@@ -65,7 +65,7 @@ it('exports the currently generated report as its own single-sheet .xlsx', funct
 });
 
 it('exports every report type as one combined multi-sheet .xlsx workbook', function (): void {
-    $component = new FinancialReports();
+    $component = new FinancialReports;
     $component->mount();
 
     $response = $component->exportAllExcel();

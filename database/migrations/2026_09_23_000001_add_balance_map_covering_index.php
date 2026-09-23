@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * costs a lookup back into the table for type and amount. Carrying all four columns makes
  * the aggregate index-only.
  */
-return new class() extends Migration
+return new class extends Migration
 {
     public function up(): void
     {

@@ -125,7 +125,7 @@ class Vendors extends Component
 
     public function render()
     {
-        $vendorTable = (new Vendor())->getTable();
+        $vendorTable = (new Vendor)->getTable();
 
         $vendors = Vendor::query()
             ->select("{$vendorTable}.*")

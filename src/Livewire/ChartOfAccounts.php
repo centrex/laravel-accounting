@@ -65,7 +65,7 @@ class ChartOfAccounts extends Component
         $this->validate([
             'code' => [
                 'required',
-                Rule::unique((new Account())->getTable(), 'code')
+                Rule::unique((new Account)->getTable(), 'code')
                     ->ignore($this->accountId),
             ],
             'name'     => 'required|min:3',

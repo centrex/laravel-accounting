@@ -19,7 +19,7 @@ class QuickBooksAccountTypeMapperTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->mapper = new QuickBooksAccountTypeMapper();
+        $this->mapper = new QuickBooksAccountTypeMapper;
     }
 
     public function test_maps_cash_account_to_qbo_bank_type(): void

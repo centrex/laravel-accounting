@@ -6,7 +6,7 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
-use Centrex\Accounting\Enums\{RequisitionStatus};
+use Centrex\Accounting\Enums\RequisitionStatus;
 use Centrex\Accounting\Models\{Account, Requisition, RequisitionItem, Vendor};
 use Centrex\Accounting\Support\DayRange;
 use Illuminate\Support\Facades\DB;
@@ -127,9 +127,9 @@ class Requisitions extends Component
         ];
 
         if ($this->type === 'purchase') {
-            $rules['vendor_id'] = 'nullable|exists:' . (new Vendor())->getTable() . ',id';
+            $rules['vendor_id'] = 'nullable|exists:' . (new Vendor)->getTable() . ',id';
         } else {
-            $rules['account_id'] = 'nullable|exists:' . (new Account())->getTable() . ',id';
+            $rules['account_id'] = 'nullable|exists:' . (new Account)->getTable() . ',id';
         }
 
         $this->validate($rules);
