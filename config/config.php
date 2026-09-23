@@ -50,6 +50,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Company Profile
+    |--------------------------------------------------------------------------
+    | Shown as the issuer ("From") on printed invoice/bill PDFs (see
+    | Livewire\InvoiceDetails::exportPdf() / BillDetails::exportPdf()). Logo is
+    | an absolute filesystem path readable by the PDF renderer, not a public URL.
+    */
+    'company' => [
+        'name'    => env('ACCOUNTING_COMPANY_NAME', config('app.name', 'Your Company')),
+        'address' => env('ACCOUNTING_COMPANY_ADDRESS'),
+        'email'   => env('ACCOUNTING_COMPANY_EMAIL'),
+        'phone'   => env('ACCOUNTING_COMPANY_PHONE'),
+        'tax_id'  => env('ACCOUNTING_COMPANY_TAX_ID'),
+        'logo'    => env('ACCOUNTING_COMPANY_LOGO'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fiscal Year Settings
     |--------------------------------------------------------------------------
     */

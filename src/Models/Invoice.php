@@ -34,16 +34,6 @@ class Invoice extends Model implements Auditable
         return 'invoices';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'invoice_number', 'customer_id', 'invoice_date', 'due_date',
         'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'total',

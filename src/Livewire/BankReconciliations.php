@@ -53,7 +53,7 @@ class BankReconciliations extends Component
         }
 
         $this->validate([
-            'account_id'               => 'required|integer|exists:' . (new Account())->getTable() . ',id',
+            'account_id'               => 'required|integer|exists:' . (new Account)->getTable() . ',id',
             'statement_date'           => 'required|date',
             'opening_balance'          => 'required|numeric',
             'statement_ending_balance' => 'required|numeric',

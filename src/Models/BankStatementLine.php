@@ -13,23 +13,13 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class BankStatementLine extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
     use HasFactory;
 
     protected function getTableSuffix(): string
     {
         return 'bank_statement_lines';
-    }
-
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [
@@ -39,8 +29,8 @@ class BankStatementLine extends Model implements Auditable
 
     protected $casts = [
         'transaction_date' => 'date',
-        'amount'            => 'decimal:2',
-        'matched_at'        => 'datetime',
+        'amount'           => 'decimal:2',
+        'matched_at'       => 'datetime',
     ];
 
     public function bankReconciliation(): BelongsTo

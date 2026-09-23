@@ -32,12 +32,6 @@ class Bill extends Model implements Auditable
         return 'bills';
     }
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'bill_number', 'vendor_id', 'bill_date', 'due_date',
         'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'other_charges_amount', 'total', 'paid_amount',

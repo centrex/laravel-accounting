@@ -251,7 +251,7 @@ class AccountingServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'accounting');
 
-        $this->app->singleton('accounting', fn (): Accounting => new Accounting());
+        $this->app->singleton('accounting', fn (): Accounting => new Accounting);
 
         // QuickBooks Online singletons
         $this->app->singleton(QuickBooksAccountTypeMapper::class);

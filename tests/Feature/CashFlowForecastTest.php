@@ -224,6 +224,50 @@ class CashFlowForecastTest extends TestCase
         $this->assertEqualsWithDelta((-700 / 31) * 7, $forecast['buckets'][0]['baseline_other'], 0.02);
     }
 
+    public function test_run_rate_excludes_credit_memo_applications_between_invoices(): void
+    {
+        // Same real cash movement as the plain-cash test above, but Invoice B's $500
+        // is settled via a credit memo applied from Invoice A instead of a fresh cash
+        // receipt. The run-rate baseline must come out identical either way, since no
+        // extra cash actually moved for the application itself.
+        $customer = Customer::factory()->create();
+
+        $invoiceA = Invoice::factory()->create([
+            'customer_id'     => $customer->id, 'invoice_date' => now()->toDateString(),
+            'due_date'        => '2025-01-01', 'subtotal' => 500, 'tax_amount' => 0,
+            'discount_amount' => 0, 'total' => 500, 'currency' => 'BDT', 'status' => 'draft',
+        ]);
+        $this->accounting->postInvoice($invoiceA);
+        $this->accounting->recordInvoicePayment($invoiceA->fresh(), [
+            'amount' => 500, 'date' => '2025-01-02', 'method' => 'cash',
+        ]);
+
+        $memo = $this->accounting->createCreditMemo($invoiceA->fresh(), ['subtotal' => 500]);
+        $this->accounting->issueCreditMemo($memo);
+
+        $invoiceB = Invoice::factory()->create([
+            'customer_id'     => $customer->id, 'invoice_date' => now()->toDateString(),
+            'due_date'        => '2025-01-05', 'subtotal' => 500, 'tax_amount' => 0,
+            'discount_amount' => 0, 'total' => 500, 'currency' => 'BDT', 'status' => 'draft',
+        ]);
+        $this->accounting->postInvoice($invoiceB);
+        $this->accounting->applyCreditMemoToInvoice($memo->fresh(), $invoiceB->fresh(), [
+            'amount' => 500, 'date' => '2025-01-12',
+        ]);
+
+        // Same payroll-like direct cash expense as the plain-cash version of this test.
+        $this->postEntry('2025-01-10', $this->expense->id, $this->cash->id, 700);
+
+        $forecast = $this->accounting->getCashFlowForecast('2025-02-01', forecastWeeks: 1, lookbackDays: 31);
+
+        // Identical to the plain-cash test above: net cash movement = +500 (A's real cash
+        // payment) - 700 (expense) = -200, minus the one real invoice payment (+500) = -700.
+        // B's credit-memo "payment" touches neither figure — before the scopeCashMovement()
+        // fix, it would have been wrongly subtracted a second time here, understating the
+        // baseline by another $500/31/day.
+        $this->assertEqualsWithDelta(-700 / 31, $forecast['run_rate']['daily'], 0.01);
+    }
+
     public function test_projected_balance_accumulates_starting_cash_inflows_outflows_and_run_rate(): void
     {
         $this->postEntry('2025-01-01', $this->cash->id, $this->revenue->id, 1000);
@@ -258,6 +302,7 @@ class CashFlowForecastTest extends TestCase
             ['code' => '2300', 'name' => 'Sales Tax Payable',   'type' => 'liability', 'subtype' => 'current_liability'],
             ['code' => '4000', 'name' => 'Sales Revenue',       'type' => 'revenue',   'subtype' => 'operating_revenue'],
             ['code' => '6100', 'name' => 'Payroll Expense',     'type' => 'expense',   'subtype' => 'operating_expense'],
+            ['code' => '6134', 'name' => 'Sales Returns & Allowances', 'type' => 'revenue', 'subtype' => 'contra_revenue'],
         ];
 
         foreach ($accounts as $data) {

@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
-use Centrex\Accounting\Contracts\InventorySnapshotProvider;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\WithCurrency;
+use Centrex\Accounting\Contracts\InventorySnapshotProvider;
 use Centrex\Accounting\Exceptions\AccountingException;
 use Centrex\Accounting\Models\{FiscalPeriod, FiscalYear, PeriodInventorySnapshot};
 use Illuminate\Contracts\View\View;

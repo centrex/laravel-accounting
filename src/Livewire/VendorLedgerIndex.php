@@ -1,14 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Concerns\WithCurrency;
 use Centrex\Accounting\Models\Vendor;
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
-use Livewire\WithPagination;
+use Livewire\{Component, WithPagination};
 
 class VendorLedgerIndex extends Component
 {

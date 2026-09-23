@@ -25,16 +25,6 @@ class Customer extends Model implements Auditable, HasMedia
         return 'customers';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'code',
         'name',
@@ -60,6 +50,16 @@ class Customer extends Model implements Auditable, HasMedia
         'is_active'           => 'boolean',
         'outstanding_balance' => 'decimal:2',
     ];
+
+    /**
+     * The appended `primary_image_url` accessor resolves through getFirstMediaUrl(), which
+     * queries the media table whenever the relation is not already loaded — one query per
+     * model on any toArray()/toJson(), i.e. every API listing and every Livewire payload.
+     * Eager-loading it turns that N+1 into a single query per result set.
+     *
+     * @var list<string>
+     */
+    protected $with = ['media'];
 
     protected $appends = [
         'primary_image_url',

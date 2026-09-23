@@ -161,7 +161,7 @@ class ReportController extends Controller
     public function generalLedger(Request $request): JsonResponse
     {
         $request->validate([
-            'account_id' => ['nullable', 'integer', 'exists:' . (new Account())->getTable() . ',id'],
+            'account_id' => ['nullable', 'integer', 'exists:' . (new Account)->getTable() . ',id'],
             'start_date' => ['nullable', 'date'],
             'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
             'sbu_code'   => ['nullable', 'string', 'max:50'],
@@ -202,7 +202,7 @@ class ReportController extends Controller
     public function cashBook(Request $request): JsonResponse
     {
         $request->validate([
-            'account_id' => ['nullable', 'integer', 'exists:' . (new Account())->getTable() . ',id'],
+            'account_id' => ['nullable', 'integer', 'exists:' . (new Account)->getTable() . ',id'],
             'start_date' => ['nullable', 'date'],
             'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
             'sbu_code'   => ['nullable', 'string', 'max:50'],

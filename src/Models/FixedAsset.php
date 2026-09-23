@@ -29,13 +29,6 @@ class FixedAsset extends Model implements Auditable
         return 'fixed_assets';
     }
 
-    /** Specify the connection, since this implements multitenant solution. */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'asset_code', 'name', 'asset_class', 'sbu_code',
         'asset_account_id', 'accumulated_depreciation_account_id',

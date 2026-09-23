@@ -24,10 +24,10 @@ class CreditMemoTest extends TestCase
         $this->seedAccounts();
     }
 
-    private function postedInvoice(float $subtotal = 100, float $tax = 0): Invoice
+    private function postedInvoice(float $subtotal = 100, float $tax = 0, ?int $customerId = null): Invoice
     {
         $invoice = Invoice::factory()->create([
-            'customer_id'     => Customer::factory()->create()->id,
+            'customer_id'     => $customerId ?? Customer::factory()->create()->id,
             'invoice_date'    => now()->toDateString(),
             'subtotal'        => $subtotal,
             'tax_amount'      => $tax,
@@ -237,6 +237,122 @@ class CreditMemoTest extends TestCase
 
         $this->expectException(AccountingException::class);
         $this->accounting->createCreditMemo($invoice, ['subtotal' => 10]);
+    }
+
+    public function test_credit_memo_can_be_applied_to_a_different_invoice_of_the_same_customer(): void
+    {
+        $customerId = Customer::factory()->create()->id;
+
+        $invoiceA = $this->postedInvoice(100, customerId: $customerId);
+        $this->accounting->recordInvoicePayment($invoiceA, [
+            'date' => now()->toDateString(), 'amount' => 100, 'method' => 'cash',
+        ]);
+        $memo = $this->accounting->createCreditMemo($invoiceA, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+        $memo->refresh();
+        $this->assertEquals(50.0, $memo->refundable_amount);
+
+        $invoiceB = $this->postedInvoice(30, customerId: $customerId);
+
+        $payment = $this->accounting->applyCreditMemoToInvoice($memo, $invoiceB, [
+            'date' => now()->toDateString(), 'amount' => 30,
+        ]);
+        $memo->refresh();
+        $invoiceB->refresh();
+
+        $this->assertEquals('credit_memo', $payment->payment_method);
+        $this->assertEquals($memo->credit_memo_number, $payment->reference);
+        $this->assertEquals(30.0, (float) $memo->amount_refunded);
+        $this->assertSame(CreditMemoStatus::PARTIALLY_REFUNDED, $memo->status);
+        $this->assertEquals(20.0, $memo->refundable_amount);
+        $this->assertEquals(30.0, (float) $invoiceB->paid_amount);
+        $this->assertEquals(0.0, $invoiceB->balance);
+        $this->assertEquals('settled', $invoiceB->status->value);
+
+        // Both lines land on Accounts Receivable (1200) and net to zero there — no cash moved.
+        $lines = $payment->journalEntry->lines()->with('account')->get();
+        $this->assertCount(2, $lines);
+        $this->assertTrue($lines->every(fn ($line) => $line->account->code === '1200'));
+        $this->assertEquals(30.0, (float) $lines->firstWhere('type', 'debit')->amount);
+        $this->assertEquals(30.0, (float) $lines->firstWhere('type', 'credit')->amount);
+
+        // A mirrored Payment against the CreditMemo itself keeps CustomerLedger's
+        // memoCredits/refunds netting correct — without it the memo's full $50 would
+        // still look unclaimed even though $30 was just spent settling Invoice B.
+        $memoPayment = $memo->payments()->first();
+        $this->assertNotNull($memoPayment);
+        $this->assertEquals(30.0, (float) $memoPayment->amount);
+        $this->assertEquals($invoiceB->invoice_number, $memoPayment->reference);
+        $this->assertEquals($payment->journal_entry_id, $memoPayment->journal_entry_id);
+    }
+
+    public function test_applying_credit_memo_is_capped_by_its_refundable_amount(): void
+    {
+        $customerId = Customer::factory()->create()->id;
+
+        $invoiceA = $this->postedInvoice(100, customerId: $customerId);
+        // Never paid — nothing real to apply elsewhere.
+        $memo = $this->accounting->createCreditMemo($invoiceA, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+
+        $invoiceB = $this->postedInvoice(30, customerId: $customerId);
+
+        $this->expectException(OverpaymentException::class);
+        $this->accounting->applyCreditMemoToInvoice($memo, $invoiceB, [
+            'date' => now()->toDateString(), 'amount' => 10,
+        ]);
+    }
+
+    public function test_applying_credit_memo_cannot_exceed_the_target_invoices_balance(): void
+    {
+        $customerId = Customer::factory()->create()->id;
+
+        $invoiceA = $this->postedInvoice(100, customerId: $customerId);
+        $this->accounting->recordInvoicePayment($invoiceA, [
+            'date' => now()->toDateString(), 'amount' => 100, 'method' => 'cash',
+        ]);
+        $memo = $this->accounting->createCreditMemo($invoiceA, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+
+        $invoiceB = $this->postedInvoice(30, customerId: $customerId);
+
+        $this->expectException(OverpaymentException::class);
+        $this->accounting->applyCreditMemoToInvoice($memo, $invoiceB, [
+            'date' => now()->toDateString(), 'amount' => 40,
+        ]);
+    }
+
+    public function test_credit_memo_cannot_be_applied_to_the_invoice_it_was_issued_against(): void
+    {
+        $invoice = $this->postedInvoice(100);
+        $this->accounting->recordInvoicePayment($invoice, [
+            'date' => now()->toDateString(), 'amount' => 100, 'method' => 'cash',
+        ]);
+        $memo = $this->accounting->createCreditMemo($invoice, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+
+        $this->expectException(AccountingException::class);
+        $this->accounting->applyCreditMemoToInvoice($memo, $invoice, [
+            'date' => now()->toDateString(), 'amount' => 10,
+        ]);
+    }
+
+    public function test_credit_memo_cannot_be_applied_to_another_customers_invoice(): void
+    {
+        $invoiceA = $this->postedInvoice(100);
+        $this->accounting->recordInvoicePayment($invoiceA, [
+            'date' => now()->toDateString(), 'amount' => 100, 'method' => 'cash',
+        ]);
+        $memo = $this->accounting->createCreditMemo($invoiceA, ['subtotal' => 50]);
+        $this->accounting->issueCreditMemo($memo);
+
+        // A different customer's invoice.
+        $invoiceB = $this->postedInvoice(30);
+
+        $this->expectException(AccountingException::class);
+        $this->accounting->applyCreditMemoToInvoice($memo, $invoiceB, [
+            'date' => now()->toDateString(), 'amount' => 10,
+        ]);
     }
 
     private function seedAccounts(): void

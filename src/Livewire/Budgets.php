@@ -13,8 +13,8 @@ use Livewire\{Component, WithPagination};
 
 class Budgets extends Component
 {
-    use WithCurrency;
     use ShowsAuditTrail;
+    use WithCurrency;
     use WithPagination;
 
     public string $search = '';
@@ -90,7 +90,7 @@ class Budgets extends Component
             'period_end'         => 'required|date|after_or_equal:period_start',
             'total_amount'       => 'required|numeric|min:0',
             'items'              => 'required|array|min:1',
-            'items.*.account_id' => ['required', Rule::exists((new Account())->getTable(), 'id')],
+            'items.*.account_id' => ['required', Rule::exists((new Account)->getTable(), 'id')],
             'items.*.amount'     => 'required|numeric|min:0',
         ]);
 

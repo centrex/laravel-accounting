@@ -13,24 +13,14 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class TaxRate extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
     use HasFactory;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
         return 'tax_rates';
-    }
-
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [

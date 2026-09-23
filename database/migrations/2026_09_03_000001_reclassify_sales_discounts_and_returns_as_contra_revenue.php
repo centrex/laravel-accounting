@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * since Account::firstOrCreate()-based seeding never updates an existing
  * row. See AccountSubtype::CONTRA_REVENUE.
  */
-return new class() extends Migration
+return new class extends Migration
 {
     private const CODES = ['6130', '6131', '6132', '6133', '6134'];
 

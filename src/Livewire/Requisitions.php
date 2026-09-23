@@ -6,44 +6,62 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
-use Centrex\Accounting\Enums\{RequisitionStatus, RequisitionType};
+use Centrex\Accounting\Enums\RequisitionStatus;
 use Centrex\Accounting\Models\{Account, Requisition, RequisitionItem, Vendor};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Support\Facades\DB;
 use Livewire\{Component, WithPagination};
 
 class Requisitions extends Component
 {
-    use WithCurrency;
     use ShowsAuditTrail;
+    use WithCurrency;
     use WithPagination;
 
     // Filters
-    public string $search       = '';
-    public string $typeFilter   = '';
+    public string $search = '';
+
+    public string $typeFilter = '';
+
     public string $statusFilter = '';
-    public string $dateFrom     = '';
-    public string $dateTo       = '';
+
+    public string $dateFrom = '';
+
+    public string $dateTo = '';
 
     // Modal state
-    public bool $showModal       = false;
+    public bool $showModal = false;
+
     public bool $showDetailModal = false;
+
     public bool $showRejectModal = false;
 
     // Form fields
-    public ?int $requisitionId   = null;
-    public string $type          = 'purchase';
-    public string $title         = '';
-    public string $description   = '';
-    public ?int $vendor_id       = null;
-    public ?int $account_id      = null;
-    public string $requested_by  = '';
+    public ?int $requisitionId = null;
+
+    public string $type = 'purchase';
+
+    public string $title = '';
+
+    public string $description = '';
+
+    public ?int $vendor_id = null;
+
+    public ?int $account_id = null;
+
+    public string $requested_by = '';
+
     public string $requested_date = '';
-    public string $required_date  = '';
-    public string $notes          = '';
-    public array $items           = [];
+
+    public string $required_date = '';
+
+    public string $notes = '';
+
+    public array $items = [];
 
     // Reject modal
-    public ?int $rejectingId      = null;
+    public ?int $rejectingId = null;
+
     public string $rejectionReason = '';
 
     // Detail modal
@@ -109,9 +127,9 @@ class Requisitions extends Component
         ];
 
         if ($this->type === 'purchase') {
-            $rules['vendor_id'] = 'nullable|exists:' . (new Vendor())->getTable() . ',id';
+            $rules['vendor_id'] = 'nullable|exists:' . (new Vendor)->getTable() . ',id';
         } else {
-            $rules['account_id'] = 'nullable|exists:' . (new Account())->getTable() . ',id';
+            $rules['account_id'] = 'nullable|exists:' . (new Account)->getTable() . ',id';
         }
 
         $this->validate($rules);
@@ -242,12 +260,12 @@ class Requisitions extends Component
             }))
             ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('requested_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('requested_date', '<=', $this->dateTo))
+            ->when($this->dateFrom, fn ($q) => $q->where('requested_date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->where('requested_date', '<', DayRange::endOfDay($this->dateTo)))
             ->latest('created_at')
             ->paginate(config('accounting.per_page.requisitions', 15));
 
-        $vendors  = Vendor::where('is_active', true)->orderBy('name')->get();
+        $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
         $accounts = Account::where('type', 'expense')->where('is_active', true)->orderBy('code')->get();
 
         $viewing = $this->viewingId

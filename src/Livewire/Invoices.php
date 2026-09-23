@@ -6,7 +6,8 @@ namespace Centrex\Accounting\Livewire;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\{ShowsAuditTrail, WithCurrency};
-use Centrex\Accounting\Models\{Account, Customer, Invoice, InvoiceItem, TaxRate};
+use Centrex\Accounting\Enums\CreditMemoStatus;
+use Centrex\Accounting\Models\{Account, CreditMemo, Customer, Invoice, InvoiceItem, TaxRate};
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\{Computed, On};
 use Livewire\Component;
@@ -41,6 +42,8 @@ class Invoices extends Component
     public string $pay_method = 'bank_transfer';
 
     public string $pay_account_code = '';
+
+    public string $pay_credit_memo_id = '';
 
     public string $pay_reference = '';
 
@@ -250,6 +253,25 @@ class Invoices extends Component
         return $this->payingInvoiceId ? Invoice::find($this->payingInvoiceId) : null;
     }
 
+    /** The paying invoice's customer's other credit memos that still have cash left to apply. */
+    #[Computed]
+    public function availableCreditMemos(): \Illuminate\Support\Collection
+    {
+        $invoice = $this->payingInvoice;
+
+        if (!$invoice) {
+            return collect();
+        }
+
+        return CreditMemo::where('customer_id', $invoice->customer_id)
+            ->where('invoice_id', '!=', $invoice->id)
+            ->whereIn('status', [CreditMemoStatus::ISSUED, CreditMemoStatus::PARTIALLY_REFUNDED])
+            ->with('invoice')
+            ->get()
+            ->filter(fn (CreditMemo $memo): bool => $memo->refundable_amount > 0)
+            ->values();
+    }
+
     #[On('invoice-table:pay')]
     public function openPayModal(int $id): void
     {
@@ -259,6 +281,7 @@ class Invoices extends Component
         $this->pay_amount = number_format($invoice->balance, 2, '.', '');
         $this->pay_method = 'bank_transfer';
         $this->pay_account_code = '';
+        $this->pay_credit_memo_id = '';
         $this->pay_reference = '';
         $this->pay_notes = '';
         $this->pay_charge_amount = '';
@@ -268,6 +291,12 @@ class Invoices extends Component
 
     public function recordPayment(): void
     {
+        if ($this->pay_method === 'credit_memo') {
+            $this->applyCreditMemoPayment();
+
+            return;
+        }
+
         $this->validate([
             'pay_date'                => 'required|date',
             'pay_amount'              => 'required|numeric|min:0.01',
@@ -307,6 +336,47 @@ class Invoices extends Component
         }
     }
 
+    /** Settle the invoice from another invoice's credit memo instead of cash — see Accounting::applyCreditMemoToInvoice(). */
+    protected function applyCreditMemoPayment(): void
+    {
+        $this->validate([
+            'pay_date'           => 'required|date',
+            'pay_amount'         => 'required|numeric|min:0.01',
+            'pay_credit_memo_id' => 'required|integer',
+        ]);
+
+        $invoice = Invoice::findOrFail($this->payingInvoiceId);
+
+        if ((float) $this->pay_amount > $invoice->balance + 0.005) {
+            $this->addError('pay_amount', 'Amount cannot exceed the outstanding balance of ' . $invoice->currency . ' ' . number_format($invoice->balance, 2) . '.');
+
+            return;
+        }
+
+        $creditMemo = CreditMemo::findOrFail($this->pay_credit_memo_id);
+
+        if ((float) $this->pay_amount > $creditMemo->refundable_amount + 0.005) {
+            $this->addError('pay_amount', 'Amount cannot exceed the credit memo\'s available balance of ' . number_format($creditMemo->refundable_amount, 2) . '.');
+
+            return;
+        }
+
+        try {
+            app(Accounting::class)->applyCreditMemoToInvoice($creditMemo, $invoice, [
+                'date'      => $this->pay_date,
+                'amount'    => $this->pay_amount,
+                'reference' => $this->pay_reference ?: null,
+                'notes'     => $this->pay_notes ?: null,
+            ]);
+
+            $this->dispatch('notify', type: 'success', message: "Applied {$creditMemo->credit_memo_number} to the invoice successfully!");
+            $this->showPayModal = false;
+            $this->dispatch('invoice-table:refresh');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+        }
+    }
+
     public function getSubtotalProperty(): float
     {
         return collect($this->items)->sum(fn ($i): int|float => ($i['quantity'] ?? 0) * ($i['unit_price'] ?? 0));
@@ -326,9 +396,29 @@ class Invoices extends Component
         return $this->subtotal + $this->taxTotal;
     }
 
+    /**
+     * Active customers for the invoice form's picker.
+     *
+     * Persisted across Livewire round-trips rather than re-queried in render(): this list
+     * is the same for every request that hits this page, but render() runs on every action
+     * (opening the modal, editing a line, paginating), so it was re-fetching and re-hydrating
+     * the whole customer table each time. Only the columns the <option> markup actually
+     * reads are selected.
+     *
+     * @return \Illuminate\Support\Collection<int, Customer>
+     */
+    #[Computed(persist: true, seconds: 300)]
+    public function customers(): \Illuminate\Support\Collection
+    {
+        return Customer::without('media')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'organization_name']);
+    }
+
     public function render(): \Illuminate\Contracts\View\View
     {
-        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        $customers = $this->customers();
 
         $layout = view()->exists('layouts.app')
         ? 'layouts.app'

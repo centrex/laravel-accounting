@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            color: #1f2937;
+            font-size: 11px;
+            margin: 24px;
+        }
+        h1 {
+            margin: 0 0 6px;
+            font-size: 24px;
+        }
+        .meta {
+            margin-bottom: 14px;
+            color: #6b7280;
+            font-size: 10px;
+        }
+        .header {
+            display: table;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+        .header .col {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .header .col.right {
+            text-align: right;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            color: #374151;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .section-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+        .info-grid .col {
+            display: table-cell;
+            width: 25%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+        th, td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #f3f4f6;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #4b5563;
+        }
+        .mono {
+            font-family: DejaVu Sans Mono, monospace;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .muted {
+            color: #6b7280;
+        }
+        .totals {
+            width: 45%;
+            margin-left: auto;
+        }
+        .totals td {
+            border-bottom: none;
+            padding: 4px 8px;
+        }
+        .totals .grand td {
+            border-top: 1px solid #1f2937;
+            font-weight: bold;
+            padding-top: 8px;
+        }
+        .notes {
+            margin-top: 18px;
+            padding: 10px 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .empty {
+            padding: 18px 8px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    @include('accounting::pdf.partials.letterhead', [
+        'company'        => config('accounting.company', []),
+        'documentTitle'  => 'Invoice',
+        'documentNumber' => $invoice->invoice_number,
+        'statusLabel'    => str($invoice->status->value ?? $invoice->status)->replace('_', ' ')->title(),
+        'generatedAt'    => $generatedAt,
+    ])
+
+    <div class="info-grid">
+        <div class="col">
+            <div class="section-title">Bill To</div>
+            <div><strong>{{ $invoice->customer?->name ?? 'Unknown customer' }}</strong></div>
+            @if($invoice->customer?->email)
+                <div class="muted">{{ $invoice->customer->email }}</div>
+            @endif
+            @if($invoice->customer?->phone)
+                <div class="muted">{{ $invoice->customer->phone }}</div>
+            @endif
+            @if($invoice->customer?->address)
+                <div class="muted">{{ $invoice->customer->address }}</div>
+            @endif
+        </div>
+        <div class="col">
+            <div class="section-title">Invoice Date</div>
+            <div>{{ $invoice->invoice_date?->format('M d, Y') }}</div>
+        </div>
+        <div class="col">
+            <div class="section-title">Due Date</div>
+            <div>{{ $invoice->due_date?->format('M d, Y') }}</div>
+        </div>
+        <div class="col">
+            <div class="section-title">Currency</div>
+            <div>{{ $invoice->currency }} @if((float) $invoice->exchange_rate !== 1.0) <span class="muted">(rate {{ number_format((float) $invoice->exchange_rate, 4) }})</span> @endif</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right" style="width: 10%;">Qty</th>
+                <th class="text-right" style="width: 16%;">Unit Price</th>
+                <th class="text-right" style="width: 14%;">Tax</th>
+                <th class="text-right" style="width: 16%;">Line Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($invoice->items as $item)
+                <tr>
+                    <td>{{ $item->description }}</td>
+                    <td class="text-right mono">{{ number_format((float) $item->quantity, 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->unit_price), 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->tax_amount), 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->total), 2) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="empty">No line items recorded.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr>
+            <td>Subtotal</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_subtotal, 2) }}</td>
+        </tr>
+        <tr>
+            <td>Tax</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_tax_amount, 2) }}</td>
+        </tr>
+        @if((float) $invoice->discount_amount > 0)
+            <tr>
+                <td>Discount</td>
+                <td class="text-right mono">-{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_discount_amount, 2) }}</td>
+            </tr>
+        @endif
+        @if((float) $invoice->shipping_amount > 0)
+            <tr>
+                <td>Shipping</td>
+                <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_shipping_amount, 2) }}</td>
+            </tr>
+        @endif
+        <tr class="grand">
+            <td>Total</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_total, 2) }}</td>
+        </tr>
+        <tr>
+            <td>Paid</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_paid_amount, 2) }}</td>
+        </tr>
+        <tr>
+            <td><strong>Balance Due</strong></td>
+            <td class="text-right mono"><strong>{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_balance, 2) }}</strong></td>
+        </tr>
+    </table>
+
+    @if($invoice->notes)
+        <div class="notes">
+            <div class="section-title">Notes</div>
+            <div>{{ $invoice->notes }}</div>
+        </div>
+    @endif
+</body>
+</html>

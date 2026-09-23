@@ -5,11 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Feature;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Models\Account;
-use Centrex\Accounting\Models\Bill;
-use Centrex\Accounting\Models\Customer;
-use Centrex\Accounting\Models\Invoice;
-use Centrex\Accounting\Models\Vendor;
+use Centrex\Accounting\Models\{Account, Bill, Customer, Invoice, Vendor};
 use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -70,7 +66,7 @@ class SbuReportingTest extends TestCase
 
     public function test_post_invoice_infers_sbu_from_linked_inventory_customer(): void
     {
-        if (! class_exists('Centrex\\Inventory\\Models\\Customer')) {
+        if (!class_exists('Centrex\\Inventory\\Models\\Customer')) {
             $this->markTestSkipped('Inventory package is not available.');
         }
 
@@ -82,29 +78,29 @@ class SbuReportingTest extends TestCase
         ]);
 
         $customer = Customer::query()->create([
-            'code' => 'CUST-001',
-            'name' => 'Accounting Customer',
-            'currency' => 'BDT',
+            'code'           => 'CUST-001',
+            'name'           => 'Accounting Customer',
+            'currency'       => 'BDT',
             'modelable_type' => $inventoryCustomer::class,
-            'modelable_id' => $inventoryCustomer->getKey(),
+            'modelable_id'   => $inventoryCustomer->getKey(),
         ]);
 
         $invoice = Invoice::query()->create([
-            'customer_id' => $customer->id,
-            'invoice_date' => now()->toDateString(),
-            'due_date' => now()->addDays(30)->toDateString(),
-            'subtotal' => 100,
-            'tax_amount' => 10,
+            'customer_id'     => $customer->id,
+            'invoice_date'    => now()->toDateString(),
+            'due_date'        => now()->addDays(30)->toDateString(),
+            'subtotal'        => 100,
+            'tax_amount'      => 10,
             'discount_amount' => 0,
-            'total' => 110,
-            'currency' => 'BDT',
-            'status' => 'draft',
+            'total'           => 110,
+            'currency'        => 'BDT',
+            'status'          => 'draft',
         ]);
 
         $entry = $this->accounting->postInvoice($invoice);
         $payment = $this->accounting->recordInvoicePayment($invoice->fresh(), [
             'amount' => 110,
-            'date' => now()->toDateString(),
+            'date'   => now()->toDateString(),
             'method' => 'cash',
         ]);
 
@@ -114,7 +110,7 @@ class SbuReportingTest extends TestCase
 
     public function test_post_bill_infers_sbu_from_linked_inventory_supplier(): void
     {
-        if (! class_exists('Centrex\\Inventory\\Models\\Supplier')) {
+        if (!class_exists('Centrex\\Inventory\\Models\\Supplier')) {
             $this->markTestSkipped('Inventory package is not available.');
         }
 
@@ -126,28 +122,28 @@ class SbuReportingTest extends TestCase
         ]);
 
         $vendor = Vendor::query()->create([
-            'code' => 'VEND-001',
-            'name' => 'Accounting Vendor',
-            'currency' => 'BDT',
+            'code'           => 'VEND-001',
+            'name'           => 'Accounting Vendor',
+            'currency'       => 'BDT',
             'modelable_type' => $inventorySupplier::class,
-            'modelable_id' => $inventorySupplier->getKey(),
+            'modelable_id'   => $inventorySupplier->getKey(),
         ]);
 
         $bill = Bill::query()->create([
-            'vendor_id' => $vendor->id,
-            'bill_date' => now()->toDateString(),
-            'due_date' => now()->addDays(30)->toDateString(),
-            'subtotal' => 100,
+            'vendor_id'  => $vendor->id,
+            'bill_date'  => now()->toDateString(),
+            'due_date'   => now()->addDays(30)->toDateString(),
+            'subtotal'   => 100,
             'tax_amount' => 10,
-            'total' => 110,
-            'currency' => 'BDT',
-            'status' => 'draft',
+            'total'      => 110,
+            'currency'   => 'BDT',
+            'status'     => 'draft',
         ]);
 
         $entry = $this->accounting->postBill($bill);
         $payment = $this->accounting->recordBillPayment($bill->fresh(), [
             'amount' => 110,
-            'date' => now()->toDateString(),
+            'date'   => now()->toDateString(),
             'method' => 'cash',
         ]);
 
@@ -173,11 +169,11 @@ class SbuReportingTest extends TestCase
     private function postEntry(string $date, int $debitAccountId, int $creditAccountId, float $amount, string $sbuCode): void
     {
         $entry = $this->accounting->createJournalEntry([
-            'date' => $date,
-            'reference' => 'SBU-' . $sbuCode . '-' . $date,
+            'date'        => $date,
+            'reference'   => 'SBU-' . $sbuCode . '-' . $date,
             'description' => 'SBU reporting test entry',
-            'sbu_code' => $sbuCode,
-            'lines' => [
+            'sbu_code'    => $sbuCode,
+            'lines'       => [
                 ['account_id' => $debitAccountId, 'type' => 'debit', 'amount' => $amount, 'description' => 'Debit line'],
                 ['account_id' => $creditAccountId, 'type' => 'credit', 'amount' => $amount, 'description' => 'Credit line'],
             ],

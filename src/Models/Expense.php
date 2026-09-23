@@ -13,19 +13,13 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Expense extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
         return 'expenses';
-    }
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [

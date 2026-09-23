@@ -112,16 +112,13 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="col">
-            <h1>Bill</h1>
-            <div class="meta">Generated {{ $generatedAt->format('F d, Y h:i A') }}</div>
-        </div>
-        <div class="col right">
-            <div class="mono" style="font-size: 14px;">{{ $bill->bill_number }}</div>
-            <div class="badge">{{ str($bill->status->value ?? $bill->status)->replace('_', ' ')->title() }}</div>
-        </div>
-    </div>
+    @include('accounting::pdf.partials.letterhead', [
+        'company'        => config('accounting.company', []),
+        'documentTitle'  => 'Bill',
+        'documentNumber' => $bill->bill_number,
+        'statusLabel'    => str($bill->status->value ?? $bill->status)->replace('_', ' ')->title(),
+        'generatedAt'    => $generatedAt,
+    ])
 
     <div class="info-grid">
         <div class="col">

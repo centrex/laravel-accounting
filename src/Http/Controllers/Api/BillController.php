@@ -9,6 +9,7 @@ use Centrex\Accounting\Exceptions\AccountingException;
 use Centrex\Accounting\Http\Requests\{RecordPaymentRequest, StoreBillRequest};
 use Centrex\Accounting\Http\Resources\{BillResource, ExpenseResource, PaymentResource};
 use Centrex\Accounting\Models\{Bill, BillItem};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\{DB, Log};
@@ -23,8 +24,8 @@ class BillController extends Controller
             ->with(['vendor'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->vendor_id, fn ($q) => $q->where('vendor_id', $request->vendor_id))
-            ->when($request->date_from, fn ($q) => $q->whereDate('bill_date', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->whereDate('bill_date', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->where('bill_date', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->where('bill_date', '<', DayRange::endOfDay($request->date_to)))
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request): void {
                 $q->where('bill_number', 'like', "%{$request->search}%")
                     ->orWhereHas('vendor', fn ($q) => $q->where('name', 'like', "%{$request->search}%"));

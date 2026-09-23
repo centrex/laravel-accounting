@@ -25,13 +25,6 @@ class CreditMemo extends Model implements Auditable
         return 'credit_memos';
     }
 
-    /** Specify the connection, since this implements multitenant solution. */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'credit_memo_number', 'invoice_id', 'customer_id', 'credit_memo_date', 'reason',
         'currency', 'exchange_rate', 'subtotal', 'tax_amount', 'total', 'amount_refunded',

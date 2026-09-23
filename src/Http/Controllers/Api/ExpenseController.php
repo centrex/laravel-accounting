@@ -8,6 +8,7 @@ use Centrex\Accounting\Facades\Accounting;
 use Centrex\Accounting\Http\Requests\StoreExpenseRequest;
 use Centrex\Accounting\Http\Resources\ExpenseResource;
 use Centrex\Accounting\Models\{Expense, ExpenseItem};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\{DB, Log};
@@ -19,8 +20,8 @@ class ExpenseController extends Controller
         $expenses = Expense::query()
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->account_id, fn ($q) => $q->where('account_id', $request->account_id))
-            ->when($request->date_from, fn ($q) => $q->whereDate('expense_date', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->whereDate('expense_date', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->where('expense_date', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->where('expense_date', '<', DayRange::endOfDay($request->date_to)))
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request): void {
                 $q->where('expense_number', 'like', "%{$request->search}%")
                     ->orWhere('vendor_name', 'like', "%{$request->search}%")

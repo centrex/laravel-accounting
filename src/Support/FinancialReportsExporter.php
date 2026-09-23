@@ -25,7 +25,7 @@ final class FinancialReportsExporter
      */
     public static function downloadReport(string $reportType, array $reportData, string $filename): StreamedResponse
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
         self::writeReportSheet($spreadsheet, 0, $reportType, $reportData);
 
@@ -36,7 +36,9 @@ final class FinancialReportsExporter
     {
         $service = app(Accounting::class);
 
-        $reports = [
+        // One memo scope for the whole pack — these seven reports overlap heavily on the
+        // same journal-line aggregate and account lookups.
+        $reports = $service->withSharedReportCache(static fn (): array => [
             'trial_balance'       => $service->getTrialBalance($startDate, $endDate, $sbuCode),
             'balance_sheet'       => $service->getBalanceSheet($endDate, $sbuCode),
             'income_statement'    => $service->getIncomeStatement($startDate, $endDate, $sbuCode),
@@ -44,9 +46,9 @@ final class FinancialReportsExporter
             'cash_flow_forecast'  => $service->getCashFlowForecast($endDate, sbuCode: $sbuCode),
             'cash_book'           => $service->getCashBook(null, $startDate, $endDate, $sbuCode),
             'sales_tax_liability' => $service->getSalesTaxLiabilityReport($startDate, $endDate, $sbuCode),
-        ];
+        ]);
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
         self::writeSummarySheet($spreadsheet, 0, $startDate, $endDate, $sbuCode, $reports);
 
