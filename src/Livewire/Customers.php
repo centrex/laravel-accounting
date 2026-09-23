@@ -132,7 +132,7 @@ class Customers extends Component
 
     public function render()
     {
-        $customerTable = (new Customer)->getTable();
+        $customerTable = (new Customer())->getTable();
 
         $customers = Customer::query()
             ->select("{$customerTable}.*")
