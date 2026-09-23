@@ -12,22 +12,12 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class FiscalPeriod extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
 
     protected function getTableSuffix(): string
     {
         return 'fiscal_periods';
-    }
-
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [

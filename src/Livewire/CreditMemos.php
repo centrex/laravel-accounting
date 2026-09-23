@@ -7,6 +7,7 @@ namespace Centrex\Accounting\Livewire;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Enums\CreditMemoStatus;
 use Centrex\Accounting\Models\{CreditMemo, Invoice};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Contracts\View\View;
 use Livewire\{Component, WithPagination};
 
@@ -125,8 +126,8 @@ class CreditMemos extends Component
                     ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', $like)->orWhere('organization_name', 'like', $like));
             }))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('credit_memo_date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('credit_memo_date', '<=', $this->dateTo))
+            ->when($this->dateFrom, fn ($q) => $q->where('credit_memo_date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->where('credit_memo_date', '<', DayRange::endOfDay($this->dateTo)))
             ->latest('created_at')
             ->paginate(config('accounting.per_page.credit_memos', 15));
 

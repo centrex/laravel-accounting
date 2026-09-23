@@ -9,6 +9,7 @@ use Centrex\Accounting\Exceptions\AccountingException;
 use Centrex\Accounting\Http\Requests\{RecordPaymentRequest, StoreInvoiceRequest};
 use Centrex\Accounting\Http\Resources\{ExpenseResource, InvoiceResource, PaymentResource};
 use Centrex\Accounting\Models\{Invoice, InvoiceItem};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\{DB, Log};
@@ -23,8 +24,8 @@ class InvoiceController extends Controller
             ->with(['customer'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->customer_id, fn ($q) => $q->where('customer_id', $request->customer_id))
-            ->when($request->date_from, fn ($q) => $q->whereDate('invoice_date', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->whereDate('invoice_date', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->where('invoice_date', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->where('invoice_date', '<', DayRange::endOfDay($request->date_to)))
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request): void {
                 $q->where('invoice_number', 'like', "%{$request->search}%")
                     ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$request->search}%"));

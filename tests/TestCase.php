@@ -32,6 +32,15 @@ class TestCase extends Orchestra
         );
 
         $this->artisan('migrate', ['--database' => 'testing'])->run();
+
+        // Media-library ships its table migration as a vendor:publish stub rather than an
+        // auto-discovered migration, so nothing creates it here. Customer and Vendor use
+        // HasPrimaryImage and eager-load the media relation, which needs the table to exist.
+        $mediaMigrationStub = __DIR__ . '/../vendor/spatie/laravel-medialibrary/database/migrations/create_media_table.php.stub';
+
+        if (file_exists($mediaMigrationStub) && !\Illuminate\Support\Facades\Schema::hasTable('media')) {
+            (require $mediaMigrationStub)->up();
+        }
     }
 
     protected function getPackageProviders($app)
@@ -55,6 +64,14 @@ class TestCase extends Orchestra
 
         if (class_exists(\Centrex\Inventory\InventoryServiceProvider::class)) {
             $providers[] = \Centrex\Inventory\InventoryServiceProvider::class;
+        }
+
+        // Customer/Vendor use HasPrimaryImage, so any query touching them needs
+        // media-library's config (getMediaModel() reads media-library.media_model and is
+        // typed to return a string). The provider auto-discovers in a real application —
+        // medialibrary is a hard require — but WithWorkbench does not register it here.
+        if (class_exists(\Spatie\MediaLibrary\MediaLibraryServiceProvider::class)) {
+            $providers[] = \Spatie\MediaLibrary\MediaLibraryServiceProvider::class;
         }
 
         if (class_exists(TallUiServiceProvider::class)) {

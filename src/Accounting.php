@@ -47,6 +47,7 @@ use Centrex\Accounting\Models\{
     TaxRate
 };
 use Centrex\Accounting\Models\Expense;
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\{Collection, Str};
@@ -249,13 +250,123 @@ class Accounting
     }
 
     /**
+     * Per-report memo for buildBalanceMap()/account-list lookups.
+     *
+     * null means memoisation is off — see {@see withReportMemo()} for why this is
+     * scoped to one report rather than kept for the life of the (singleton) instance.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $reportMemo = null;
+
+    /**
+     * Run $report with balance-map and account-list lookups memoised.
+     *
+     * The composite reports re-derive the same aggregate over and over: a balance sheet
+     * asks for it five times with identical arguments (three account types, plus two more
+     * inside getNetIncome()), a cash flow statement thirteen times, and the all-sheets
+     * Excel export around twenty — each one a full GROUP BY across every posted journal
+     * entry line, plus a repeat of the same Account lookup.
+     *
+     * This is deliberately *not* a request-lifetime cache. `accounting` is bound as a
+     * singleton, so holding results across a whole request would serve pre-write numbers
+     * to any report generated after a posting in the same request. Scoped to a single
+     * report call the underlying data cannot change, so the memo is always consistent.
+     *
+     * Nested calls (getCashFlowStatement() -> getBalanceSheet()) share the outer scope
+     * rather than opening their own, which is what collapses the repeats.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $report
+     * @return TReturn
+     */
+    private function withReportMemo(callable $report): mixed
+    {
+        if ($this->reportMemo !== null) {
+            return $report();
+        }
+
+        $this->reportMemo = [];
+
+        try {
+            return $report();
+        } finally {
+            $this->reportMemo = null;
+        }
+    }
+
+    /**
+     * Generate several reports for the same period under one shared memo scope, so the
+     * journal-line aggregate and account lookups they have in common are computed once
+     * across the whole batch rather than once per report.
+     *
+     * Intended for callers that emit a full report pack in a single pass (the all-sheets
+     * Excel export, the `accounting:report --type=all` command).
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $reports
+     * @return TReturn
+     */
+    public function withSharedReportCache(callable $reports): mixed
+    {
+        return $this->withReportMemo($reports);
+    }
+
+    /**
+     * Memoise $resolver under $key for the duration of the current withReportMemo() scope.
+     * Outside such a scope the value is always recomputed.
+     */
+    /**
+     * @template TValue
+     *
+     * @param  callable(): TValue  $resolver
+     * @return TValue
+     */
+    private function rememberForReport(string $key, callable $resolver): mixed
+    {
+        if ($this->reportMemo === null) {
+            return $resolver();
+        }
+
+        /** @var TValue */
+        return $this->reportMemo[$key] ??= $resolver();
+    }
+
+    /** Stable memo key for a (start, end, sbu) triple that may hold nulls, strings or Carbon instances. */
+    private function reportPeriodKey(mixed $startDate, mixed $endDate, ?string $sbuCode): string
+    {
+        $stringify = static fn (mixed $d): string => match (true) {
+            $d === null                      => '',
+            $d instanceof \DateTimeInterface => $d->format('Y-m-d'),
+            is_scalar($d)                    => (string) $d,
+            default                          => serialize($d),
+        };
+
+        return $stringify($startDate) . '|' . $stringify($endDate) . '|' . ($sbuCode ?? '');
+    }
+
+    /**
      * Single aggregated query for journal-entry-line balances.
      * Replaces the N+1 pattern (3 queries per account) in every report method.
      *
      * Returns a Collection keyed by account_id, each item having
      * `total_debit` and `total_credit` properties.
+     *
+     * @return Collection<int|string, object>
      */
     private function buildBalanceMap(mixed $startDate, mixed $endDate, ?string $sbuCode = null): Collection
+    {
+        /** @var Collection<int|string, object> */
+        return $this->rememberForReport(
+            'balances:' . $this->reportPeriodKey($startDate, $endDate, $sbuCode),
+            fn (): Collection => $this->queryBalanceMap($startDate, $endDate, $sbuCode),
+        );
+    }
+
+    /** @return Collection<int|string, object> */
+    private function queryBalanceMap(mixed $startDate, mixed $endDate, ?string $sbuCode): Collection
     {
         $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
@@ -265,8 +376,8 @@ class Accounting
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
             ->whereNull('je.deleted_at')
-            ->when($startDate, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
-            ->when($endDate, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->when($startDate, fn ($q) => $q->where('je.date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->where('je.date', '<', DayRange::endOfDay($endDate)))
             ->select([
                 'l.account_id',
                 DB::raw("SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as total_debit"),
@@ -451,7 +562,7 @@ class Accounting
                 Payment::where('payable_type', Invoice::class)
                     ->where('payable_id', $invoice->id)
                     ->where('amount', $amount)
-                    ->whereDate('payment_date', $paymentData['date'])
+                    ->tap(fn ($q) => DayRange::onDay($q, 'payment_date', $paymentData['date']))
                     ->where('payment_method', $paymentData['method'])
                     ->exists()
             ) {
@@ -696,7 +807,7 @@ class Accounting
                 Payment::where('payable_type', CreditMemo::class)
                     ->where('payable_id', $creditMemo->id)
                     ->where('amount', $amount)
-                    ->whereDate('payment_date', $paymentData['date'])
+                    ->tap(fn ($q) => DayRange::onDay($q, 'payment_date', $paymentData['date']))
                     ->where('payment_method', $paymentData['method'])
                     ->exists()
             ) {
@@ -986,7 +1097,7 @@ class Accounting
                 Payment::where('payable_type', Bill::class)
                     ->where('payable_id', $bill->id)
                     ->where('amount', $amount)
-                    ->whereDate('payment_date', $paymentData['date'])
+                    ->tap(fn ($q) => DayRange::onDay($q, 'payment_date', $paymentData['date']))
                     ->where('payment_method', $paymentData['method'])
                     ->exists()
             ) {
@@ -1267,7 +1378,7 @@ class Accounting
                 Payment::where('payable_type', Expense::class)
                     ->where('payable_id', $expense->id)
                     ->where('amount', $amount)
-                    ->whereDate('payment_date', $paymentData['date'])
+                    ->tap(fn ($q) => DayRange::onDay($q, 'payment_date', $paymentData['date']))
                     ->where('payment_method', $paymentData['method'])
                     ->exists()
             ) {
@@ -1320,7 +1431,10 @@ class Accounting
     public function getTrialBalance(mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
     {
         $tolerance = $this->tolerance();
-        $accounts = Account::where('is_active', true)->orderBy('code')->get();
+        $accounts = $this->rememberForReport(
+            'accounts:all-active',
+            fn (): Collection => Account::where('is_active', true)->orderBy('code')->get(),
+        );
         $balanceMap = $this->buildBalanceMap($startDate, $endDate, $sbuCode);
 
         $trialBalance = [];
@@ -1368,47 +1482,51 @@ class Accounting
     {
         $date ??= now();
 
-        $assets = $this->getAccountsByType('asset', $date, null, $sbuCode);
-        $liabilities = $this->getAccountsByType('liability', $date, null, $sbuCode);
-        $equity = $this->getAccountsByType('equity', $date, null, $sbuCode);
+        return $this->withReportMemo(function () use ($date, $sbuCode): array {
+            $assets = $this->getAccountsByType('asset', $date, null, $sbuCode);
+            $liabilities = $this->getAccountsByType('liability', $date, null, $sbuCode);
+            $equity = $this->getAccountsByType('equity', $date, null, $sbuCode);
 
-        $netIncome = $this->getNetIncome(null, $date, $sbuCode);
-        $retainedEarnings = ($equity['total'] ?? 0) + $netIncome;
+            $netIncome = $this->getNetIncome(null, $date, $sbuCode);
+            $retainedEarnings = ($equity['total'] ?? 0) + $netIncome;
 
-        return [
-            'date'        => $date,
-            'assets'      => $assets,
-            'liabilities' => $liabilities,
-            'equity'      => array_merge($equity, [
-                'net_income'        => $netIncome,
-                'retained_earnings' => $retainedEarnings,
-                'total_with_income' => $retainedEarnings,
-            ]),
-            'sbu_code'    => $this->normalizeSbuCode($sbuCode),
-            'is_balanced' => abs(
-                ($assets['total'] ?? 0) - (($liabilities['total'] ?? 0) + $retainedEarnings),
-            ) < ($this->tolerance() * 2),
-        ];
+            return [
+                'date'        => $date,
+                'assets'      => $assets,
+                'liabilities' => $liabilities,
+                'equity'      => array_merge($equity, [
+                    'net_income'        => $netIncome,
+                    'retained_earnings' => $retainedEarnings,
+                    'total_with_income' => $retainedEarnings,
+                ]),
+                'sbu_code'    => $this->normalizeSbuCode($sbuCode),
+                'is_balanced' => abs(
+                    ($assets['total'] ?? 0) - (($liabilities['total'] ?? 0) + $retainedEarnings),
+                ) < ($this->tolerance() * 2),
+            ];
+        });
     }
 
     /** Generate Income Statement (P&L). */
     public function getIncomeStatement(mixed $startDate, mixed $endDate, ?string $sbuCode = null): array
     {
-        $revenue = $this->getAccountsByType('revenue', $endDate, $startDate, $sbuCode);
-        $cogs = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, ['cost_of_goods_sold']);
-        $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, [], ['cost_of_goods_sold']);
+        return $this->withReportMemo(function () use ($startDate, $endDate, $sbuCode): array {
+            $revenue = $this->getAccountsByType('revenue', $endDate, $startDate, $sbuCode);
+            $cogs = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, ['cost_of_goods_sold']);
+            $expenses = $this->getAccountsByType('expense', $endDate, $startDate, $sbuCode, [], ['cost_of_goods_sold']);
 
-        $grossProfit = ($revenue['total'] ?? 0) - ($cogs['total'] ?? 0);
+            $grossProfit = ($revenue['total'] ?? 0) - ($cogs['total'] ?? 0);
 
-        return [
-            'period'       => ['start' => $startDate, 'end' => $endDate],
-            'revenue'      => $revenue,
-            'cogs'         => $cogs,
-            'expenses'     => $expenses,
-            'gross_profit' => $grossProfit,
-            'net_income'   => $grossProfit - ($expenses['total'] ?? 0),
-            'sbu_code'     => $this->normalizeSbuCode($sbuCode),
-        ];
+            return [
+                'period'       => ['start' => $startDate, 'end' => $endDate],
+                'revenue'      => $revenue,
+                'cogs'         => $cogs,
+                'expenses'     => $expenses,
+                'gross_profit' => $grossProfit,
+                'net_income'   => $grossProfit - ($expenses['total'] ?? 0),
+                'sbu_code'     => $this->normalizeSbuCode($sbuCode),
+            ];
+        });
     }
 
     /**
@@ -1419,6 +1537,17 @@ class Accounting
      * Financing  = changes in long-term liabilities (codes ≥ 2500) + equity.
      */
     public function getCashFlowStatement(mixed $startDate = null, mixed $endDate = null, ?string $sbuCode = null): array
+    {
+        // Two balance sheets plus an income statement would otherwise re-run the same
+        // journal-line aggregate thirteen times; one shared memo scope makes it two
+        // (opening period and closing period).
+        return $this->withReportMemo(
+            fn (): array => $this->computeCashFlowStatement($startDate, $endDate, $sbuCode),
+        );
+    }
+
+    /** @return array<string, mixed> */
+    private function computeCashFlowStatement(mixed $startDate, mixed $endDate, ?string $sbuCode): array
     {
         $start = $startDate ? Carbon::parse($startDate) : now()->startOfYear();
         $end = $endDate ? Carbon::parse($endDate) : now();
@@ -1750,7 +1879,7 @@ class Accounting
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
             ->whereIn('l.account_id', $accountIds->all())
-            ->whereDate('je.date', '<=', $date->toDateString())
+            ->where('je.date', '<', DayRange::endOfDay($date->toDateString()))
             ->selectRaw(
                 "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
                 SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
@@ -1788,8 +1917,8 @@ class Accounting
                 ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
                 ->where('je.status', 'posted')
                 ->whereIn('l.account_id', $accountIds->all())
-                ->whereDate('je.date', '>=', $lookbackStart->toDateString())
-                ->whereDate('je.date', '<', $asOf->toDateString())
+                ->where('je.date', '>=', $lookbackStart->toDateString())
+                ->where('je.date', '<', $asOf->toDateString())
                 ->selectRaw(
                     "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
                     SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
@@ -1801,15 +1930,18 @@ class Accounting
 
         $paymentsQuery = Payment::query()
             ->whereIn('payable_type', [Invoice::class, Bill::class])
-            ->whereDate('payment_date', '>=', $lookbackStart->toDateString())
-            ->whereDate('payment_date', '<', $asOf->toDateString());
+            ->where('payment_date', '>=', $lookbackStart->toDateString())
+            ->where('payment_date', '<', $asOf->toDateString());
 
         if ($sbuCode !== null) {
             $paymentsQuery->whereHas('journalEntry', fn ($q) => $q->where('sbu_code', $sbuCode));
         }
 
-        $invoicePayments = (float) (clone $paymentsQuery)->where('payable_type', Invoice::class)->sum('amount');
-        $billPayments = (float) (clone $paymentsQuery)->where('payable_type', Bill::class)->sum('amount');
+        // Only real cash/bank movements here — Payment::scopeCashMovement() is the single
+        // place that knows which payment_method values (e.g. 'credit_memo') settle a payable
+        // without moving cash, so this stays correct as new non-cash methods are added.
+        $invoicePayments = (float) (clone $paymentsQuery)->where('payable_type', Invoice::class)->cashMovement()->sum('amount');
+        $billPayments = (float) (clone $paymentsQuery)->where('payable_type', Bill::class)->cashMovement()->sum('amount');
 
         $otherNetCashFlow = $netCashMovement - ($invoicePayments - $billPayments);
         $daily = $lookbackDays > 0 ? $otherNetCashFlow / $lookbackDays : 0.0;
@@ -1855,7 +1987,7 @@ class Accounting
                 ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
                 ->where('je.status', 'posted')
                 ->whereIn('l.account_id', $accountIds)
-                ->whereDate('je.date', '<', $startDate)
+                ->where('je.date', '<', $startDate)
                 ->groupBy('l.account_id')
                 ->selectRaw(
                     "l.account_id,
@@ -1870,8 +2002,8 @@ class Accounting
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
             ->whereIn('l.account_id', $accountIds)
-            ->when($startDate !== null, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
-            ->when($endDate !== null, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->when($startDate !== null, fn ($q) => $q->where('je.date', '>=', $startDate))
+            ->when($endDate !== null, fn ($q) => $q->where('je.date', '<', DayRange::endOfDay($endDate)))
             ->orderBy('l.account_id')
             ->orderBy('je.date')
             ->orderBy('je.id')
@@ -2009,7 +2141,7 @@ class Accounting
                 ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
                 ->where('je.status', 'posted')
                 ->whereIn('l.account_id', $accountIds)
-                ->whereDate('je.date', '<', $startDate)
+                ->where('je.date', '<', $startDate)
                 ->selectRaw(
                     "SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE 0 END) as total_debit,
                     SUM(CASE WHEN l.type = 'credit' THEN l.amount ELSE 0 END) as total_credit",
@@ -2024,8 +2156,8 @@ class Accounting
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
             ->whereIn('l.account_id', $accountIds)
-            ->when($startDate !== null, fn ($q) => $q->whereDate('je.date', '>=', $startDate))
-            ->when($endDate !== null, fn ($q) => $q->whereDate('je.date', '<=', $endDate))
+            ->when($startDate !== null, fn ($q) => $q->where('je.date', '>=', $startDate))
+            ->when($endDate !== null, fn ($q) => $q->where('je.date', '<', DayRange::endOfDay($endDate)))
             ->orderBy('je.date')
             ->orderBy('je.id')
             ->orderBy('l.id')
@@ -2339,22 +2471,22 @@ class Accounting
         $unpostedJournals = $db->table("{$prefix}journal_entries")
             ->whereNull('deleted_at')
             ->where('status', 'draft')
-            ->whereDate('date', '>=', $period->start_date)
-            ->whereDate('date', '<=', $period->end_date)
+            ->where('date', '>=', $period->start_date)
+            ->where('date', '<=', $period->end_date)
             ->count();
 
         $openInvoices = $db->table("{$prefix}invoices")
             ->whereNull('deleted_at')
             ->whereIn('status', ['draft', 'sent'])
-            ->whereDate('invoice_date', '>=', $period->start_date)
-            ->whereDate('invoice_date', '<=', $period->end_date)
+            ->where('invoice_date', '>=', $period->start_date)
+            ->where('invoice_date', '<=', $period->end_date)
             ->count();
 
         $openBills = $db->table("{$prefix}bills")
             ->whereNull('deleted_at')
             ->whereIn('status', ['draft', 'sent'])
-            ->whereDate('bill_date', '>=', $period->start_date)
-            ->whereDate('bill_date', '<=', $period->end_date)
+            ->where('bill_date', '>=', $period->start_date)
+            ->where('bill_date', '<=', $period->end_date)
             ->count();
 
         return [
@@ -2475,7 +2607,7 @@ class Accounting
             ->where('je.status', 'posted')
             ->whereNull('je.deleted_at')
             ->where('l.account_id', $account->id)
-            ->when($asOfDate, fn ($q) => $q->whereDate('je.date', '<=', $asOfDate))
+            ->when($asOfDate, fn ($q) => $q->where('je.date', '<', DayRange::endOfDay($asOfDate)))
             ->selectRaw("SUM(CASE WHEN l.type = 'debit' THEN l.amount ELSE -l.amount END) as balance")
             ->first();
 
@@ -2493,8 +2625,8 @@ class Accounting
             ->join("{$prefix}journal_entries as je", 'je.id', '=', 'l.journal_entry_id')
             ->where('je.status', 'posted')
             ->whereNull('je.deleted_at')
-            ->whereDate('je.date', '>=', $period->start_date)
-            ->whereDate('je.date', '<=', $period->end_date)
+            ->where('je.date', '>=', $period->start_date)
+            ->where('je.date', '<=', $period->end_date)
             ->select([
                 'l.account_id',
                 DB::raw("SUM(CASE WHEN l.type = 'debit'  THEN l.amount ELSE 0 END) as debit"),
@@ -2633,8 +2765,8 @@ class Accounting
     public function getBudgetSummary(string $startDate, string $endDate): array
     {
         $budgets = Budget::where('status', 'approved')
-            ->whereDate('period_start', '<=', $endDate)
-            ->whereDate('period_end', '>=', $startDate)
+            ->where('period_start', '<=', $endDate)
+            ->where('period_end', '>=', $startDate)
             ->with(['items.account', 'fiscalYear'])
             ->get();
 
@@ -4185,10 +4317,13 @@ class Accounting
     protected function getAccountsByType(string $type, mixed $endDate, mixed $startDate = null, ?string $sbuCode = null, array $onlySubtypes = [], array $excludeSubtypes = []): array
     {
         $tolerance = $this->tolerance();
-        $accounts = Account::where('type', $type)->where('is_active', true)
-            ->when($onlySubtypes !== [], fn ($q) => $q->whereIn('subtype', $onlySubtypes))
-            ->when($excludeSubtypes !== [], fn ($q) => $q->whereNotIn('subtype', $excludeSubtypes))
-            ->orderBy('code')->get();
+        $accounts = $this->rememberForReport(
+            'accounts:' . $type . '|' . implode(',', $onlySubtypes) . '|' . implode(',', $excludeSubtypes),
+            fn (): Collection => Account::where('type', $type)->where('is_active', true)
+                ->when($onlySubtypes !== [], fn ($q) => $q->whereIn('subtype', $onlySubtypes))
+                ->when($excludeSubtypes !== [], fn ($q) => $q->whereNotIn('subtype', $excludeSubtypes))
+                ->orderBy('code')->get(),
+        );
         $balanceMap = $this->buildBalanceMap($startDate, $endDate, $sbuCode);
 
         $accountsData = [];

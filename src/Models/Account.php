@@ -25,16 +25,6 @@ class Account extends Model implements Auditable
         return 'accounts';
     }
 
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
-    }
-
     protected $fillable = [
         'code', 'name', 'type', 'subtype', 'parent_id',
         'description', 'currency', 'is_active', 'is_system', 'level',

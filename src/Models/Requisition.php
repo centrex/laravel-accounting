@@ -14,19 +14,13 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Requisition extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
         return 'requisitions';
-    }
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [
@@ -126,9 +120,9 @@ class Requisition extends Model implements Auditable
     public function markConverted(string $toType, int $toId): void
     {
         $this->update([
-            'status'           => RequisitionStatus::CONVERTED,
+            'status'            => RequisitionStatus::CONVERTED,
             'converted_to_type' => $toType,
-            'converted_to_id'  => $toId,
+            'converted_to_id'   => $toId,
         ]);
     }
 

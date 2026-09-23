@@ -7,6 +7,7 @@ namespace Centrex\Accounting\Livewire;
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Concerns\ShowsAuditTrail;
 use Centrex\Accounting\Models\{Account, Bill, Expense, Invoice, JournalEntry};
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\{Component, WithPagination};
@@ -50,7 +51,6 @@ class JournalEntries extends Component
     public function mount(): void
     {
         $this->resetForm();
-
 
         if (request()->boolean('create')) {
             $this->showModal = true;
@@ -114,9 +114,9 @@ class JournalEntries extends Component
         $this->description = $entry->description;
         $this->lines = $entry->lines
             ->map(fn (mixed $line): array => [
-                'account_id' => $line->account_id,
-                'type' => $line->type,
-                'amount' => (float) $line->amount,
+                'account_id'  => $line->account_id,
+                'type'        => $line->type,
+                'amount'      => (float) $line->amount,
                 'description' => $line->description,
             ])
             ->values()
@@ -146,7 +146,7 @@ class JournalEntries extends Component
 
     public function editViewingEntry(): void
     {
-        if (! $this->viewingEntry) {
+        if (!$this->viewingEntry) {
             return;
         }
 
@@ -189,9 +189,9 @@ class JournalEntries extends Component
                     }
 
                     $entry->update([
-                        'date' => $this->date,
-                        'reference' => $this->reference,
-                        'type' => $this->type,
+                        'date'        => $this->date,
+                        'reference'   => $this->reference,
+                        'type'        => $this->type,
                         'description' => $this->description,
                     ]);
 
@@ -199,9 +199,9 @@ class JournalEntries extends Component
 
                     foreach ($this->lines as $line) {
                         $entry->lines()->create([
-                            'account_id' => $line['account_id'],
-                            'type' => strtolower((string) $line['type']),
-                            'amount' => $line['amount'],
+                            'account_id'  => $line['account_id'],
+                            'type'        => strtolower((string) $line['type']),
+                            'amount'      => $line['amount'],
                             'description' => $line['description'] ?? null,
                         ]);
                     }
@@ -301,8 +301,8 @@ class JournalEntries extends Component
                 });
             })
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('date', '<=', $this->dateTo))
+            ->when($this->dateFrom, fn ($q) => $q->where('date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->where('date', '<', DayRange::endOfDay($this->dateTo)))
             ->latest('date')
             ->paginate(15);
 

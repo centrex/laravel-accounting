@@ -8,6 +8,7 @@ use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Http\Requests\StoreJournalEntryRequest;
 use Centrex\Accounting\Http\Resources\JournalEntryResource;
 use Centrex\Accounting\Models\JournalEntry;
+use Centrex\Accounting\Support\DayRange;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;
 
@@ -20,8 +21,8 @@ class JournalEntryController extends Controller
         $entries = JournalEntry::query()
             ->with(['lines.account', 'creator'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->when($request->date_from, fn ($q) => $q->whereDate('date', '>=', $request->date_from))
-            ->when($request->date_to, fn ($q) => $q->whereDate('date', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->where('date', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->where('date', '<', DayRange::endOfDay($request->date_to)))
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request): void {
                 $q->where('entry_number', 'like', "%{$request->search}%")
                     ->orWhere('description', 'like', "%{$request->search}%")

@@ -14,23 +14,13 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class JournalEntry extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
     use SoftDeletes;
 
     protected function getTableSuffix(): string
     {
         return 'journal_entries';
-    }
-
-    /**
-     * Specify the connection, since this implements multitenant solution
-     * Called via constructor to faciliate testing
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [
@@ -127,20 +117,20 @@ class JournalEntry extends Model implements Auditable
         if (!$bypassPeriodLock && config('accounting.enforce_period_lock', true)) {
             $isClosed = FiscalPeriod::query()
                 ->where('is_closed', true)
-                ->whereDate('start_date', '<=', $this->date)
-                ->whereDate('end_date', '>=', $this->date)
+                ->where('start_date', '<=', $this->date)
+                ->where('end_date', '>=', $this->date)
                 ->exists();
 
             if ($isClosed) {
                 throw new AccountingException(
-                    "Cannot post to a closed period. Entry date {$this->date->format('Y-m-d')} falls in a locked accounting period."
+                    "Cannot post to a closed period. Entry date {$this->date->format('Y-m-d')} falls in a locked accounting period.",
                 );
             }
         }
 
         if (config('accounting.enforce_sod', true) && $this->submitted_by !== null && $this->submitted_by === auth()->id()) {
             throw new AccountingException(
-                'Segregation of duties: the user who submitted this entry for approval cannot also post it.'
+                'Segregation of duties: the user who submitted this entry for approval cannot also post it.',
             );
         }
 

@@ -12,18 +12,12 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class PeriodInventorySnapshot extends Model implements Auditable
 {
-    use AuditableTrait;
     use AddTablePrefix;
+    use AuditableTrait;
 
     protected function getTableSuffix(): string
     {
         return 'period_inventory_snapshots';
-    }
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->setConnection(config('accounting.drivers.database.connection', config('database.default')));
     }
 
     protected $fillable = [
