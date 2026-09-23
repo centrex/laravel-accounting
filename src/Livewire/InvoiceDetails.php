@@ -252,6 +252,27 @@ class InvoiceDetails extends Component
         }
     }
 
+    public function exportPdf()
+    {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            session()->flash('error', 'PDF export is not available in this environment.');
+
+            return null;
+        }
+
+        $this->invoice->load(['customer', 'items']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.invoice', [
+            'invoice'     => $this->invoice,
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            static fn () => print ($pdf->output()),
+            $this->invoice->invoice_number . '.pdf',
+        );
+    }
+
     public function render(): View
     {
         // Always re-load relations — Livewire re-hydrates model properties

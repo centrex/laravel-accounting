@@ -38,9 +38,9 @@ class GeneralLedger extends Component
     {
         $this->validate([
             'accountId' => ['nullable', 'integer'],
-            'sbuCode' => ['nullable', 'string', 'max:50'],
+            'sbuCode'   => ['nullable', 'string', 'max:50'],
             'startDate' => ['nullable', 'date'],
-            'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+            'endDate'   => ['nullable', 'date', 'after_or_equal:startDate'],
         ]);
 
         try {
@@ -63,7 +63,7 @@ class GeneralLedger extends Component
             return null;
         }
 
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             session()->flash('error', 'PDF export is not available in this environment.');
 
             return null;
@@ -81,15 +81,15 @@ class GeneralLedger extends Component
             : null;
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('accounting::pdf.general-ledger', [
-            'ledgerData' => $ledgerData,
+            'ledgerData'      => $ledgerData,
             'selectedAccount' => $selectedAccount,
             'selectedSbuCode' => $this->sbuCode !== '' ? strtoupper($this->sbuCode) : null,
-            'currency' => $this->currency,
-            'generatedAt' => now(),
+            'currency'        => $this->currency,
+            'generatedAt'     => now(),
         ]);
 
         return response()->streamDownload(
-            static fn () => print($pdf->output()),
+            static fn () => print ($pdf->output()),
             'general-ledger-' . now()->format('Ymd_His') . '.pdf',
         );
     }

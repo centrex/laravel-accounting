@@ -13,8 +13,8 @@ use Livewire\{Component, WithPagination};
 
 class Budgets extends Component
 {
-    use WithCurrency;
     use ShowsAuditTrail;
+    use WithCurrency;
     use WithPagination;
 
     public string $search = '';

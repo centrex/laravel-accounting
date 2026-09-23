@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Centrex\Accounting\Http\Controllers\Api;
 
 use Centrex\Accounting\Accounting;
-use Centrex\Accounting\Http\Resources\{BudgetResource};
+use Centrex\Accounting\Http\Resources\BudgetResource;
 use Centrex\Accounting\Models\{Budget, BudgetItem};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Routing\Controller;

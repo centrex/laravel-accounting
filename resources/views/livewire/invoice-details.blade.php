@@ -65,6 +65,7 @@
 <x-tallui-page-header title="Invoice {{ $invoice->invoice_number }}" subtitle="Customer invoice details and payment history" icon="o-document-text">
     <x-slot:actions>
         <a href="{{ route('accounting.invoices') }}" class="btn btn-ghost btn-sm">Back to Invoices</a>
+        <x-tallui-button wire:click="exportPdf" spinner="exportPdf" icon="o-arrow-down-tray" class="btn-outline btn-sm">Print Invoice</x-tallui-button>
         @if(!in_array($status, ['void']))
             <button wire:click="openDiscountModal" class="btn btn-outline btn-sm">
                 Record Discount

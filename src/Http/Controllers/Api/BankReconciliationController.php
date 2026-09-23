@@ -49,12 +49,12 @@ class BankReconciliationController extends Controller
     public function importStatementLines(Request $request, BankReconciliation $bankReconciliation): JsonResponse
     {
         $request->validate([
-            'rows'                       => ['required', 'array', 'min:1'],
-            'rows.*.transaction_date'    => ['required', 'date'],
+            'rows'                      => ['required', 'array', 'min:1'],
+            'rows.*.transaction_date'   => ['required', 'date'],
             'rows.*.description'        => ['required', 'string'],
-            'rows.*.amount'              => ['required', 'numeric'],
-            'rows.*.type'                => ['required', 'in:debit,credit'],
-            'rows.*.external_reference'  => ['nullable', 'string'],
+            'rows.*.amount'             => ['required', 'numeric'],
+            'rows.*.type'               => ['required', 'in:debit,credit'],
+            'rows.*.external_reference' => ['nullable', 'string'],
         ]);
 
         try {
@@ -69,7 +69,7 @@ class BankReconciliationController extends Controller
     public function match(Request $request, BankReconciliation $bankReconciliation): JsonResponse
     {
         $request->validate([
-            'statement_line_id' => ['required', 'integer'],
+            'statement_line_id'     => ['required', 'integer'],
             'journal_entry_line_id' => ['required', 'integer'],
         ]);
 

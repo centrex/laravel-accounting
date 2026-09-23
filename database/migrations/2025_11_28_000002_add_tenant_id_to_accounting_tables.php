@@ -32,7 +32,7 @@ return new class() extends Migration
 
     public function up(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         foreach ($this->rootTables($prefix) as $table) {
@@ -44,7 +44,7 @@ return new class() extends Migration
 
     public function down(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         foreach ($this->rootTables($prefix) as $table) {

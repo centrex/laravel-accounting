@@ -86,11 +86,11 @@ class BankReconciliationDetails extends Component
             }
 
             $rows[] = [
-                'transaction_date'    => $date,
-                'description'         => $description,
-                'amount'              => (float) $amount,
-                'type'                => strtolower($type),
-                'external_reference'  => $reference ?: null,
+                'transaction_date'   => $date,
+                'description'        => $description,
+                'amount'             => (float) $amount,
+                'type'               => strtolower($type),
+                'external_reference' => $reference ?: null,
             ];
         }
 
@@ -146,8 +146,8 @@ class BankReconciliationDetails extends Component
             app(Accounting::class)->createAdjustingJournalEntryForStatementLine(
                 BankStatementLine::findOrFail($this->adjustingStatementLineId),
                 [
-                    'description'        => $this->adjust_description ?: null,
-                    'offset_account_id'  => $this->adjust_offset_account_id,
+                    'description'       => $this->adjust_description ?: null,
+                    'offset_account_id' => $this->adjust_offset_account_id,
                 ],
             );
 

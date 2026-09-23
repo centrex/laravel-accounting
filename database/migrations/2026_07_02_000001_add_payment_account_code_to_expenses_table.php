@@ -10,7 +10,7 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         Schema::connection($connection)->table($prefix . 'expenses', function (Blueprint $table): void {
@@ -20,7 +20,7 @@ return new class() extends Migration
 
     public function down(): void
     {
-        $prefix     = config('accounting.table_prefix', 'acct_');
+        $prefix = config('accounting.table_prefix', 'acct_');
         $connection = config('accounting.drivers.database.connection', config('database.default'));
 
         Schema::connection($connection)->table($prefix . 'expenses', function (Blueprint $table): void {

@@ -188,7 +188,6 @@ final class AccountingDemoCommand extends Command
         ] as $v) {
             Vendor::firstOrCreate(['code' => $v['code']], $v);
         }
-
     }
 
     /* ═══════════════════════════════════════════════════════════════════════
@@ -849,7 +848,7 @@ final class AccountingDemoCommand extends Command
             'period_end'     => $end->copy()->endOfMonth()->toDateString(),
             'total_amount'   => 22_000_000,
             'notes'          => 'Q1 budget: payroll, marketing, rent/utilities, misc across 3 BUs',
-            'items' => [
+            'items'          => [
                 ['account_id' => $this->acc('6000'), 'description' => 'Basic salaries — 25 staff × 3 months',        'amount' => 7_500_000],
                 ['account_id' => $this->acc('6010'), 'description' => 'Housing allowance × 3 months',                'amount' => 1_500_000],
                 ['account_id' => $this->acc('6020'), 'description' => 'Transport allowance × 3 months',              'amount' => 750_000],

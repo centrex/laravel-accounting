@@ -133,37 +133,56 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
             <x-tallui-form-group label="Payment Method *" :error="$errors->first('pay_method')">
-                <x-tallui-select wire:model="pay_method">
+                <x-tallui-select wire:model.live="pay_method">
                     <option value="cash">Cash</option>
                     <option value="bank_transfer">Bank Transfer</option>
                     <option value="check">Check</option>
                     <option value="card">Card</option>
                     <option value="mobile_banking">Mobile Banking</option>
                     <option value="other">Other</option>
+                    <option value="credit_memo">Credit Memo</option>
                 </x-tallui-select>
             </x-tallui-form-group>
-            <x-tallui-form-group label="Bank / Cash Account *" :error="$errors->first('pay_account_code')">
-                <x-tallui-select wire:model="pay_account_code">
-                    <option value="">— Select Account —</option>
-                    @foreach($this->paymentAccounts as $acct)
-                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
-                    @endforeach
-                </x-tallui-select>
-            </x-tallui-form-group>
+            <div wire:key="pay-account-field">
+                @if($pay_method === 'credit_memo')
+                    <x-tallui-form-group label="Credit Memo *" :error="$errors->first('pay_credit_memo_id')">
+                        <x-tallui-select wire:model="pay_credit_memo_id">
+                            <option value="">— Select Credit Memo —</option>
+                            @foreach($this->availableCreditMemos as $memo)
+                                <option value="{{ $memo->id }}">{{ $memo->credit_memo_number }} — {{ $memo->currency }} {{ number_format($memo->refundable_amount, 2) }} available</option>
+                            @endforeach
+                        </x-tallui-select>
+                        @if($this->availableCreditMemos->isEmpty())
+                            <p class="mt-1 text-xs text-warning">This customer has no other credit memo with cash left to apply.</p>
+                        @endif
+                    </x-tallui-form-group>
+                @else
+                    <x-tallui-form-group label="Bank / Cash Account *" :error="$errors->first('pay_account_code')">
+                        <x-tallui-select wire:model="pay_account_code">
+                            <option value="">— Select Account —</option>
+                            @foreach($this->paymentAccounts as $acct)
+                                <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                            @endforeach
+                        </x-tallui-select>
+                    </x-tallui-form-group>
+                @endif
+            </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <x-tallui-form-group label="Shipping / Charge (deducted from AR)" :error="$errors->first('pay_charge_amount')">
-                <x-tallui-input type="number" step="0.01" wire:model="pay_charge_amount" class="text-right" placeholder="0.00" />
-            </x-tallui-form-group>
-            <x-tallui-form-group label="Charge Account" :error="$errors->first('pay_charge_account_code')">
-                <x-tallui-select wire:model="pay_charge_account_code">
-                    <option value="">— Select Account —</option>
-                    @foreach($this->chargeAccounts as $acct)
-                        <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
-                    @endforeach
-                </x-tallui-select>
-            </x-tallui-form-group>
-        </div>
+        @if($pay_method !== 'credit_memo')
+            <div class="grid grid-cols-2 gap-4">
+                <x-tallui-form-group label="Shipping / Charge (deducted from AR)" :error="$errors->first('pay_charge_amount')">
+                    <x-tallui-input type="number" step="0.01" wire:model="pay_charge_amount" class="text-right" placeholder="0.00" />
+                </x-tallui-form-group>
+                <x-tallui-form-group label="Charge Account" :error="$errors->first('pay_charge_account_code')">
+                    <x-tallui-select wire:model="pay_charge_account_code">
+                        <option value="">— Select Account —</option>
+                        @foreach($this->chargeAccounts as $acct)
+                            <option value="{{ $acct->code }}">{{ $acct->code }} — {{ $acct->name }}</option>
+                        @endforeach
+                    </x-tallui-select>
+                </x-tallui-form-group>
+            </div>
+        @endif
         <x-tallui-form-group label="Reference">
             <x-tallui-input wire:model="pay_reference" placeholder="Transaction ID, check #…" />
         </x-tallui-form-group>

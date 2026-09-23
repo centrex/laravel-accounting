@@ -6,10 +6,10 @@ namespace Centrex\Accounting\Enums;
 
 enum RequisitionStatus: string
 {
-    case DRAFT     = 'draft';
+    case DRAFT = 'draft';
     case SUBMITTED = 'submitted';
-    case APPROVED  = 'approved';
-    case REJECTED  = 'rejected';
+    case APPROVED = 'approved';
+    case REJECTED = 'rejected';
     case CONVERTED = 'converted';
 
     public function label(): string

@@ -6,7 +6,7 @@ namespace Tests\Feature;
 
 use Centrex\Accounting\Accounting;
 use Centrex\Accounting\Exceptions\{AmountToleranceExceededException, StatementLineAlreadyMatchedException, StatementLinePolarityMismatchException};
-use Centrex\Accounting\Models\{Account, BankReconciliation, BankStatementLine, JournalEntry};
+use Centrex\Accounting\Models\{Account, BankReconciliation, BankStatementLine};
 use Centrex\Accounting\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

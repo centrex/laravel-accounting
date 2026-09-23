@@ -20,27 +20,27 @@ class DocumentDetailsViewTest extends TestCase
         ]);
 
         $invoice = Invoice::create([
-            'invoice_number' => 'INV-TEST-00001',
-            'customer_id' => $customer->id,
-            'invoice_date' => '2026-04-20',
-            'due_date' => '2026-05-20',
-            'subtotal' => 100,
-            'tax_amount' => 10,
+            'invoice_number'  => 'INV-TEST-00001',
+            'customer_id'     => $customer->id,
+            'invoice_date'    => '2026-04-20',
+            'due_date'        => '2026-05-20',
+            'subtotal'        => 100,
+            'tax_amount'      => 10,
             'discount_amount' => 0,
-            'total' => 110,
-            'paid_amount' => 0,
-            'currency' => 'BDT',
-            'status' => 'draft',
+            'total'           => 110,
+            'paid_amount'     => 0,
+            'currency'        => 'BDT',
+            'status'          => 'draft',
         ]);
 
         InvoiceItem::create([
-            'invoice_id' => $invoice->id,
+            'invoice_id'  => $invoice->id,
             'description' => 'Consulting services',
-            'quantity' => 1,
-            'unit_price' => 100,
-            'amount' => 100,
-            'tax_rate' => 10,
-            'tax_amount' => 10,
+            'quantity'    => 1,
+            'unit_price'  => 100,
+            'amount'      => 100,
+            'tax_rate'    => 10,
+            'tax_amount'  => 10,
         ]);
 
         $response = $this->get(route('accounting.invoices.show', $invoice));
@@ -60,25 +60,25 @@ class DocumentDetailsViewTest extends TestCase
 
         $bill = Bill::create([
             'bill_number' => 'BILL-TEST-00001',
-            'vendor_id' => $vendor->id,
-            'bill_date' => '2026-04-20',
-            'due_date' => '2026-05-20',
-            'subtotal' => 200,
-            'tax_amount' => 20,
-            'total' => 220,
+            'vendor_id'   => $vendor->id,
+            'bill_date'   => '2026-04-20',
+            'due_date'    => '2026-05-20',
+            'subtotal'    => 200,
+            'tax_amount'  => 20,
+            'total'       => 220,
             'paid_amount' => 0,
-            'currency' => 'BDT',
-            'status' => 'draft',
+            'currency'    => 'BDT',
+            'status'      => 'draft',
         ]);
 
         BillItem::create([
-            'bill_id' => $bill->id,
+            'bill_id'     => $bill->id,
             'description' => 'Infrastructure subscription',
-            'quantity' => 1,
-            'unit_price' => 200,
-            'amount' => 200,
-            'tax_rate' => 10,
-            'tax_amount' => 20,
+            'quantity'    => 1,
+            'unit_price'  => 200,
+            'amount'      => 200,
+            'tax_rate'    => 10,
+            'tax_amount'  => 20,
         ]);
 
         $response = $this->get(route('accounting.bills.show', $bill));

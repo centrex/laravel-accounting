@@ -43,12 +43,12 @@ class ExpenseDetails extends Component
 
     public function openPayModal(): void
     {
-        $this->pay_date      = now()->format('Y-m-d');
-        $this->pay_amount    = number_format((float) $this->expense->balance, 2, '.', '');
-        $this->pay_method    = 'cash';
+        $this->pay_date = now()->format('Y-m-d');
+        $this->pay_amount = number_format((float) $this->expense->balance, 2, '.', '');
+        $this->pay_method = 'cash';
         $this->pay_reference = '';
-        $this->pay_notes     = '';
-        $this->showPayModal  = true;
+        $this->pay_notes = '';
+        $this->showPayModal = true;
     }
 
     public function recordPayment(): void

@@ -74,7 +74,7 @@ class GeneralLedgerTest extends TestCase
         $this->assertCount(2, $ledger['accounts']);
         $this->assertSame(['1000', '4000'], array_map(
             fn (array $row): string => $row['account']->code,
-            $ledger['accounts']
+            $ledger['accounts'],
         ));
     }
 
@@ -92,10 +92,10 @@ class GeneralLedgerTest extends TestCase
     private function postEntry(string $date, int $debitAccountId, int $creditAccountId, float $amount): void
     {
         $entry = $this->accounting->createJournalEntry([
-            'date' => $date,
-            'reference' => 'GL-'.$date.'-'.$amount,
+            'date'        => $date,
+            'reference'   => 'GL-' . $date . '-' . $amount,
             'description' => 'General ledger test entry',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $debitAccountId, 'type' => 'debit', 'amount' => $amount, 'description' => 'Debit line'],
                 ['account_id' => $creditAccountId, 'type' => 'credit', 'amount' => $amount, 'description' => 'Credit line'],
             ],
@@ -107,10 +107,10 @@ class GeneralLedgerTest extends TestCase
     private function createDraftEntry(string $date, int $debitAccountId, int $creditAccountId, float $amount): void
     {
         $this->accounting->createJournalEntry([
-            'date' => $date,
-            'reference' => 'DRAFT-'.$date.'-'.$amount,
+            'date'        => $date,
+            'reference'   => 'DRAFT-' . $date . '-' . $amount,
             'description' => 'Draft general ledger test entry',
-            'lines' => [
+            'lines'       => [
                 ['account_id' => $debitAccountId, 'type' => 'debit', 'amount' => $amount, 'description' => 'Debit line'],
                 ['account_id' => $creditAccountId, 'type' => 'credit', 'amount' => $amount, 'description' => 'Credit line'],
             ],

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bill {{ $bill->bill_number }}</title>
+    <title>Invoice {{ $invoice->invoice_number }}</title>
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -114,37 +114,37 @@
 <body>
     @include('accounting::pdf.partials.letterhead', [
         'company'        => config('accounting.company', []),
-        'documentTitle'  => 'Bill',
-        'documentNumber' => $bill->bill_number,
-        'statusLabel'    => str($bill->status->value ?? $bill->status)->replace('_', ' ')->title(),
+        'documentTitle'  => 'Invoice',
+        'documentNumber' => $invoice->invoice_number,
+        'statusLabel'    => str($invoice->status->value ?? $invoice->status)->replace('_', ' ')->title(),
         'generatedAt'    => $generatedAt,
     ])
 
     <div class="info-grid">
         <div class="col">
-            <div class="section-title">Vendor</div>
-            <div><strong>{{ $bill->vendor?->name ?? 'Unknown vendor' }}</strong></div>
-            @if($bill->vendor?->email)
-                <div class="muted">{{ $bill->vendor->email }}</div>
+            <div class="section-title">Bill To</div>
+            <div><strong>{{ $invoice->customer?->name ?? 'Unknown customer' }}</strong></div>
+            @if($invoice->customer?->email)
+                <div class="muted">{{ $invoice->customer->email }}</div>
             @endif
-            @if($bill->vendor?->phone)
-                <div class="muted">{{ $bill->vendor->phone }}</div>
+            @if($invoice->customer?->phone)
+                <div class="muted">{{ $invoice->customer->phone }}</div>
             @endif
-            @if($bill->vendor?->address)
-                <div class="muted">{{ $bill->vendor->address }}</div>
+            @if($invoice->customer?->address)
+                <div class="muted">{{ $invoice->customer->address }}</div>
             @endif
         </div>
         <div class="col">
-            <div class="section-title">Bill Date</div>
-            <div>{{ $bill->bill_date?->format('M d, Y') }}</div>
+            <div class="section-title">Invoice Date</div>
+            <div>{{ $invoice->invoice_date?->format('M d, Y') }}</div>
         </div>
         <div class="col">
             <div class="section-title">Due Date</div>
-            <div>{{ $bill->due_date?->format('M d, Y') }}</div>
+            <div>{{ $invoice->due_date?->format('M d, Y') }}</div>
         </div>
         <div class="col">
             <div class="section-title">Currency</div>
-            <div>{{ $bill->currency }} @if((float) $bill->exchange_rate !== 1.0) <span class="muted">(rate {{ number_format((float) $bill->exchange_rate, 4) }})</span> @endif</div>
+            <div>{{ $invoice->currency }} @if((float) $invoice->exchange_rate !== 1.0) <span class="muted">(rate {{ number_format((float) $invoice->exchange_rate, 4) }})</span> @endif</div>
         </div>
     </div>
 
@@ -159,13 +159,13 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($bill->items as $item)
+            @forelse($invoice->items as $item)
                 <tr>
                     <td>{{ $item->description }}</td>
                     <td class="text-right mono">{{ number_format((float) $item->quantity, 2) }}</td>
-                    <td class="text-right mono">{{ $bill->base_currency }} {{ number_format($bill->convertToBase($item->unit_price), 2) }}</td>
-                    <td class="text-right mono">{{ $bill->base_currency }} {{ number_format($bill->convertToBase($item->tax_amount), 2) }}</td>
-                    <td class="text-right mono">{{ $bill->base_currency }} {{ number_format($bill->convertToBase($item->total), 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->unit_price), 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->tax_amount), 2) }}</td>
+                    <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format($invoice->convertToBase($item->total), 2) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -178,48 +178,42 @@
     <table class="totals">
         <tr>
             <td>Subtotal</td>
-            <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_subtotal, 2) }}</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_subtotal, 2) }}</td>
         </tr>
         <tr>
             <td>Tax</td>
-            <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_tax_amount, 2) }}</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_tax_amount, 2) }}</td>
         </tr>
-        @if((float) $bill->discount_amount > 0)
+        @if((float) $invoice->discount_amount > 0)
             <tr>
                 <td>Discount</td>
-                <td class="text-right mono">-{{ $bill->base_currency }} {{ number_format((float) $bill->base_discount_amount, 2) }}</td>
+                <td class="text-right mono">-{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_discount_amount, 2) }}</td>
             </tr>
         @endif
-        @if((float) $bill->shipping_amount > 0)
+        @if((float) $invoice->shipping_amount > 0)
             <tr>
                 <td>Shipping</td>
-                <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_shipping_amount, 2) }}</td>
-            </tr>
-        @endif
-        @if((float) $bill->other_charges_amount > 0)
-            <tr>
-                <td>Other Charges</td>
-                <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_other_charges_amount, 2) }}</td>
+                <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_shipping_amount, 2) }}</td>
             </tr>
         @endif
         <tr class="grand">
             <td>Total</td>
-            <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_total, 2) }}</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_total, 2) }}</td>
         </tr>
         <tr>
             <td>Paid</td>
-            <td class="text-right mono">{{ $bill->base_currency }} {{ number_format((float) $bill->base_paid_amount, 2) }}</td>
+            <td class="text-right mono">{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_paid_amount, 2) }}</td>
         </tr>
         <tr>
             <td><strong>Balance Due</strong></td>
-            <td class="text-right mono"><strong>{{ $bill->base_currency }} {{ number_format((float) $bill->base_balance, 2) }}</strong></td>
+            <td class="text-right mono"><strong>{{ $invoice->base_currency }} {{ number_format((float) $invoice->base_balance, 2) }}</strong></td>
         </tr>
     </table>
 
-    @if($bill->notes)
+    @if($invoice->notes)
         <div class="notes">
             <div class="section-title">Notes</div>
-            <div>{{ $bill->notes }}</div>
+            <div>{{ $invoice->notes }}</div>
         </div>
     @endif
 </body>
