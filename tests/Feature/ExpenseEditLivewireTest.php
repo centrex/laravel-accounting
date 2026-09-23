@@ -36,7 +36,7 @@ class ExpenseEditLivewireTest extends TestCase
     {
         $expense = $this->createDraftExpenseWithItem(vendor: 'Old Vendor', description: 'Old Item', unitPrice: 100);
 
-        $component = new Expenses();
+        $component = new Expenses;
         $component->openEdit($expense->id);
 
         $this->assertEquals($expense->id, $component->expenseId);
@@ -50,7 +50,7 @@ class ExpenseEditLivewireTest extends TestCase
     {
         $expense = $this->createDraftExpenseWithItem(vendor: 'Old Vendor', description: 'Old Item', unitPrice: 100);
 
-        $component = new Expenses();
+        $component = new Expenses;
         $component->openEdit($expense->id);
         $component->vendor_name = 'New Vendor';
         $component->reference = 'REF-123';
@@ -73,7 +73,7 @@ class ExpenseEditLivewireTest extends TestCase
     {
         $expense = $this->createDraftExpenseWithItem(description: 'Item A', unitPrice: 50);
 
-        $component = new Expenses();
+        $component = new Expenses;
         $component->openEdit($expense->id);
         $component->addItem();
         $component->items[1]['description'] = 'Item B';
@@ -91,7 +91,7 @@ class ExpenseEditLivewireTest extends TestCase
         $expense = $this->createDraftExpenseWithItem(vendor: 'Original Vendor', unitPrice: 100, paymentMethod: 'credit');
         $this->accounting->postExpense($expense);
 
-        $component = new Expenses();
+        $component = new Expenses;
         $component->openEdit($expense->id);
 
         $this->assertNull($component->expenseId);
@@ -102,7 +102,7 @@ class ExpenseEditLivewireTest extends TestCase
     {
         $expense = $this->createDraftExpenseWithItem(vendor: 'Original Vendor', unitPrice: 100, paymentMethod: 'credit');
 
-        $component = new Expenses();
+        $component = new Expenses;
         $component->openEdit($expense->id);
         $component->vendor_name = 'Tampered Vendor';
 

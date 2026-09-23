@@ -139,7 +139,7 @@ class BankReconciliationDetails extends Component
     public function saveAdjustingEntry(): void
     {
         $this->validate([
-            'adjust_offset_account_id' => 'required|integer|exists:' . (new Account())->getTable() . ',id',
+            'adjust_offset_account_id' => 'required|integer|exists:' . (new Account)->getTable() . ',id',
         ]);
 
         try {

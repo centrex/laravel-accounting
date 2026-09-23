@@ -2241,8 +2241,8 @@ class Accounting
     {
         $sbuCode = $this->normalizeSbuCode($sbuCode);
 
-        $collected = DB::table((new InvoiceItem())->getTable() . ' as ii')
-            ->join((new Invoice())->getTable() . ' as i', 'i.id', '=', 'ii.invoice_id')
+        $collected = DB::table((new InvoiceItem)->getTable() . ' as ii')
+            ->join((new Invoice)->getTable() . ' as i', 'i.id', '=', 'ii.invoice_id')
             ->whereNotIn('i.status', ['draft', 'void'])
             ->whereBetween('i.invoice_date', [$startDate, $endDate])
             ->when($sbuCode !== null, fn ($q) => $q->where('i.sbu_code', $sbuCode))
@@ -2251,8 +2251,8 @@ class Accounting
             ->get()
             ->keyBy(fn ($row) => $row->tax_rate_id ?? 0);
 
-        $paid = DB::table((new BillItem())->getTable() . ' as bi')
-            ->join((new Bill())->getTable() . ' as b', 'b.id', '=', 'bi.bill_id')
+        $paid = DB::table((new BillItem)->getTable() . ' as bi')
+            ->join((new Bill)->getTable() . ' as b', 'b.id', '=', 'bi.bill_id')
             ->whereNotIn('b.status', ['draft', 'void'])
             ->whereBetween('b.bill_date', [$startDate, $endDate])
             ->when($sbuCode !== null, fn ($q) => $q->where('b.sbu_code', $sbuCode))
@@ -4126,7 +4126,7 @@ class Accounting
         }
 
         return DB::transaction(function () use ($reconciliation, $rows): Collection {
-            $lines = new Collection();
+            $lines = new Collection;
 
             foreach ($rows as $row) {
                 $lines->push(BankStatementLine::create([

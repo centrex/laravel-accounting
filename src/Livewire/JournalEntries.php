@@ -168,7 +168,7 @@ class JournalEntries extends Component
             'type'               => 'required|in:general,closing,adjustment',
             'description'        => 'required|min:5',
             'lines'              => 'required|array|min:2',
-            'lines.*.account_id' => ['required', Rule::exists((new Account())->getTable(), 'id')],
+            'lines.*.account_id' => ['required', Rule::exists((new Account)->getTable(), 'id')],
             'lines.*.type'       => 'required|in:debit,credit',
             'lines.*.amount'     => 'required|numeric|min:0.01',
         ]);

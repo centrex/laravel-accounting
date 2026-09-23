@@ -49,7 +49,7 @@ it('AccountingKpiCard reports revenue/expenses for the given date range and cach
 });
 
 it('AccountingKpiCard placeholder renders a skeleton', function (): void {
-    $component = new AccountingKpiCard();
+    $component = new AccountingKpiCard;
 
     expect($component->placeholder())->toBeString()->toContain('role="status"');
 });
@@ -87,7 +87,7 @@ it('AccountingReceivablesCard nets AR-reducing discounts', function (): void {
         'reference'       => $invoice->invoice_number,
     ]);
 
-    $component = new AccountingReceivablesCard();
+    $component = new AccountingReceivablesCard;
     $component->mount();
 
     expect($component->invoiceStats()['outstanding_ar'])->toBe(900.0);
@@ -109,7 +109,7 @@ it('AccountingPayablesCard sums outstanding bill balances', function (): void {
         'status'        => 'sent',
     ]);
 
-    $component = new AccountingPayablesCard();
+    $component = new AccountingPayablesCard;
     $component->mount();
 
     expect($component->billStats()['outstanding_ap'])->toBe(400.0);
@@ -131,7 +131,7 @@ it('AccountingBalanceSnapshotCard and AccountingCurrentAssetsCard share one cach
         ],
     ])->post();
 
-    $snapshot = new AccountingBalanceSnapshotCard();
+    $snapshot = new AccountingBalanceSnapshotCard;
     $snapshot->endDate = today()->endOfMonth();
     $snapshot->mount();
 
@@ -143,7 +143,7 @@ it('AccountingBalanceSnapshotCard and AccountingCurrentAssetsCard share one cach
     });
 
     // Same cache key (same endDate) as the snapshot card above -> getBalanceSheet() must not re-run.
-    $currentAssets = new AccountingCurrentAssetsCard();
+    $currentAssets = new AccountingCurrentAssetsCard;
     $currentAssets->endDate = today()->endOfMonth();
     $currentAssets->mount();
     $currentAssets->balanceSheet();
@@ -167,7 +167,7 @@ it('AccountingCurrentAssetsCard::refresh() clears the shared balance sheet cache
         ],
     ])->post();
 
-    $currentAssets = new AccountingCurrentAssetsCard();
+    $currentAssets = new AccountingCurrentAssetsCard;
     $currentAssets->endDate = today()->endOfMonth();
     $currentAssets->mount();
     $currentAssets->balanceSheet();
@@ -176,7 +176,7 @@ it('AccountingCurrentAssetsCard::refresh() clears the shared balance sheet cache
 
     // refresh() forgets the same key AccountingBalanceSnapshotCard shares — its next
     // balanceSheet() call must recompute (a fresh query), not read the now-cleared cache.
-    $snapshot = new AccountingBalanceSnapshotCard();
+    $snapshot = new AccountingBalanceSnapshotCard;
     $snapshot->endDate = today()->endOfMonth();
     $snapshot->mount();
 
@@ -211,7 +211,7 @@ it('never puts an Account model into the cached balance sheet — only plain arr
         ],
     ])->post();
 
-    $component = new AccountingCurrentAssetsCard();
+    $component = new AccountingCurrentAssetsCard;
     $component->endDate = today()->endOfMonth();
     $component->mount();
 

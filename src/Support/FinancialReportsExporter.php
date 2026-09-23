@@ -25,7 +25,7 @@ final class FinancialReportsExporter
      */
     public static function downloadReport(string $reportType, array $reportData, string $filename): StreamedResponse
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
         self::writeReportSheet($spreadsheet, 0, $reportType, $reportData);
 
@@ -48,7 +48,7 @@ final class FinancialReportsExporter
             'sales_tax_liability' => $service->getSalesTaxLiabilityReport($startDate, $endDate, $sbuCode),
         ]);
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
         self::writeSummarySheet($spreadsheet, 0, $startDate, $endDate, $sbuCode, $reports);
 

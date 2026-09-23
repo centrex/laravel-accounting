@@ -73,7 +73,7 @@ class PrintDocumentTest extends TestCase
     {
         $this->assertFalse(class_exists(\Barryvdh\DomPDF\Facade\Pdf::class), 'This test assumes dompdf is not installed — see PDF export docblock.');
 
-        $component = new InvoiceDetails();
+        $component = new InvoiceDetails;
         $component->mount($this->invoice());
 
         $this->assertNull($component->exportPdf());
@@ -84,7 +84,7 @@ class PrintDocumentTest extends TestCase
     {
         $this->assertFalse(class_exists(\Barryvdh\DomPDF\Facade\Pdf::class), 'This test assumes dompdf is not installed — see PDF export docblock.');
 
-        $component = new BillDetails();
+        $component = new BillDetails;
         $component->mount($this->bill());
 
         $this->assertNull($component->exportPdf());

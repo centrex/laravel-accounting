@@ -65,7 +65,7 @@ class CreditMemos extends Component
     public function save(): void
     {
         $this->validate([
-            'invoice_id' => 'required|exists:' . (new Invoice())->getTable() . ',id',
+            'invoice_id' => 'required|exists:' . (new Invoice)->getTable() . ',id',
             'memo_date'  => 'required|date',
             'reason'     => 'nullable|string|max:255',
             'subtotal'   => 'required|numeric|min:0.01',
