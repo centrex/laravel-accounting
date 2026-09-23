@@ -748,6 +748,144 @@ class Accounting
         });
     }
 
+    /**
+     * Apply an issued credit memo's refundable balance toward a *different* invoice
+     * instead of paying it back in cash.
+     *
+     * Economically this is a cash refund immediately re-collected as payment on
+     * $targetInvoice, so the cash leg washes out: DR Accounts Receivable (releasing the
+     * memo's invoice) / CR Accounts Receivable (settling the target invoice) — both lines
+     * hit the same GL account, netting to zero there.
+     *
+     * Two Payment rows are written for the one JE — payable_type=CreditMemo (like
+     * recordCreditMemoRefund()) and payable_type=Invoice (like recordInvoicePayment()) —
+     * so both documents' own payment history shows the event, and so CustomerLedger's
+     * `refunds` term (Payment against the CreditMemo) correctly offsets `memoCredits`
+     * (the memo's full total) by the amount already consumed here. Without the
+     * CreditMemo-side row, that ledger would keep counting this memo's whole total as
+     * still-outstanding credit even after part of it was spent settling $targetInvoice.
+     *
+     * Still capped by refundable_amount: applying a memo raised against an unpaid invoice
+     * has nothing real to move — the return already reduced that invoice's own balance.
+     *
+     * @param  array{date: mixed, amount: float|int|string, reference?: string, notes?: string, sbu_code?: string}  $paymentData
+     */
+    public function applyCreditMemoToInvoice(CreditMemo $creditMemo, Invoice $targetInvoice, array $paymentData): Payment
+    {
+        return DB::transaction(function () use ($creditMemo, $targetInvoice, $paymentData): Payment {
+            $creditMemo = CreditMemo::lockForUpdate()->findOrFail($creditMemo->id);
+
+            if (!in_array($creditMemo->status, [Enums\CreditMemoStatus::ISSUED, Enums\CreditMemoStatus::PARTIALLY_REFUNDED], true)) {
+                throw InvalidStatusTransitionException::make('CreditMemo', $creditMemo->status->value, 'refunded');
+            }
+
+            $targetInvoice = Invoice::lockForUpdate()->findOrFail($targetInvoice->id);
+
+            if ($targetInvoice->id === $creditMemo->invoice_id) {
+                throw new AccountingException('Cannot apply a credit memo to the invoice it was issued against — that invoice\'s balance already reflects the credit.');
+            }
+
+            if ($targetInvoice->customer_id !== $creditMemo->customer_id) {
+                throw new AccountingException('The credit memo and the target invoice belong to different customers.');
+            }
+
+            if (!$targetInvoice->is_posted) {
+                throw InvalidStatusTransitionException::make('Invoice', $targetInvoice->status->value, 'payment');
+            }
+
+            $amount = round((float) $paymentData['amount'], 2);
+            // Capped by cash actually received on the memo's own invoice — see CreditMemo::getRefundableAmountAttribute().
+            $refundable = $creditMemo->refundable_amount;
+
+            if ($amount <= 0) {
+                throw new AccountingException('Applied amount must be greater than zero.');
+            }
+
+            if ($amount > $refundable + $this->tolerance()) {
+                throw OverpaymentException::make($amount, $refundable);
+            }
+
+            $outstanding = round((float) $targetInvoice->balance, 6);
+
+            if ($amount > $outstanding + $this->tolerance()) {
+                throw OverpaymentException::make($amount, $outstanding);
+            }
+
+            // Idempotency guard — same amount + date + memo reference = duplicate
+            if (
+                Payment::where('payable_type', Invoice::class)
+                    ->where('payable_id', $targetInvoice->id)
+                    ->where('amount', $amount)
+                    ->tap(fn ($q) => DayRange::onDay($q, 'payment_date', $paymentData['date']))
+                    ->where('payment_method', 'credit_memo')
+                    ->where('reference', $creditMemo->credit_memo_number)
+                    ->exists()
+            ) {
+                throw new AccountingException("A credit memo application of {$amount} on {$paymentData['date']} already exists for invoice {$targetInvoice->invoice_number}.");
+            }
+
+            $payment = Payment::create([
+                'payment_number' => $paymentData['payment_number'] ?? ('PMT-' . now()->format('YmdHis') . '-' . random_int(1000, 9999)),
+                'payable_type'   => Invoice::class,
+                'payable_id'     => $targetInvoice->id,
+                'payment_date'   => $paymentData['date'],
+                'amount'         => $amount,
+                'payment_method' => 'credit_memo',
+                'reference'      => $paymentData['reference'] ?? $creditMemo->credit_memo_number,
+                'notes'          => $paymentData['notes'] ?? "Applied from credit memo {$creditMemo->credit_memo_number}",
+            ]);
+
+            // Mirrors recordCreditMemoRefund()'s Payment shape so CustomerLedger's `refunds`
+            // term sees this amount as consumed from the memo — see the docblock above.
+            $memoPayment = Payment::create([
+                'payment_number' => 'RFND-' . now()->format('YmdHis') . '-' . random_int(1000, 9999),
+                'payable_type'   => CreditMemo::class,
+                'payable_id'     => $creditMemo->id,
+                'payment_date'   => $paymentData['date'],
+                'amount'         => $amount,
+                'payment_method' => 'credit_memo',
+                'reference'      => $targetInvoice->invoice_number,
+                'notes'          => "Applied to Invoice {$targetInvoice->invoice_number}",
+            ]);
+
+            $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
+
+            $entry = $this->createJournalEntry([
+                'date'          => $paymentData['date'],
+                'reference'     => $payment->payment_number,
+                'description'   => "Credit memo {$creditMemo->credit_memo_number} applied to Invoice {$targetInvoice->invoice_number}",
+                'currency'      => $targetInvoice->currency ?? $this->baseCurrency(),
+                'sbu_code'      => $this->normalizeSbuCode($paymentData['sbu_code'] ?? null) ?? $this->normalizeSbuCode($creditMemo->sbu_code) ?? $this->resolveInvoiceSbuCode($targetInvoice),
+                'source_type'   => CreditMemo::class,
+                'source_id'     => $creditMemo->id,
+                'source_action' => 'credit_memo_applied',
+                'lines'         => [
+                    ['account_id' => $arAccount->id, 'type' => 'debit',  'amount' => $amount, 'description' => "Release credit memo {$creditMemo->credit_memo_number}"],
+                    ['account_id' => $arAccount->id, 'type' => 'credit', 'amount' => $amount, 'description' => "Settle Invoice {$targetInvoice->invoice_number}"],
+                ],
+            ]);
+
+            $entry->post();
+            $payment->update(['journal_entry_id' => $entry->id]);
+            $memoPayment->update(['journal_entry_id' => $entry->id]);
+
+            // Atomic status updates — compute from known locked values, no refresh needed
+            $newRefunded = round((float) $creditMemo->amount_refunded + $amount, 2);
+            $newMemoStatus = $newRefunded >= (float) $creditMemo->total - $this->tolerance()
+                ? Enums\CreditMemoStatus::REFUNDED->value
+                : Enums\CreditMemoStatus::PARTIALLY_REFUNDED->value;
+
+            $creditMemo->update(['amount_refunded' => $newRefunded, 'status' => $newMemoStatus]);
+
+            $newPaid = round((float) $targetInvoice->paid_amount + $amount, 6);
+            $newInvoiceStatus = $newPaid >= (float) $targetInvoice->total - $this->tolerance() ? 'settled' : 'partially_settled';
+
+            $targetInvoice->update(['paid_amount' => $newPaid, 'status' => $newInvoiceStatus]);
+
+            return $payment;
+        });
+    }
+
     /** Void a draft credit memo. Issued memos cannot be voided — their JE has already posted. */
     public function voidCreditMemo(CreditMemo $creditMemo): CreditMemo
     {
