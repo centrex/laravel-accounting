@@ -15,11 +15,16 @@ trait ManagesBills
     /** Post a bill: DR Inventory Asset + Tax / CR Accounts Payable. */
     public function postBill(Bill $bill): JournalEntry
     {
-        if ($bill->journal_entry_id !== null) {
-            throw InvalidStatusTransitionException::make('Bill', $bill->status->value, 'posted');
-        }
-
         $entry = DB::transaction(function () use ($bill): JournalEntry {
+            // Locked and status-checked inside the transaction — see the matching comment
+            // in InvoiceService::postInvoice(). Otherwise two concurrent posts of the same
+            // bill could both pass the check and both create+post a journal entry.
+            $bill = Bill::lockForUpdate()->findOrFail($bill->id);
+
+            if ($bill->journal_entry_id !== null) {
+                throw InvalidStatusTransitionException::make('Bill', $bill->status->value, 'posted');
+            }
+
             $apAccount = $this->requireAccount($this->accountCode('accounts_payable'));
             $expenseAccount = $this->requireAccount($this->accountCode('inventory'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));

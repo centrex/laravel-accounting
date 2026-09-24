@@ -587,7 +587,7 @@ parameters:
 
 		-
 			message: "#^Anonymous function should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
-			count: 1
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -667,11 +667,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:accrueAllLoanInterest\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:approveRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -866,17 +861,7 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:rejectRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:resolveExpenseSbuCode\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:submitRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
 			count: 1
 			path: src/Accounting.php
 

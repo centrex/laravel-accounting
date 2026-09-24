@@ -69,43 +69,59 @@ trait ManagesRequisitions
     /** Advance requisition from draft → submitted. */
     public function submitRequisition(Requisition $requisition, ?int $userId = null): Requisition
     {
-        if ($requisition->status !== RequisitionStatus::DRAFT) {
-            throw new InvalidStatusTransitionException(
-                "Cannot submit a requisition with status [{$requisition->status->value}].",
-            );
-        }
+        return DB::transaction(function () use ($requisition, $userId): Requisition {
+            // Locked and status-checked inside the transaction — otherwise two concurrent
+            // submits of the same requisition could both pass the check and both submit.
+            $requisition = Requisition::lockForUpdate()->findOrFail($requisition->id);
 
-        $requisition->submit($userId ?? auth()->id());
+            if ($requisition->status !== RequisitionStatus::DRAFT) {
+                throw new InvalidStatusTransitionException(
+                    "Cannot submit a requisition with status [{$requisition->status->value}].",
+                );
+            }
 
-        return $requisition->fresh();
+            $requisition->submit($userId ?? auth()->id());
+
+            return $requisition->fresh();
+        });
     }
 
     /** Advance requisition from submitted → approved. */
     public function approveRequisition(Requisition $requisition, ?int $userId = null): Requisition
     {
-        if ($requisition->status !== RequisitionStatus::SUBMITTED) {
-            throw new InvalidStatusTransitionException(
-                "Cannot approve a requisition with status [{$requisition->status->value}].",
-            );
-        }
+        return DB::transaction(function () use ($requisition, $userId): Requisition {
+            // Locked and status-checked inside the transaction — see submitRequisition().
+            $requisition = Requisition::lockForUpdate()->findOrFail($requisition->id);
 
-        $requisition->approve($userId ?? auth()->id());
+            if ($requisition->status !== RequisitionStatus::SUBMITTED) {
+                throw new InvalidStatusTransitionException(
+                    "Cannot approve a requisition with status [{$requisition->status->value}].",
+                );
+            }
 
-        return $requisition->fresh();
+            $requisition->approve($userId ?? auth()->id());
+
+            return $requisition->fresh();
+        });
     }
 
     /** Reject a submitted requisition. */
     public function rejectRequisition(Requisition $requisition, string $reason, ?int $userId = null): Requisition
     {
-        if ($requisition->status !== RequisitionStatus::SUBMITTED) {
-            throw new InvalidStatusTransitionException(
-                "Cannot reject a requisition with status [{$requisition->status->value}].",
-            );
-        }
+        return DB::transaction(function () use ($requisition, $reason, $userId): Requisition {
+            // Locked and status-checked inside the transaction — see submitRequisition().
+            $requisition = Requisition::lockForUpdate()->findOrFail($requisition->id);
 
-        $requisition->reject($reason, $userId ?? auth()->id());
+            if ($requisition->status !== RequisitionStatus::SUBMITTED) {
+                throw new InvalidStatusTransitionException(
+                    "Cannot reject a requisition with status [{$requisition->status->value}].",
+                );
+            }
 
-        return $requisition->fresh();
+            $requisition->reject($reason, $userId ?? auth()->id());
+
+            return $requisition->fresh();
+        });
     }
 
     /**
@@ -114,15 +130,20 @@ trait ManagesRequisitions
      */
     public function convertRequisitionToBill(Requisition $requisition): Bill
     {
-        if ($requisition->status !== RequisitionStatus::APPROVED) {
-            throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
-        }
-
         if ($requisition->type !== RequisitionType::PURCHASE) {
             throw new \InvalidArgumentException('convertRequisitionToBill requires a purchase-type requisition.');
         }
 
         return DB::transaction(function () use ($requisition): Bill {
+            // Locked and status-checked inside the transaction — otherwise two concurrent
+            // conversions of the same requisition could both pass the check and both
+            // create a Bill from it, double-billing the vendor.
+            $requisition = Requisition::lockForUpdate()->findOrFail($requisition->id);
+
+            if ($requisition->status !== RequisitionStatus::APPROVED) {
+                throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
+            }
+
             $bill = Bill::create([
                 'vendor_id'  => $requisition->vendor_id,
                 'bill_date'  => now()->toDateString(),
@@ -157,15 +178,19 @@ trait ManagesRequisitions
      */
     public function convertRequisitionToExpense(Requisition $requisition): Expense
     {
-        if ($requisition->status !== RequisitionStatus::APPROVED) {
-            throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
-        }
-
         if ($requisition->type !== RequisitionType::EXPENSE) {
             throw new \InvalidArgumentException('convertRequisitionToExpense requires an expense-type requisition.');
         }
 
         return DB::transaction(function () use ($requisition): Expense {
+            // Locked and status-checked inside the transaction — see the matching comment
+            // in convertRequisitionToBill().
+            $requisition = Requisition::lockForUpdate()->findOrFail($requisition->id);
+
+            if ($requisition->status !== RequisitionStatus::APPROVED) {
+                throw new InvalidStatusTransitionException('Only approved requisitions can be converted.');
+            }
+
             $expense = Expense::create([
                 'account_id'     => $requisition->account_id,
                 'expense_date'   => now()->toDateString(),

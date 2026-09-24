@@ -14,15 +14,20 @@ trait ManagesExpenses
     /** Post an inventory-owned expense into the ledger. */
     public function postExpense(Expense $expense): JournalEntry
     {
-        if (in_array($expense->status, ['paid', 'settled'], true)) {
-            throw InvalidStatusTransitionException::make('Expense', $expense->status, 'posted');
-        }
-
-        if ($expense->journal_entry_id !== null) {
-            throw InvalidStatusTransitionException::make('Expense', (string) $expense->status, 'posted');
-        }
-
         return DB::transaction(function () use ($expense): JournalEntry {
+            // Locked and status-checked inside the transaction — see the matching comment
+            // in InvoiceService::postInvoice(). Otherwise two concurrent posts of the same
+            // expense could both pass the check and both create+post a journal entry.
+            $expense = Expense::lockForUpdate()->findOrFail($expense->id);
+
+            if (in_array($expense->status, ['paid', 'settled'], true)) {
+                throw InvalidStatusTransitionException::make('Expense', $expense->status, 'posted');
+            }
+
+            if ($expense->journal_entry_id !== null) {
+                throw InvalidStatusTransitionException::make('Expense', (string) $expense->status, 'posted');
+            }
+
             $expenseAccount = $expense->account_id
                 ? (Account::find($expense->account_id) ?? throw AccountNotFoundException::forCode('custom'))
                 : $this->requireAccount($this->accountCode('cogs'));
