@@ -7,6 +7,7 @@ namespace Centrex\Accounting;
 use Centrex\Accounting\Models\{
     BankReconciliation,
     BankStatementLine,
+    CreditMemo,
     FixedAsset,
     InventoryFinancingFacility,
     Invoice,
@@ -15,7 +16,14 @@ use Centrex\Accounting\Models\{
     LoanFacility,
     Payment
 };
-use Centrex\Accounting\Services\{BankReconciliationService, FixedAssetService, InventoryFinancingService, InvoiceService, LoanFacilityService};
+use Centrex\Accounting\Services\{
+    BankReconciliationService,
+    CreditMemoService,
+    FixedAssetService,
+    InventoryFinancingService,
+    InvoiceService,
+    LoanFacilityService
+};
 use Illuminate\Support\Collection;
 
 class Accounting
@@ -26,7 +34,6 @@ class Accounting
     use Concerns\ManagesBills;
     use Concerns\ManagesBudgets;
     use Concerns\ManagesChartOfAccounts;
-    use Concerns\ManagesCreditMemos;
     use Concerns\ManagesExpenses;
     use Concerns\ManagesFiscalYear;
     use Concerns\ManagesJournalEntries;
@@ -40,6 +47,7 @@ class Accounting
         private readonly FixedAssetService $fixedAssets = new FixedAssetService(),
         private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService(),
         private readonly InvoiceService $invoices = new InvoiceService(),
+        private readonly CreditMemoService $creditMemos = new CreditMemoService(),
     ) {}
 
     /** @see InvoiceService::postInvoice() */
@@ -52,6 +60,52 @@ class Accounting
     public function recordInvoicePayment(Invoice $invoice, array $paymentData): Payment
     {
         return $this->invoices->recordInvoicePayment($invoice, $paymentData);
+    }
+
+    /**
+     * @see CreditMemoService::createCreditMemo()
+     *
+     * @param array{
+     *     date?: mixed, reason?: string, subtotal?: float|int|string, tax_amount?: float|int|string,
+     *     total?: float|int|string, source_type?: string, source_id?: int, source_reference?: string,
+     *     sbu_code?: string, notes?: string, created_by?: int
+     * } $data
+     */
+    public function createCreditMemo(Invoice $invoice, array $data): CreditMemo
+    {
+        return $this->creditMemos->createCreditMemo($invoice, $data);
+    }
+
+    /** @see CreditMemoService::issueCreditMemo() */
+    public function issueCreditMemo(CreditMemo $creditMemo): JournalEntry
+    {
+        return $this->creditMemos->issueCreditMemo($creditMemo);
+    }
+
+    /**
+     * @see CreditMemoService::recordCreditMemoRefund()
+     *
+     * @param  array{date: mixed, amount: float|int|string, method: string, account_code?: string, reference?: string, notes?: string, sbu_code?: string}  $paymentData
+     */
+    public function recordCreditMemoRefund(CreditMemo $creditMemo, array $paymentData): Payment
+    {
+        return $this->creditMemos->recordCreditMemoRefund($creditMemo, $paymentData);
+    }
+
+    /**
+     * @see CreditMemoService::applyCreditMemoToInvoice()
+     *
+     * @param  array{date: mixed, amount: float|int|string, reference?: string, notes?: string, sbu_code?: string}  $paymentData
+     */
+    public function applyCreditMemoToInvoice(CreditMemo $creditMemo, Invoice $targetInvoice, array $paymentData): Payment
+    {
+        return $this->creditMemos->applyCreditMemoToInvoice($creditMemo, $targetInvoice, $paymentData);
+    }
+
+    /** @see CreditMemoService::voidCreditMemo() */
+    public function voidCreditMemo(CreditMemo $creditMemo): CreditMemo
+    {
+        return $this->creditMemos->voidCreditMemo($creditMemo);
     }
 
     /** @see BankReconciliationService::createBankReconciliation() */
