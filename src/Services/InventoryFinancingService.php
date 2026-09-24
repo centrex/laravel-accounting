@@ -2,14 +2,18 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\Accounting\Concerns;
+namespace Centrex\Accounting\Services;
 
+use Centrex\Accounting\Concerns\{HasSharedAccountingHelpers, ManagesJournalEntries};
 use Centrex\Accounting\Models\{Account, InventoryFinancingFacility, JournalEntry};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-trait ManagesInventoryFinancing
+class InventoryFinancingService
 {
+    use HasSharedAccountingHelpers;
+    use ManagesJournalEntries;
+
     /**
      * Register a new lender and auto-create its dedicated GL sub-accounts.
      *
