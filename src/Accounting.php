@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
-use Centrex\Accounting\Models\{InventoryFinancingFacility, JournalEntry, LoanFacility};
-use Centrex\Accounting\Services\{InventoryFinancingService, LoanFacilityService};
+use Centrex\Accounting\Models\{FixedAsset, InventoryFinancingFacility, JournalEntry, LoanFacility};
+use Centrex\Accounting\Services\{FixedAssetService, InventoryFinancingService, LoanFacilityService};
 
 class Accounting
 {
@@ -19,7 +19,6 @@ class Accounting
     use Concerns\ManagesCreditMemos;
     use Concerns\ManagesExpenses;
     use Concerns\ManagesFiscalYear;
-    use Concerns\ManagesFixedAssets;
     use Concerns\ManagesInvoices;
     use Concerns\ManagesJournalEntries;
     use Concerns\ManagesOwnerEquity;
@@ -29,7 +28,66 @@ class Accounting
     public function __construct(
         private readonly LoanFacilityService $loanFacilities = new LoanFacilityService(),
         private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService(),
+        private readonly FixedAssetService $fixedAssets = new FixedAssetService(),
     ) {}
+
+    /** @see FixedAssetService::addFixedAsset() */
+    public function addFixedAsset(
+        string $name,
+        float $acquisitionCost,
+        int $usefulLifeMonths,
+        float $salvageValue = 0.0,
+        ?string $acquiredAt = null,
+        ?string $assetClass = null,
+        ?string $sbuCode = null,
+        ?string $location = null,
+        ?string $serialNumber = null,
+        ?string $notes = null,
+    ): FixedAsset {
+        return $this->fixedAssets->addFixedAsset(
+            $name, $acquisitionCost, $usefulLifeMonths, $salvageValue,
+            $acquiredAt, $assetClass, $sbuCode, $location, $serialNumber, $notes,
+        );
+    }
+
+    /** @see FixedAssetService::capitalizeFixedAsset() */
+    public function capitalizeFixedAsset(
+        FixedAsset $asset,
+        string $date,
+        string $reference,
+        ?string $paymentAccountCode = null,
+        ?string $description = null,
+    ): JournalEntry {
+        return $this->fixedAssets->capitalizeFixedAsset($asset, $date, $reference, $paymentAccountCode, $description);
+    }
+
+    /** @see FixedAssetService::depreciateAsset() */
+    public function depreciateAsset(FixedAsset $asset, ?string $date = null): ?JournalEntry
+    {
+        return $this->fixedAssets->depreciateAsset($asset, $date);
+    }
+
+    /** @see FixedAssetService::depreciateAllAssets() */
+    public function depreciateAllAssets(?string $date = null): array
+    {
+        return $this->fixedAssets->depreciateAllAssets($date);
+    }
+
+    /** @see FixedAssetService::disposeAsset() */
+    public function disposeAsset(
+        FixedAsset $asset,
+        string $date,
+        float $proceeds = 0.0,
+        ?string $reference = null,
+    ): JournalEntry {
+        return $this->fixedAssets->disposeAsset($asset, $date, $proceeds, $reference);
+    }
+
+    /** @see FixedAssetService::getFixedAssetRegister() */
+    public function getFixedAssetRegister(?string $sbuCode = null): array
+    {
+        return $this->fixedAssets->getFixedAssetRegister($sbuCode);
+    }
 
     /** @see InventoryFinancingService::addFinancingFacility() */
     public function addFinancingFacility(

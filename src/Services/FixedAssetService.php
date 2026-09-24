@@ -2,14 +2,18 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\Accounting\Concerns;
+namespace Centrex\Accounting\Services;
 
+use Centrex\Accounting\Concerns\{HasSharedAccountingHelpers, ManagesJournalEntries};
 use Centrex\Accounting\Models\{Account, FixedAsset, JournalEntry};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-trait ManagesFixedAssets
+class FixedAssetService
 {
+    use HasSharedAccountingHelpers;
+    use ManagesJournalEntries;
+
     /**
      * Register a fixed asset and auto-create its dedicated GL sub-accounts.
      *

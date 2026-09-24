@@ -247,12 +247,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
-			count: 6
+			count: 4
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
-			count: 5
+			count: 3
 			path: src/Accounting.php
 
 		-
@@ -552,71 +552,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FiscalYear\\:\\:\\$start_date\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$accumulated_depreciation_account_id\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$acquired_at\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$acquisition_cost\\.$#"
-			count: 4
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_account_id\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_class\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_code\\.$#"
-			count: 5
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$depreciation_method\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$disposed_at\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$is_active\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$name\\.$#"
-			count: 4
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$salvage_value\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$sbu_code\\.$#"
-			count: 4
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$useful_life_months\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1221,11 +1156,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>, array\\<string, float\\|int\\|string\\|false\\|null\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
 			count: 2
 			path: src/Accounting.php
@@ -1267,7 +1197,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>, array\\<string, int\\|string\\|false\\> given\\.$#"
-			count: 4
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -1313,11 +1243,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>, array\\<string, mixed\\> given\\.$#"
 			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>, array\\<string, float\\|int\\|string\\|true\\|null\\> given\\.$#"
-			count: 1
 			path: src/Accounting.php
 
 		-
@@ -1382,11 +1307,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Expense, 'status' given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'sbu_code' given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1472,11 +1392,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Budget\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Budget, 'status' given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'is_active' given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1626,18 +1541,13 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
 			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:all\\(\\) contains unresolvable type\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -8449,6 +8359,256 @@ parameters:
 			message: "#^Unable to resolve the template type TValue in call to function collect$#"
 			count: 2
 			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$name\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$accumulated_depreciation_account_id\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$acquired_at\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$acquisition_cost\\.$#"
+			count: 4
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_account_id\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_class\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$asset_code\\.$#"
+			count: 5
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$depreciation_method\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$disposed_at\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$is_active\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$name\\.$#"
+			count: 4
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$salvage_value\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$sbu_code\\.$#"
+			count: 4
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\:\\:\\$useful_life_months\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$sbu_code\\.$#"
+			count: 3
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getAttribute\\(\\)\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot access offset 'account_id' on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot access offset 'amount' on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot access offset 'description' on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot access offset 'reference' on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot access offset 'type' on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot call method get\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot call method where\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 3
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\FixedAssetService\\:\\:depreciateAllAssets\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\FixedAssetService\\:\\:getAccountsByType\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\FixedAssetService\\:\\:getFixedAssetRegister\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\FixedAssetService\\:\\:resolveExpenseSbuCode\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>, array\\<string, float\\|int\\|string\\|false\\|null\\> given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasOneOrMany\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine,Centrex\\\\Accounting\\\\Models\\\\JournalEntry,Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>, array\\<string, int\\|string\\|false\\> given\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>, array\\<string, float\\|int\\|string\\|true\\|null\\> given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'sbu_code' given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'code' given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'type' given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\FixedAsset, 'is_active' given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Database\\\\DatabaseManager\\:\\:connection\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Parameter \\#1 \\$sbuCode of method Centrex\\\\Accounting\\\\Services\\\\FixedAssetService\\:\\:normalizeSbuCode\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Part \\$prefix \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int,Centrex\\\\Accounting\\\\Models\\\\FixedAsset\\>\\:\\:map\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Return type of call to method Illuminate\\\\Support\\\\Collection\\<int,array\\<string, mixed\\>\\>\\:\\:all\\(\\) contains unresolvable type\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
+
+		-
+			message: "#^Variable \\$lastException on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Services/FixedAssetService.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
