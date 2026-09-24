@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
-use Centrex\Accounting\Models\{JournalEntry, LoanFacility};
-use Centrex\Accounting\Services\LoanFacilityService;
+use Centrex\Accounting\Models\{InventoryFinancingFacility, JournalEntry, LoanFacility};
+use Centrex\Accounting\Services\{InventoryFinancingService, LoanFacilityService};
 
 class Accounting
 {
@@ -20,7 +20,6 @@ class Accounting
     use Concerns\ManagesExpenses;
     use Concerns\ManagesFiscalYear;
     use Concerns\ManagesFixedAssets;
-    use Concerns\ManagesInventoryFinancing;
     use Concerns\ManagesInvoices;
     use Concerns\ManagesJournalEntries;
     use Concerns\ManagesOwnerEquity;
@@ -29,7 +28,69 @@ class Accounting
 
     public function __construct(
         private readonly LoanFacilityService $loanFacilities = new LoanFacilityService(),
+        private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService(),
     ) {}
+
+    /** @see InventoryFinancingService::addFinancingFacility() */
+    public function addFinancingFacility(
+        string $lenderName,
+        string $lenderType = 'bank',
+        float $monthlyRate = 0.02,
+        ?float $creditLimit = null,
+        ?string $contact = null,
+    ): InventoryFinancingFacility {
+        return $this->inventoryFinancing->addFinancingFacility($lenderName, $lenderType, $monthlyRate, $creditLimit, $contact);
+    }
+
+    /** @see InventoryFinancingService::drawdownFinancing() */
+    public function drawdownFinancing(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+    ): JournalEntry {
+        return $this->inventoryFinancing->drawdownFinancing($facility, $amount, $date, $reference, $description);
+    }
+
+    /** @see InventoryFinancingService::accrueFinancingInterest() */
+    public function accrueFinancingInterest(InventoryFinancingFacility $facility, mixed $date = null): ?JournalEntry
+    {
+        return $this->inventoryFinancing->accrueFinancingInterest($facility, $date);
+    }
+
+    /** @see InventoryFinancingService::accrueAllFinancingInterest() */
+    public function accrueAllFinancingInterest(mixed $date = null): array
+    {
+        return $this->inventoryFinancing->accrueAllFinancingInterest($date);
+    }
+
+    /** @see InventoryFinancingService::payFinancingInterest() */
+    public function payFinancingInterest(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+    ): JournalEntry {
+        return $this->inventoryFinancing->payFinancingInterest($facility, $amount, $date, $reference);
+    }
+
+    /** @see InventoryFinancingService::repayFinancing() */
+    public function repayFinancing(
+        InventoryFinancingFacility $facility,
+        float $amount,
+        string $date,
+        string $reference,
+        ?string $description = null,
+    ): JournalEntry {
+        return $this->inventoryFinancing->repayFinancing($facility, $amount, $date, $reference, $description);
+    }
+
+    /** @see InventoryFinancingService::getFinancingSummary() */
+    public function getFinancingSummary(): array
+    {
+        return $this->inventoryFinancing->getFinancingSummary();
+    }
 
     /** @see LoanFacilityService::addLoanFacility() */
     public function addLoanFacility(
