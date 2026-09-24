@@ -9,11 +9,13 @@ use Centrex\Accounting\Models\{
     BankStatementLine,
     FixedAsset,
     InventoryFinancingFacility,
+    Invoice,
     JournalEntry,
     JournalEntryLine,
-    LoanFacility
+    LoanFacility,
+    Payment
 };
-use Centrex\Accounting\Services\{BankReconciliationService, FixedAssetService, InventoryFinancingService, LoanFacilityService};
+use Centrex\Accounting\Services\{BankReconciliationService, FixedAssetService, InventoryFinancingService, InvoiceService, LoanFacilityService};
 use Illuminate\Support\Collection;
 
 class Accounting
@@ -27,18 +29,30 @@ class Accounting
     use Concerns\ManagesCreditMemos;
     use Concerns\ManagesExpenses;
     use Concerns\ManagesFiscalYear;
-    use Concerns\ManagesInvoices;
     use Concerns\ManagesJournalEntries;
     use Concerns\ManagesOwnerEquity;
     use Concerns\ManagesPeriodClosing;
     use Concerns\ManagesRequisitions;
 
     public function __construct(
-        private readonly LoanFacilityService $loanFacilities = new LoanFacilityService,
-        private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService,
-        private readonly FixedAssetService $fixedAssets = new FixedAssetService,
-        private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService,
+        private readonly LoanFacilityService $loanFacilities = new LoanFacilityService(),
+        private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService(),
+        private readonly FixedAssetService $fixedAssets = new FixedAssetService(),
+        private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService(),
+        private readonly InvoiceService $invoices = new InvoiceService(),
     ) {}
+
+    /** @see InvoiceService::postInvoice() */
+    public function postInvoice(Invoice $invoice): JournalEntry
+    {
+        return $this->invoices->postInvoice($invoice);
+    }
+
+    /** @see InvoiceService::recordInvoicePayment() */
+    public function recordInvoicePayment(Invoice $invoice, array $paymentData): Payment
+    {
+        return $this->invoices->recordInvoicePayment($invoice, $paymentData);
+    }
 
     /** @see BankReconciliationService::createBankReconciliation() */
     public function createBankReconciliation(array $data): BankReconciliation

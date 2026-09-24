@@ -397,7 +397,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$name\\.$#"
-			count: 2
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -502,22 +502,22 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_date\\.$#"
-			count: 2
+			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
-			count: 11
+			count: 8
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$journal_entry_id\\.$#"
-			count: 2
+			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$paid_amount\\.$#"
-			count: 3
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -527,22 +527,12 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$status\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$subtotal\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$tax_amount\\.$#"
 			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$total\\.$#"
-			count: 4
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -582,7 +572,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:\\$payment_number\\.$#"
-			count: 7
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1062,17 +1052,12 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, int\\|string\\> given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, int\\> given\\.$#"
-			count: 6
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1132,7 +1117,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 3
+			count: 2
 			path: src/Accounting.php
 
 		-
@@ -1147,7 +1132,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 6
+			count: 5
 			path: src/Accounting.php
 
 		-
@@ -1217,12 +1202,12 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'amount' given\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_id' given\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1237,7 +1222,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payment_method' given\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1272,7 +1257,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_type' given\\.$#"
-			count: 5
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -1282,11 +1267,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, description\\: non\\-falsy\\-string, currency\\: mixed, exchange_rate\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{0\\: array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Inventory'\\}, 1\\: array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Clear goods…'\\|'Tax'\\}, 2\\: array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Accounts Payable'\\}\\|array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Tax'\\}, 3\\?\\: array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Accounts Payable'\\}\\}\\|array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Clear goods…'\\}, array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Tax'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Accounts Payable'\\}\\}\\|array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Tax'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Accounts Payable'\\}\\}\\} given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, description\\: non\\-falsy\\-string, currency\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{0\\: array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Cash received'\\}, 1\\: array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Accounts Receivable'\\}\\|array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Shipping/handling…'\\}, 2\\?\\: array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Accounts Receivable'\\}\\}\\} given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1316,17 +1296,7 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, type\\: 'general', description\\: non\\-falsy\\-string, currency\\: mixed, exchange_rate\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Accounts Receivable'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Sales Revenue'\\|'Sales Revenue \\(net…'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Sales Tax'\\}\\}\\} given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Accounting\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, type\\: 'general', description\\: non\\-falsy\\-string, currency\\: mixed, exchange_rate\\: mixed, sbu_code\\: string\\|null, source_type\\: 'Centrex\\\\\\\\Accounting\\\\\\\\Models\\\\\\\\CreditMemo', \\.\\.\\.\\} given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$invoice of event class Centrex\\\\Accounting\\\\Events\\\\InvoicePosted constructor expects Centrex\\\\Accounting\\\\Models\\\\Invoice in Centrex\\\\Accounting\\\\Events\\\\InvoicePosted\\:\\:dispatch\\(\\), Centrex\\\\Accounting\\\\Models\\\\Invoice\\|null given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1342,7 +1312,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$payment of event class Centrex\\\\Accounting\\\\Events\\\\PaymentRecorded constructor expects Centrex\\\\Accounting\\\\Models\\\\Payment in Centrex\\\\Accounting\\\\Events\\\\PaymentRecorded\\:\\:dispatch\\(\\), Centrex\\\\Accounting\\\\Models\\\\Payment\\|null given\\.$#"
-			count: 2
+			count: 1
 			path: src/Accounting.php
 
 		-
@@ -8984,6 +8954,256 @@ parameters:
 			message: "#^Variable \\$lastException on left side of \\?\\? always exists and is not nullable\\.$#"
 			count: 1
 			path: src/Services/InventoryFinancingService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Customer\\:\\:\\$name\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_date\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$invoice_number\\.$#"
+			count: 3
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$journal_entry_id\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$paid_amount\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$status\\.$#"
+			count: 2
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$subtotal\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$tax_amount\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$total\\.$#"
+			count: 2
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$sbu_code\\.$#"
+			count: 3
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Payment\\:\\:\\$payment_number\\.$#"
+			count: 3
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getAttribute\\(\\)\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot access offset 'account_id' on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot access offset 'amount' on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot access offset 'description' on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot access offset 'reference' on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot access offset 'type' on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot call method get\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot call method where\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 3
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:getAccountsByType\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:recordInvoicePayment\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:resolveExpenseSbuCode\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Invoice, mixed\\>, array\\<string, int\\|string\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, int\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasOneOrMany\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine,Centrex\\\\Accounting\\\\Models\\\\JournalEntry,Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Expense\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Expense, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
+			count: 2
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'amount' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_id' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payment_method' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'code' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'type' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Payment\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Payment, 'payable_type' given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, description\\: non\\-falsy\\-string, currency\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{0\\: array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Cash received'\\}, 1\\: array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Accounts Receivable'\\}\\|array\\{account_id\\: int, type\\: 'debit', amount\\: float, description\\: 'Shipping/handling…'\\}, 2\\?\\: array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Accounts Receivable'\\}\\}\\} given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: mixed, type\\: 'general', description\\: non\\-falsy\\-string, currency\\: mixed, exchange_rate\\: mixed, sbu_code\\: string\\|null, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: mixed, description\\: 'Accounts Receivable'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: float, description\\: 'Sales Revenue'\\|'Sales Revenue \\(net…'\\}, array\\{account_id\\: int, type\\: 'credit', amount\\: mixed, description\\: 'Sales Tax'\\}\\}\\} given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$invoice of event class Centrex\\\\Accounting\\\\Events\\\\InvoicePosted constructor expects Centrex\\\\Accounting\\\\Models\\\\Invoice in Centrex\\\\Accounting\\\\Events\\\\InvoicePosted\\:\\:dispatch\\(\\), Centrex\\\\Accounting\\\\Models\\\\Invoice\\|null given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Database\\\\DatabaseManager\\:\\:connection\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$payment of event class Centrex\\\\Accounting\\\\Events\\\\PaymentRecorded constructor expects Centrex\\\\Accounting\\\\Models\\\\Payment in Centrex\\\\Accounting\\\\Events\\\\PaymentRecorded\\:\\:dispatch\\(\\), Centrex\\\\Accounting\\\\Models\\\\Payment\\|null given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Parameter \\#1 \\$sbuCode of method Centrex\\\\Accounting\\\\Services\\\\InvoiceService\\:\\:normalizeSbuCode\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Part \\$prefix \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/Services/InvoiceService.php
+
+		-
+			message: "#^Variable \\$lastException on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Services/InvoiceService.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"
