@@ -587,7 +587,7 @@ parameters:
 
 		-
 			message: "#^Anonymous function should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
-			count: 1
+			count: 4
 			path: src/Accounting.php
 
 		-
@@ -667,11 +667,6 @@ parameters:
 
 		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:accrueAllLoanInterest\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:approveRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -866,17 +861,7 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:rejectRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:resolveExpenseSbuCode\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:submitRequisition\\(\\) should return Centrex\\\\Accounting\\\\Models\\\\Requisition but returns Centrex\\\\Accounting\\\\Models\\\\Requisition\\|null\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -9101,6 +9086,11 @@ parameters:
 			path: src/Services/InventoryFinancingService.php
 
 		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'reference' given\\.$#"
+			count: 1
+			path: src/Services/InventoryFinancingService.php
+
+		-
 			message: "#^Parameter \\#1 \\$data of method Centrex\\\\Accounting\\\\Services\\\\InventoryFinancingService\\:\\:createJournalEntry\\(\\) expects array\\{date\\: string, reference\\?\\: string, type\\?\\: string, description\\?\\: string, currency\\?\\: string, exchange_rate\\?\\: float, sbu_code\\?\\: string, lines\\: array\\<int, array\\{account_id\\: int, type\\: string, amount\\: float, description\\?\\: string, reference\\?\\: string\\}\\>\\}, array\\{date\\: mixed, reference\\: non\\-falsy\\-string, type\\: 'general', description\\: non\\-falsy\\-string, lines\\: array\\{array\\{account_id\\: int, type\\: 'debit', amount\\: float\\}, array\\{account_id\\: mixed, type\\: 'credit', amount\\: float\\}\\}\\} given\\.$#"
 			count: 1
 			path: src/Services/InventoryFinancingService.php
@@ -9592,6 +9582,11 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'type' given\\.$#"
+			count: 1
+			path: src/Services/LoanFacilityService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, 'reference' given\\.$#"
 			count: 1
 			path: src/Services/LoanFacilityService.php
 

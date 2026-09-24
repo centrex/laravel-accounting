@@ -85,34 +85,42 @@ class InventoryFinancingService
         string $reference,
         ?string $description = null,
     ): JournalEntry {
-        if (!$facility->is_active) {
-            throw new \RuntimeException("Financing facility '{$facility->lender_name}' is inactive.");
-        }
+        return DB::transaction(function () use ($facility, $amount, $date, $reference, $description): JournalEntry {
+            // Locked for the duration of the check-then-post — outstandingPrincipal() is
+            // computed live from posted journal lines, not a stored balance column, so
+            // without the lock two concurrent draw-downs could each read the same
+            // outstanding figure and jointly exceed the credit limit.
+            $facility = InventoryFinancingFacility::lockForUpdate()->findOrFail($facility->id);
 
-        $creditLimit = $facility->credit_limit;
-
-        if ($creditLimit !== null) {
-            $outstanding = $facility->outstandingPrincipal();
-
-            if (($outstanding + $amount) > $creditLimit) {
-                throw new \RuntimeException(
-                    "Draw-down of {$amount} would exceed credit limit of {$creditLimit} for '{$facility->lender_name}'.",
-                );
+            if (!$facility->is_active) {
+                throw new \RuntimeException("Financing facility '{$facility->lender_name}' is inactive.");
             }
-        }
 
-        $inventory = $this->requireAccount($this->accountCode('inventory'));
+            $creditLimit = $facility->credit_limit;
 
-        return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'description' => $description ?? "Inventory financing draw-down — {$facility->lender_name}",
-            'lines'       => [
-                ['account_id' => $inventory->id,                     'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $facility->principal_account_id,    'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            if ($creditLimit !== null) {
+                $outstanding = $facility->outstandingPrincipal();
+
+                if (($outstanding + $amount) > $creditLimit) {
+                    throw new \RuntimeException(
+                        "Draw-down of {$amount} would exceed credit limit of {$creditLimit} for '{$facility->lender_name}'.",
+                    );
+                }
+            }
+
+            $inventory = $this->requireAccount($this->accountCode('inventory'));
+
+            return $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => $reference,
+                'type'        => 'general',
+                'description' => $description ?? "Inventory financing draw-down — {$facility->lender_name}",
+                'lines'       => [
+                    ['account_id' => $inventory->id,                     'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $facility->principal_account_id,    'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -125,32 +133,47 @@ class InventoryFinancingService
         InventoryFinancingFacility $facility,
         mixed $date = null,
     ): ?JournalEntry {
-        $principal = $facility->outstandingPrincipal();
+        return DB::transaction(function () use ($facility, $date): ?JournalEntry {
+            // Locked for the duration — see the matching comment in drawdownFinancing().
+            $facility = InventoryFinancingFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($principal <= 0) {
-            return null;
-        }
+            $principal = $facility->outstandingPrincipal();
 
-        $interest = round($principal * $facility->monthly_rate, 2);
-        $date ??= now()->endOfMonth()->toDateString();
-        $interestAcct = $this->requireAccount($this->accountCode('financing_interest'));
+            if ($principal <= 0) {
+                return null;
+            }
 
-        return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => 'INT-' . now()->format('Y-m') . '-' . $facility->id,
-            'type'        => 'general',
-            'description' => sprintf(
-                'Interest accrual — %s — %s — principal %s × %.2f%%/mo',
-                $facility->lender_name,
-                now()->format('F Y'),
-                number_format($principal, 2),
-                $facility->monthly_rate * 100,
-            ),
-            'lines' => [
-                ['account_id' => $interestAcct->id,               'type' => 'debit',  'amount' => $interest],
-                ['account_id' => $facility->interest_account_id,  'type' => 'credit', 'amount' => $interest],
-            ],
-        ]);
+            $reference = 'INT-' . now()->format('Y-m') . '-' . $facility->id;
+
+            // Idempotency guard — this reference already uniquely identifies "this
+            // facility, this month"; a double-fired scheduler run would otherwise post a
+            // second month's interest for one period. See the matching guard in
+            // LoanFacilityService::accrueLoanInterest().
+            if (JournalEntry::where('reference', $reference)->exists()) {
+                return null;
+            }
+
+            $interest = round($principal * $facility->monthly_rate, 2);
+            $date ??= now()->endOfMonth()->toDateString();
+            $interestAcct = $this->requireAccount($this->accountCode('financing_interest'));
+
+            return $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => $reference,
+                'type'        => 'general',
+                'description' => sprintf(
+                    'Interest accrual — %s — %s — principal %s × %.2f%%/mo',
+                    $facility->lender_name,
+                    now()->format('F Y'),
+                    number_format($principal, 2),
+                    $facility->monthly_rate * 100,
+                ),
+                'lines' => [
+                    ['account_id' => $interestAcct->id,               'type' => 'debit',  'amount' => $interest],
+                    ['account_id' => $facility->interest_account_id,  'type' => 'credit', 'amount' => $interest],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -179,26 +202,31 @@ class InventoryFinancingService
         string $date,
         string $reference,
     ): JournalEntry {
-        $accrued = $facility->accruedInterest();
+        return DB::transaction(function () use ($facility, $amount, $date, $reference): JournalEntry {
+            // Locked for the duration — see the matching comment in drawdownFinancing().
+            $facility = InventoryFinancingFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($amount > $accrued + 0.01) {
-            throw new \RuntimeException(
-                "Payment of {$amount} exceeds accrued interest of {$accrued} for '{$facility->lender_name}'.",
-            );
-        }
+            $accrued = $facility->accruedInterest();
 
-        $bank = $this->requireAccount($this->accountCode('bank'));
+            if ($amount > $accrued + 0.01) {
+                throw new \RuntimeException(
+                    "Payment of {$amount} exceeds accrued interest of {$accrued} for '{$facility->lender_name}'.",
+                );
+            }
 
-        return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'description' => "Interest payment — {$facility->lender_name}",
-            'lines'       => [
-                ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            $bank = $this->requireAccount($this->accountCode('bank'));
+
+            return $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => $reference,
+                'type'        => 'general',
+                'description' => "Interest payment — {$facility->lender_name}",
+                'lines'       => [
+                    ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -213,26 +241,31 @@ class InventoryFinancingService
         string $reference,
         ?string $description = null,
     ): JournalEntry {
-        $outstanding = $facility->outstandingPrincipal();
+        return DB::transaction(function () use ($facility, $amount, $date, $reference, $description): JournalEntry {
+            // Locked for the duration — see the matching comment in drawdownFinancing().
+            $facility = InventoryFinancingFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($amount > $outstanding + 0.01) {
-            throw new \RuntimeException(
-                "Repayment of {$amount} exceeds outstanding principal of {$outstanding} for '{$facility->lender_name}'.",
-            );
-        }
+            $outstanding = $facility->outstandingPrincipal();
 
-        $bank = $this->requireAccount($this->accountCode('bank'));
+            if ($amount > $outstanding + 0.01) {
+                throw new \RuntimeException(
+                    "Repayment of {$amount} exceeds outstanding principal of {$outstanding} for '{$facility->lender_name}'.",
+                );
+            }
 
-        return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => $reference,
-            'type'        => 'general',
-            'description' => $description ?? "Principal repayment — {$facility->lender_name}",
-            'lines'       => [
-                ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            $bank = $this->requireAccount($this->accountCode('bank'));
+
+            return $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => $reference,
+                'type'        => 'general',
+                'description' => $description ?? "Principal repayment — {$facility->lender_name}",
+                'lines'       => [
+                    ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**

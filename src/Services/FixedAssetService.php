@@ -121,36 +121,50 @@ class FixedAssetService
      */
     public function depreciateAsset(FixedAsset $asset, ?string $date = null): ?JournalEntry
     {
-        if (!$asset->is_active || $asset->isDisposed() || $asset->isFullyDepreciated()) {
-            return null;
-        }
+        return DB::transaction(function () use ($asset, $date): ?JournalEntry {
+            // Locked for the duration — without it, two concurrent depreciation runs for
+            // the same asset (e.g. an overlapping scheduler run) could each compute
+            // "remaining" from the same pre-write snapshot and each post a full period's
+            // depreciation, together exceeding the depreciable base for that period.
+            $asset = FixedAsset::lockForUpdate()->findOrFail($asset->id);
 
-        $remaining = round($asset->depreciableBase() - $asset->accumulatedDepreciation(), 2);
-        $amount = min($asset->monthlyDepreciationAmount(), $remaining);
+            if (!$asset->is_active || $asset->isDisposed() || $asset->isFullyDepreciated()) {
+                return null;
+            }
 
-        if ($amount <= 0.0) {
-            return null;
-        }
+            // No reference-based duplicate guard here (unlike the interest-accrual
+            // methods) — depreciateAsset() is designed to be called once per intended
+            // period by the caller, not strictly once per calendar month; the remaining
+            // vs. depreciable-base cap below is what prevents over-depreciation, and tests
+            // rely on calling this method repeatedly within a single request to post
+            // several periods' worth of depreciation in immediate succession.
+            $remaining = round($asset->depreciableBase() - $asset->accumulatedDepreciation(), 2);
+            $amount = min($asset->monthlyDepreciationAmount(), $remaining);
 
-        $date ??= now()->endOfMonth()->toDateString();
-        $expenseAccount = $this->requireAccount($this->accountCode('depreciation_expense'));
+            if ($amount <= 0.0) {
+                return null;
+            }
 
-        return $this->createJournalEntry([
-            'date'        => $date,
-            'reference'   => 'FA-DEPR-' . now()->format('Y-m') . '-' . $asset->id,
-            'type'        => 'general',
-            'sbu_code'    => $asset->sbu_code,
-            'description' => sprintf(
-                'Depreciation — %s (%s) — %s',
-                $asset->name,
-                $asset->asset_code,
-                now()->format('F Y'),
-            ),
-            'lines' => [
-                ['account_id' => $expenseAccount->id,                          'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $asset->accumulated_depreciation_account_id,  'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            $date ??= now()->endOfMonth()->toDateString();
+            $expenseAccount = $this->requireAccount($this->accountCode('depreciation_expense'));
+
+            return $this->createJournalEntry([
+                'date'        => $date,
+                'reference'   => 'FA-DEPR-' . now()->format('Y-m') . '-' . $asset->id,
+                'type'        => 'general',
+                'sbu_code'    => $asset->sbu_code,
+                'description' => sprintf(
+                    'Depreciation — %s (%s) — %s',
+                    $asset->name,
+                    $asset->asset_code,
+                    now()->format('F Y'),
+                ),
+                'lines' => [
+                    ['account_id' => $expenseAccount->id,                          'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $asset->accumulated_depreciation_account_id,  'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -186,11 +200,17 @@ class FixedAssetService
         float $proceeds = 0.0,
         ?string $reference = null,
     ): JournalEntry {
-        if ($asset->isDisposed()) {
-            throw new \RuntimeException("Fixed asset '{$asset->asset_code}' has already been disposed.");
-        }
-
         return DB::transaction(function () use ($asset, $date, $proceeds, $reference): JournalEntry {
+            // Locked and status-checked inside the transaction — the check used to run
+            // against an $asset loaded before the transaction opened, so two concurrent
+            // disposals of the same asset could both pass and both post a disposal entry,
+            // double-crediting the asset account.
+            $asset = FixedAsset::lockForUpdate()->findOrFail($asset->id);
+
+            if ($asset->isDisposed()) {
+                throw new \RuntimeException("Fixed asset '{$asset->asset_code}' has already been disposed.");
+            }
+
             $accumulatedDepreciation = $asset->accumulatedDepreciation();
             $acquisitionCost = (float) $asset->acquisition_cost;
             $bookValue = round($acquisitionCost - $accumulatedDepreciation, 2);

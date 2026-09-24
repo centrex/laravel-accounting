@@ -20,15 +20,21 @@ class InvoiceService
     /** Post an invoice: create & post a journal entry, update invoice status to 'issued'. */
     public function postInvoice(Invoice $invoice): JournalEntry
     {
-        if ($invoice->status === EntryStatus::SETTLED) {
-            throw InvalidStatusTransitionException::make('Invoice', 'settled', 'posted');
-        }
-
-        if ($invoice->journal_entry_id !== null) {
-            throw InvalidStatusTransitionException::make('Invoice', $invoice->status->value, 'posted');
-        }
-
         $entry = DB::transaction(function () use ($invoice): JournalEntry {
+            // Locked and status-checked inside the transaction — the checks used to run
+            // against an $invoice loaded before the transaction opened, so two concurrent
+            // posts of the same invoice could both pass and both create+post a journal
+            // entry, double-recognizing revenue.
+            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+
+            if ($invoice->status === EntryStatus::SETTLED) {
+                throw InvalidStatusTransitionException::make('Invoice', 'settled', 'posted');
+            }
+
+            if ($invoice->journal_entry_id !== null) {
+                throw InvalidStatusTransitionException::make('Invoice', $invoice->status->value, 'posted');
+            }
+
             $arAccount = $this->requireAccount($this->accountCode('accounts_receivable'));
             $revenueAccount = $this->requireAccount($this->accountCode('sales_revenue'));
             $taxAccount = $this->requireAccount($this->accountCode('tax_payable'));
