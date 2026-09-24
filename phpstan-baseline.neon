@@ -262,72 +262,7 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:\\$id\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$opening_balance\\.$#"
 			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$statement_ending_balance\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$status\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$account_id\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$id\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$status\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$amount\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$bank_reconciliation_id\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$description\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$external_reference\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$matched_journal_entry_line_id\\.$#"
-			count: 3
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$transaction_date\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$type\\.$#"
-			count: 2
 			path: src/Accounting.php
 
 		-
@@ -626,21 +561,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$amount\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$bank_reconciliation_id\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$type\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Owner\\:\\:\\$capital_account_id\\.$#"
 			count: 1
 			path: src/Accounting.php
@@ -767,11 +687,6 @@ parameters:
 
 		-
 			message: "#^Call to an undefined method Centrex\\\\Accounting\\\\Models\\\\Invoice\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\Invoice\\>\\:\\:expenses\\(\\)\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Call to an undefined method Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:update\\(\\)\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1006,6 +921,11 @@ parameters:
 			path: src/Accounting.php
 
 		-
+			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:importBankStatementLines\\(\\) has parameter \\$rows with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Accounting.php
+
+		-
 			message: "#^Method Centrex\\\\Accounting\\\\Accounting\\:\\:importBankStatementLines\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: src/Accounting.php
@@ -1091,21 +1011,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankReconciliation, mixed\\>, array\\<string, Illuminate\\\\Support\\\\Carbon\\|int\\|string\\|null\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, Illuminate\\\\Support\\\\Carbon\\|int\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, null\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Bill, mixed\\>, array\\<string, float\\|string\\> given\\.$#"
 			count: 1
 			path: src/Accounting.php
@@ -1166,11 +1071,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\Payment, mixed\\>, array\\<string, int\\> given\\.$#"
 			count: 6
 			path: src/Accounting.php
@@ -1212,16 +1112,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\AccountBalance\\>\\:\\:updateOrCreate\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\AccountBalance, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankReconciliation, mixed\\>, array\\<string, mixed\\> given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1321,16 +1211,6 @@ parameters:
 			path: src/Accounting.php
 
 		-
-			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, 'account_id' given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, 'type' given\\.$#"
-			count: 2
-			path: src/Accounting.php
-
-		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Owner\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Owner, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Owner\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Owner, 'is_active' given\\.$#"
 			count: 1
 			path: src/Accounting.php
@@ -1367,11 +1247,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'sbu_code' given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<TRelatedModel\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'status' given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1492,11 +1367,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$userId of method Centrex\\\\Accounting\\\\Models\\\\Requisition\\:\\:submit\\(\\) expects int\\|null, int\\|string\\|null given\\.$#"
-			count: 1
-			path: src/Accounting.php
-
-		-
-			message: "#^Parameter \\#2 \\$glLine of method Centrex\\\\Accounting\\\\Accounting\\:\\:matchStatementLine\\(\\) expects Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\|null given\\.$#"
 			count: 1
 			path: src/Accounting.php
 
@@ -1941,7 +1811,7 @@ parameters:
 			path: src/Http/Controllers/Api/BankReconciliationController.php
 
 		-
-			message: "#^Parameter \\#2 \\$rows of method Centrex\\\\Accounting\\\\Accounting\\:\\:importBankStatementLines\\(\\) expects array\\<int, array\\{transaction_date\\: string, description\\: string, amount\\: float, type\\: string, external_reference\\?\\: string\\|null\\}\\>, mixed given\\.$#"
+			message: "#^Parameter \\#2 \\$rows of method Centrex\\\\Accounting\\\\Accounting\\:\\:importBankStatementLines\\(\\) expects array, mixed given\\.$#"
 			count: 1
 			path: src/Http/Controllers/Api/BankReconciliationController.php
 
@@ -8359,6 +8229,296 @@ parameters:
 			message: "#^Unable to resolve the template type TValue in call to function collect$#"
 			count: 2
 			path: src/QuickBooks/QuickBooksSyncService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:\\$id\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$opening_balance\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$statement_ending_balance\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\:\\:\\$status\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$account_id\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$id\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:\\$status\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$amount\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$bank_reconciliation_id\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$description\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$external_reference\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$matched_journal_entry_line_id\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$transaction_date\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\:\\:\\$type\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Bill\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Invoice\\:\\:\\$sbu_code\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\:\\:\\$sbu_code\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$amount\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$bank_reconciliation_id\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Call to an undefined method Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:update\\(\\)\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getAttribute\\(\\)\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot access offset 'account_id' on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot access offset 'amount' on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot access offset 'description' on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot access offset 'reference' on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot access offset 'type' on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot call method get\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot call method where\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot cast mixed to float\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 3
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:createAdjustingJournalEntryForStatementLine\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:createBankReconciliation\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:getAccountsByType\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:getUnreconciledLines\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:importBankStatementLines\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:resolveExpenseSbuCode\\(\\) has parameter \\$paymentData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankReconciliation, mixed\\>, array\\<string, Illuminate\\\\Support\\\\Carbon\\|int\\|string\\|null\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, Illuminate\\\\Support\\\\Carbon\\|int\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, null\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:update\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of method Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasOneOrMany\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine,Centrex\\\\Accounting\\\\Models\\\\JournalEntry,Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\BankReconciliation\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankReconciliation, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\BankStatementLine\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\BankStatementLine, mixed\\>, array\\<string, float\\|int\\|string\\|null\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$attributes of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntry\\>\\:\\:create\\(\\) expects array\\<model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntry, mixed\\>, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'is_active' given\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, 'account_id' given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, 'type' given\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\:\\:where\\(\\) expects array\\<int\\|model property of TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<TRelatedModel\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of TRelatedModel of Illuminate\\\\Database\\\\Eloquent\\\\Model, 'status' given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'code' given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of static method Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\:\\:where\\(\\) expects array\\<int\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, mixed\\>\\|\\(Closure\\(Illuminate\\\\Database\\\\Eloquent\\\\Builder\\<Centrex\\\\Accounting\\\\Models\\\\Account\\>\\)\\: mixed\\)\\|Illuminate\\\\Contracts\\\\Database\\\\Query\\\\Expression\\|model property of Centrex\\\\Accounting\\\\Models\\\\Account, 'type' given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of static method Illuminate\\\\Database\\\\DatabaseManager\\:\\:connection\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#1 \\$sbuCode of method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:normalizeSbuCode\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Parameter \\#2 \\$glLine of method Centrex\\\\Accounting\\\\Services\\\\BankReconciliationService\\:\\:matchStatementLine\\(\\) expects Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine, Centrex\\\\Accounting\\\\Models\\\\JournalEntryLine\\|null given\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Part \\$prefix \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/Services/BankReconciliationService.php
+
+		-
+			message: "#^Variable \\$lastException on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Services/BankReconciliationService.php
 
 		-
 			message: "#^Access to an undefined property Centrex\\\\Accounting\\\\Models\\\\Account\\:\\:\\$code\\.$#"

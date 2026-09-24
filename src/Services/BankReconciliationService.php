@@ -2,8 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\Accounting\Concerns;
+namespace Centrex\Accounting\Services;
 
+use Centrex\Accounting\Concerns\{HasSharedAccountingHelpers, ManagesJournalEntries};
 use Centrex\Accounting\Enums\BankReconciliationStatus;
 use Centrex\Accounting\Exceptions\{
     AccountingException,
@@ -16,8 +17,11 @@ use Centrex\Accounting\Models\{Account, BankReconciliation, BankStatementLine, J
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-trait ManagesBankReconciliation
+class BankReconciliationService
 {
+    use HasSharedAccountingHelpers;
+    use ManagesJournalEntries;
+
     public function createBankReconciliation(array $data): BankReconciliation
     {
         return DB::transaction(fn (): BankReconciliation => BankReconciliation::create([
@@ -43,7 +47,7 @@ trait ManagesBankReconciliation
         }
 
         return DB::transaction(function () use ($reconciliation, $rows): Collection {
-            $lines = new Collection;
+            $lines = new Collection();
 
             foreach ($rows as $row) {
                 $lines->push(BankStatementLine::create([

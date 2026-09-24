@@ -4,15 +4,23 @@ declare(strict_types = 1);
 
 namespace Centrex\Accounting;
 
-use Centrex\Accounting\Models\{FixedAsset, InventoryFinancingFacility, JournalEntry, LoanFacility};
-use Centrex\Accounting\Services\{FixedAssetService, InventoryFinancingService, LoanFacilityService};
+use Centrex\Accounting\Models\{
+    BankReconciliation,
+    BankStatementLine,
+    FixedAsset,
+    InventoryFinancingFacility,
+    JournalEntry,
+    JournalEntryLine,
+    LoanFacility
+};
+use Centrex\Accounting\Services\{BankReconciliationService, FixedAssetService, InventoryFinancingService, LoanFacilityService};
+use Illuminate\Support\Collection;
 
 class Accounting
 {
     use Concerns\GeneratesAgingReports;
     use Concerns\GeneratesFinancialReports;
     use Concerns\HasSharedAccountingHelpers;
-    use Concerns\ManagesBankReconciliation;
     use Concerns\ManagesBills;
     use Concerns\ManagesBudgets;
     use Concerns\ManagesChartOfAccounts;
@@ -29,7 +37,50 @@ class Accounting
         private readonly LoanFacilityService $loanFacilities = new LoanFacilityService(),
         private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService(),
         private readonly FixedAssetService $fixedAssets = new FixedAssetService(),
+        private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService(),
     ) {}
+
+    /** @see BankReconciliationService::createBankReconciliation() */
+    public function createBankReconciliation(array $data): BankReconciliation
+    {
+        return $this->bankReconciliation->createBankReconciliation($data);
+    }
+
+    /** @see BankReconciliationService::importBankStatementLines() */
+    public function importBankStatementLines(BankReconciliation $reconciliation, array $rows): Collection
+    {
+        return $this->bankReconciliation->importBankStatementLines($reconciliation, $rows);
+    }
+
+    /** @see BankReconciliationService::getUnreconciledLines() */
+    public function getUnreconciledLines(int $accountId): Collection
+    {
+        return $this->bankReconciliation->getUnreconciledLines($accountId);
+    }
+
+    /** @see BankReconciliationService::matchStatementLine() */
+    public function matchStatementLine(BankStatementLine $statementLine, JournalEntryLine $glLine): void
+    {
+        $this->bankReconciliation->matchStatementLine($statementLine, $glLine);
+    }
+
+    /** @see BankReconciliationService::unmatchStatementLine() */
+    public function unmatchStatementLine(BankStatementLine $statementLine): void
+    {
+        $this->bankReconciliation->unmatchStatementLine($statementLine);
+    }
+
+    /** @see BankReconciliationService::createAdjustingJournalEntryForStatementLine() */
+    public function createAdjustingJournalEntryForStatementLine(BankStatementLine $statementLine, array $data): JournalEntry
+    {
+        return $this->bankReconciliation->createAdjustingJournalEntryForStatementLine($statementLine, $data);
+    }
+
+    /** @see BankReconciliationService::completeBankReconciliation() */
+    public function completeBankReconciliation(BankReconciliation $reconciliation): void
+    {
+        $this->bankReconciliation->completeBankReconciliation($reconciliation);
+    }
 
     /** @see FixedAssetService::addFixedAsset() */
     public function addFixedAsset(
