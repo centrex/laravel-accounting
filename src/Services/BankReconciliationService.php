@@ -47,7 +47,7 @@ class BankReconciliationService
         }
 
         return DB::transaction(function () use ($reconciliation, $rows): Collection {
-            $lines = new Collection();
+            $lines = new Collection;
 
             foreach ($rows as $row) {
                 $lines->push(BankStatementLine::create([

@@ -34,10 +34,10 @@ class Accounting
     use Concerns\ManagesRequisitions;
 
     public function __construct(
-        private readonly LoanFacilityService $loanFacilities = new LoanFacilityService(),
-        private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService(),
-        private readonly FixedAssetService $fixedAssets = new FixedAssetService(),
-        private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService(),
+        private readonly LoanFacilityService $loanFacilities = new LoanFacilityService,
+        private readonly InventoryFinancingService $inventoryFinancing = new InventoryFinancingService,
+        private readonly FixedAssetService $fixedAssets = new FixedAssetService,
+        private readonly BankReconciliationService $bankReconciliation = new BankReconciliationService,
     ) {}
 
     /** @see BankReconciliationService::createBankReconciliation() */
