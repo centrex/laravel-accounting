@@ -2,8 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\Accounting\Concerns;
+namespace Centrex\Accounting\Services;
 
+use Centrex\Accounting\Concerns\{HasSharedAccountingHelpers, ManagesJournalEntries};
 use Centrex\Accounting\Enums\EntryStatus;
 use Centrex\Accounting\Events\{InvoicePosted, PaymentRecorded};
 use Centrex\Accounting\Exceptions\{DuplicatePaymentException, InvalidStatusTransitionException, OverpaymentException};
@@ -11,8 +12,11 @@ use Centrex\Accounting\Models\{Expense, Invoice, JournalEntry, Payment};
 use Centrex\Accounting\Support\DayRange;
 use Illuminate\Support\Facades\DB;
 
-trait ManagesInvoices
+class InvoiceService
 {
+    use HasSharedAccountingHelpers;
+    use ManagesJournalEntries;
+
     /** Post an invoice: create & post a journal entry, update invoice status to 'issued'. */
     public function postInvoice(Invoice $invoice): JournalEntry
     {

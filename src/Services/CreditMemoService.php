@@ -2,16 +2,20 @@
 
 declare(strict_types = 1);
 
-namespace Centrex\Accounting\Concerns;
+namespace Centrex\Accounting\Services;
 
+use Centrex\Accounting\Concerns\{HasSharedAccountingHelpers, ManagesJournalEntries};
 use Centrex\Accounting\Enums\CreditMemoStatus;
 use Centrex\Accounting\Exceptions\{AccountingException, InvalidStatusTransitionException, OverpaymentException};
 use Centrex\Accounting\Models\{CreditMemo, Invoice, JournalEntry, Payment};
 use Centrex\Accounting\Support\DayRange;
 use Illuminate\Support\Facades\DB;
 
-trait ManagesCreditMemos
+class CreditMemoService
 {
+    use HasSharedAccountingHelpers;
+    use ManagesJournalEntries;
+
     /**
      * Create a draft credit memo against an invoice (e.g. for a sale return).
      * No accounting impact until issueCreditMemo() is called.
