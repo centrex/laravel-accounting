@@ -162,38 +162,52 @@ class LoanFacilityService
         LoanFacility $facility,
         mixed $date = null,
     ): ?JournalEntry {
-        $principalLocal = $facility->outstandingPrincipalLocal();
+        return DB::transaction(function () use ($facility, $date): ?JournalEntry {
+            // Locked for the duration — see the matching comment in payLoanInterest().
+            $facility = LoanFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($principalLocal <= 0) {
-            return null;
-        }
+            $principalLocal = $facility->outstandingPrincipalLocal();
 
-        $interestLocal = round($principalLocal * $facility->monthly_rate, 2);
-        $date ??= now()->endOfMonth()->toDateString();
-        $expenseCode = $facility->isShortTerm() ? '6720' : '6730';
-        $expenseAcct = $this->requireAccount($expenseCode);
+            if ($principalLocal <= 0) {
+                return null;
+            }
 
-        return $this->createJournalEntry([
-            'date'          => $date,
-            'reference'     => 'LOAN-INT-' . now()->format('Y-m') . '-' . $facility->id,
-            'type'          => 'general',
-            'sbu_code'      => $facility->sbu_code,
-            'currency'      => $facility->currency,
-            'exchange_rate' => $facility->exchange_rate,
-            'description'   => sprintf(
-                'Loan interest accrual — %s (%s) — %s — principal %s %s × %.2f%%/mo',
-                $facility->lender_name,
-                str_replace('_', ' ', $facility->loan_type),
-                now()->format('F Y'),
-                $facility->currency,
-                number_format($principalLocal, 2),
-                $facility->monthly_rate * 100,
-            ),
-            'lines' => [
-                ['account_id' => $expenseAcct->id,               'type' => 'debit',  'amount' => $interestLocal],
-                ['account_id' => $facility->interest_account_id, 'type' => 'credit', 'amount' => $interestLocal],
-            ],
-        ]);
+            $reference = 'LOAN-INT-' . now()->format('Y-m') . '-' . $facility->id;
+
+            // Idempotency guard — this reference already uniquely identifies "this facility,
+            // this month"; a double-fired scheduler run (or an admin retrying after a slow
+            // response) would otherwise post a second month's interest for one period.
+            if (JournalEntry::where('reference', $reference)->exists()) {
+                return null;
+            }
+
+            $interestLocal = round($principalLocal * $facility->monthly_rate, 2);
+            $date ??= now()->endOfMonth()->toDateString();
+            $expenseCode = $facility->isShortTerm() ? '6720' : '6730';
+            $expenseAcct = $this->requireAccount($expenseCode);
+
+            return $this->createJournalEntry([
+                'date'          => $date,
+                'reference'     => $reference,
+                'type'          => 'general',
+                'sbu_code'      => $facility->sbu_code,
+                'currency'      => $facility->currency,
+                'exchange_rate' => $facility->exchange_rate,
+                'description'   => sprintf(
+                    'Loan interest accrual — %s (%s) — %s — principal %s %s × %.2f%%/mo',
+                    $facility->lender_name,
+                    str_replace('_', ' ', $facility->loan_type),
+                    now()->format('F Y'),
+                    $facility->currency,
+                    number_format($principalLocal, 2),
+                    $facility->monthly_rate * 100,
+                ),
+                'lines' => [
+                    ['account_id' => $expenseAcct->id,               'type' => 'debit',  'amount' => $interestLocal],
+                    ['account_id' => $facility->interest_account_id, 'type' => 'credit', 'amount' => $interestLocal],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -226,29 +240,37 @@ class LoanFacilityService
         string $reference,
         ?string $accountCode = null,
     ): JournalEntry {
-        $accruedLocal = $facility->accruedInterestLocal();
+        return DB::transaction(function () use ($facility, $amount, $date, $reference, $accountCode): JournalEntry {
+            // Locked for the duration of the check-then-post — accruedInterestLocal() is
+            // computed live from posted journal lines, not a stored balance column, so
+            // without the lock two concurrent payments could each read the same accrued
+            // figure, both pass the guard below, and jointly overpay past what's accrued.
+            $facility = LoanFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($amount > $accruedLocal + 0.01) {
-            throw new \RuntimeException(
-                "Payment of {$amount} {$facility->currency} exceeds accrued interest of {$accruedLocal} {$facility->currency} for '{$facility->lender_name}'.",
-            );
-        }
+            $accruedLocal = $facility->accruedInterestLocal();
 
-        $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
+            if ($amount > $accruedLocal + 0.01) {
+                throw new \RuntimeException(
+                    "Payment of {$amount} {$facility->currency} exceeds accrued interest of {$accruedLocal} {$facility->currency} for '{$facility->lender_name}'.",
+                );
+            }
 
-        return $this->createJournalEntry([
-            'date'          => $date,
-            'reference'     => $reference,
-            'type'          => 'general',
-            'sbu_code'      => $facility->sbu_code,
-            'currency'      => $facility->currency,
-            'exchange_rate' => $facility->exchange_rate,
-            'description'   => "Loan interest payment — {$facility->lender_name}",
-            'lines'         => [
-                ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
+
+            return $this->createJournalEntry([
+                'date'          => $date,
+                'reference'     => $reference,
+                'type'          => 'general',
+                'sbu_code'      => $facility->sbu_code,
+                'currency'      => $facility->currency,
+                'exchange_rate' => $facility->exchange_rate,
+                'description'   => "Loan interest payment — {$facility->lender_name}",
+                'lines'         => [
+                    ['account_id' => $facility->interest_account_id, 'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $bank->id,                      'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**
@@ -269,30 +291,35 @@ class LoanFacilityService
         ?string $sbuCode = null,
         ?string $accountCode = null,
     ): JournalEntry {
-        $outstandingLocal = $facility->outstandingPrincipalLocal();
+        return DB::transaction(function () use ($facility, $amount, $date, $reference, $description, $sbuCode, $accountCode): JournalEntry {
+            // Locked for the duration — see the matching comment in payLoanInterest().
+            $facility = LoanFacility::lockForUpdate()->findOrFail($facility->id);
 
-        if ($amount > $outstandingLocal + 0.01) {
-            throw new \RuntimeException(
-                "Repayment of {$amount} {$facility->currency} exceeds outstanding principal of {$outstandingLocal} {$facility->currency} for '{$facility->lender_name}'.",
-            );
-        }
+            $outstandingLocal = $facility->outstandingPrincipalLocal();
 
-        $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
-        $effectiveSbu = $sbuCode ?? $facility->sbu_code;
+            if ($amount > $outstandingLocal + 0.01) {
+                throw new \RuntimeException(
+                    "Repayment of {$amount} {$facility->currency} exceeds outstanding principal of {$outstandingLocal} {$facility->currency} for '{$facility->lender_name}'.",
+                );
+            }
 
-        return $this->createJournalEntry([
-            'date'          => $date,
-            'reference'     => $reference,
-            'type'          => 'general',
-            'sbu_code'      => $effectiveSbu,
-            'currency'      => $facility->currency,
-            'exchange_rate' => $facility->exchange_rate,
-            'description'   => $description ?? "Loan principal repayment — {$facility->lender_name}",
-            'lines'         => [
-                ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
-                ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
-            ],
-        ]);
+            $bank = $this->requireAccount($accountCode ?? $this->accountCode('bank'));
+            $effectiveSbu = $sbuCode ?? $facility->sbu_code;
+
+            return $this->createJournalEntry([
+                'date'          => $date,
+                'reference'     => $reference,
+                'type'          => 'general',
+                'sbu_code'      => $effectiveSbu,
+                'currency'      => $facility->currency,
+                'exchange_rate' => $facility->exchange_rate,
+                'description'   => $description ?? "Loan principal repayment — {$facility->lender_name}",
+                'lines'         => [
+                    ['account_id' => $facility->principal_account_id, 'type' => 'debit',  'amount' => $amount],
+                    ['account_id' => $bank->id,                       'type' => 'credit', 'amount' => $amount],
+                ],
+            ]);
+        });
     }
 
     /**
